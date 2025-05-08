@@ -1,0 +1,13 @@
+#pragma once
+
+#include <plog/Log.h>
+
+#include <nabto/signaling/signaling.hpp>
+
+#define NABTO_SIGNALING_LOGV PLOGV_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)
+#define NABTO_SIGNALING_LOGD PLOGD_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)
+#define NABTO_SIGNALING_LOGI PLOGI_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)
+#define NABTO_SIGNALING_LOGW PLOGW_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)
+#define NABTO_SIGNALING_LOGE PLOGE_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)
+#define NABTO_SIGNALING_LOGF PLOGF_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)
+#define NABTO_SIGNALING_LOGN PLOGN_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)

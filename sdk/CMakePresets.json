@@ -1,0 +1,152 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "base",
+            "binaryDir": "build/${presetName}",
+            "installDir": "build/${presetName}/install"
+        },
+        {
+            "name": "unix_base",
+            "generator": "Ninja"
+        },
+        {
+            "name": "vcpkg_base",
+            "toolchainFile": "../3rdparty/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        },
+        {
+            "name": "release",
+            "inherits": [
+                "base",
+                "unix_base",
+                "vcpkg_base"
+            ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "debug",
+            "inherits": [
+                "base",
+                "unix_base",
+                "vcpkg_base"
+            ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "clang_tidy",
+            "inherits": ["release"],
+            "cacheVariables": {
+                "CMAKE_C_CLANG_TIDY": "clang-tidy",
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+            }
+        },
+        {
+            "name": "test",
+            "inherits": [
+                "base",
+                "unix_base",
+                "vcpkg_base"
+            ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "NABTO_SIGNALING_BUILD_TESTS": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "targets": [
+                "install"
+            ]
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "targets": [
+                "install"
+            ]
+        },
+        {
+            "name": "test",
+            "configurePreset": "test",
+            "targets": [
+                "install"
+            ]
+        },
+        {
+            "name": "clang_tidy",
+            "configurePreset": "clang_tidy",
+            "targets": ["install"]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test",
+            "configurePreset": "test"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "release",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "release"
+                },
+                {
+                    "type": "build",
+                    "name": "release"
+                }
+            ]
+        },
+        {
+            "name": "debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "debug"
+                },
+                {
+                    "type": "build",
+                    "name": "debug"
+                }
+            ]
+        },
+        {
+            "name": "test",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "test"
+                },
+                {
+                    "type": "build",
+                    "name": "test"
+                },
+                {
+                    "type": "test",
+                    "name": "test"
+                }
+            ]
+        },
+        {
+            "name": "clang_tidy",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "clang_tidy"
+                },
+                {
+                    "type": "build",
+                    "name": "clang_tidy"
+                }
+            ]
+        }
+    ]
+}
