@@ -1,0 +1,28 @@
+name: Check Library code
+
+on: push
+
+permissions:
+  actions: write
+  checks: write
+  contents: read
+
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-aws,s3://vcpkg-build-cache-us-east-1,readwrite"
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+
+jobs:
+  clang-tidy-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Run clang tidy
+        run: cmake --workflow --preset clang_tidy
+        working-directory: sdk/cpp
