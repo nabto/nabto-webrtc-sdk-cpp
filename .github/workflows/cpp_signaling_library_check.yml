@@ -25,4 +25,4 @@ jobs:
           fetch-depth: 0
       - name: Run clang tidy
         run: cmake --workflow --preset clang_tidy
-        working-directory: sdk/cpp
+        working-directory: sdk
