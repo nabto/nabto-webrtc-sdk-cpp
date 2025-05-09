@@ -1,6 +1,8 @@
 # Nabto WebRTC SDK C++
 
-C++ device implementation of Nabto WebRTC Signaling. Since this only implements the device side, the demo application must be used with a client from another SDK (iOS, Android, JavaScript).
+C++ device implementation of Nabto WebRTC Signaling. Since this only implements
+the device side, the demo application must be used with a client from another
+SDK (iOS, Android, JavaScript).
 
 
 ## Usage
@@ -22,10 +24,13 @@ After building, test if the executables exist:
 
 Generate a key pair:
 
-Go to the [Nabto Cloud Console](https://console.cloud.nabto.com/) and create a WebRTC product and device. On the device page, generate a key pair, download the key files, and add the public key to the device.
+Go to the [Nabto Cloud Console](https://console.cloud.nabto.com/) and create a
+WebRTC product and device. On the device page, generate a key pair, download the
+key files, and add the public key to the device.
 
 
-The demos requires a video feed to stream to the client. For testing the RTP demo, a feed can be started using a gstreamer testvideosrc UDP RTP feed:
+The demos requires a video feed to stream to the client. For testing the RTP
+demo, a feed can be started using a gstreamer testvideosrc UDP RTP feed:
 
 ```
 gst-launch-1.0 videotestsrc ! clockoverlay ! video/x-raw,width=1920,height=1200 ! \
@@ -34,9 +39,12 @@ gst-launch-1.0 videotestsrc ! clockoverlay ! video/x-raw,width=1920,height=1200 
     udpsink host=127.0.0.1 port=6000
 ```
 
-For testing RTSP, Nabto provides a test RTSP server also based on Gstreamer [here](https://github.com/nabto/edge-device-webrtc/tree/main/test-apps/rtsp-server).
+For testing RTSP, Nabto provides a test RTSP server also based on Gstreamer
+[here](https://github.com/nabto/edge-device-webrtc/tree/main/test-apps/rtsp-server).
 
-See our [simulated video sources guide](https://docs.nabto.com/developer/guides/video/simulated-video-sources.html) for more options for simulating a video feed.
+See our [simulated video sources
+guide](https://docs.nabto.com/developer/guides/video/simulated-video-sources.html)
+for more options for simulating a video feed.
 
 Run the RTP device:
 
