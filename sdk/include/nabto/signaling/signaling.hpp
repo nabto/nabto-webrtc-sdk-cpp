@@ -1,6 +1,7 @@
 #pragma once
 
 #include <plog/Log.h>
+#include <nlohmann/json.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -29,6 +30,9 @@ using SignalingTimerPtr = std::shared_ptr<SignalingTimer>;
 
 class SignalingTimerFactory;
 using SignalingTimerFactoryPtr = std::shared_ptr<SignalingTimerFactory>;
+
+class SignalingTokenGenerator;
+using SignalingTokenGeneratorPtr = std::shared_ptr<SignalingTokenGenerator>;
 
 /**
  * HTTP Request abstraction used by the SDK.
@@ -67,6 +71,11 @@ class SignalingHttpResponse {
     std::string body;
 };
 
+enum class SignalingErrorCode {
+    CHANNEL_CLOSED,
+    CHANNEL_NOT_FOUND
+};
+
 /**
  * Class defining the error format used by the SDK
  */
@@ -76,12 +85,18 @@ class SignalingError {
     /**
      * Construct a SignalingError
      *
+     * @param code An error code
+     * @param message An error message string
+     */
+    SignalingError(SignalingErrorCode code, std::string message);
+
+    /**
+     * Construct a SignalingError
+     *
      * @param code An error code string
      * @param message An error message string
      */
-    SignalingError(std::string code, std::string message) :
-        errorCode_(std::move(code)), errorMessage_(std::move(message)) {
-    }
+    SignalingError(std::string code, std::string message);
 
     /**
      * Get the error code
@@ -95,9 +110,13 @@ class SignalingError {
      */
     std::string errorMessage() const { return errorMessage_; };
 
-   private:
+    static std::string errorCodeToString(SignalingErrorCode code);
+
+  private:
     std::string errorCode_;
     std::string errorMessage_;
+
+
 };
 
 /**
@@ -235,9 +254,30 @@ class SignalingTimer {
 };
 
 /**
+ * Token generator to create JWT tokens suitable for connecting to the Nabto Backend.
+ */
+class SignalingTokenGenerator {
+public:
+    virtual ~SignalingTokenGenerator() = default;
+    SignalingTokenGenerator() = default;
+    SignalingTokenGenerator(const SignalingTokenGenerator&) = delete;
+    SignalingTokenGenerator& operator=(const SignalingTokenGenerator&) = delete;
+    SignalingTokenGenerator(SignalingTokenGenerator&&) = delete;
+    SignalingTokenGenerator& operator=(SignalingTokenGenerator&&) = delete;
+
+    /**
+     * Create a token for connecting to the backend
+     *
+     * @param token The string object to write the token to
+     * @return true iff the token was generated
+     */
+    virtual bool generateToken(std::string& token) = 0;
+};
+
+/**
  * Events the signaling device can emit
  */
-enum SignalingDeviceState : std::uint8_t {
+enum class SignalingDeviceState : std::uint8_t {
     NEW,
     CONNECTING,
     CONNECTED,
@@ -247,26 +287,37 @@ enum SignalingDeviceState : std::uint8_t {
 };
 
 /**
- * Events a Signaling Channel can emit
+ * Convert a SignalingDeviceState enum to a string
+ * @param state The state to convert
+ * @return The string representation of the state
  */
-enum SignalingChannelEventType : std::uint8_t {
-    /**
-     * The underlying Signaling Websocket reconnected to the backend.
-     */
-    SIGNALING_RECONNECT,
-    /**
-     * The underlying Signaling Websocket connection closed and should not be used any more.
-     */
-    SIGNALING_CLOSED,
-    /**
-     * The client just connected to the backend. Since the device only knows of this client if it has been connected, this will always mean the client reconnected to the backend.
-     */
-    CLIENT_CONNECTED,
-    /**
-     * The Signaling tried to send a message to the client, but the client is not connected to the backend. If the client reconnects, the Signaler will retransmit the message.
-     */
-    CLIENT_OFFLINE,
+std::string signalingDeviceStateToString(SignalingDeviceState state);
+
+/**
+ * Events a Signaling Channel can emit.
+ *
+ *  - NEW: The channel was just created.
+ *  - ONLINE: The SDK received an indication that the client is online.
+ *  - OFFLINE: The SDK tried to send a message to the client but the client was offline.
+ *  - FAILED: The channel received a error, which is fatal in the protocol.
+ *  - CLOSED: The channel was closed by the application
+ */
+enum class SignalingChannelState : std::uint8_t {
+    NEW,
+    ONLINE,
+    OFFLINE,
+    FAILED,
+    CLOSED
 };
+
+/**
+ * Convert a SignalingChannelState enum to a string
+ * @param state The state to convert
+ * @return The string representation of the state
+ */
+std::string signalingChannelStateToString(SignalingChannelState state);
+
+
 
 /**
  * struct representing an ICE server returned by the Nabto Backend
@@ -287,19 +338,29 @@ struct IceServer {
 };
 
 /**
+ * Callback function definition when a new signaling channel is available.
+ */
+using NewSignalingChannelHandler = std::function<void(SignalingChannelPtr conn, bool authorized)>;
+
+/**
  * Callback function definition when a new signaling message is available.
  */
-using SignalingMessageHandler = std::function<void(const std::string& msg)>;
+using SignalingMessageHandler = std::function<void(const nlohmann::json& msg)>;
 
 /**
- * Callback function definition when a new device event is available.
+ * Callback function definition when the device state changes.
  */
-using SignalingDeviceEventHandler = std::function<void(SignalingDeviceState event)>;
+using SignalingDeviceStateHandler = std::function<void(SignalingDeviceState state)>;
 
 /**
- * Callback function definition when a new signaling channel event is available.
+ * Callback function definition when the signaling channel state changes.
  */
-using SignalingChannelEventHandler = std::function<void(SignalingChannelEventType event)>;
+using SignalingChannelStateHandler = std::function<void(SignalingChannelState state)>;
+
+/**
+ * Callback function definition when the signaling connection reconnects.
+ */
+using SignalingReconnectHandler = std::function<void(void)>;
 
 /**
  * Callback function definition when a signaling error occurs.
@@ -310,12 +371,6 @@ using SignalingErrorHandler = std::function<void(const SignalingError& error)>;
  * Callback function definition when a new ICE servers response is received.
  */
 using IceServersResponse = std::function<void(std::vector<struct IceServer>)>;
-
-// TODO(tk): make into a class like the timerfactory or vice versa
-/**
- * Function the Signaler can invoke to get a Token suitable for making an attach request to the Nabto Backend
- */
-using SignalingTokenProvider = std::function<bool(std::string& token)>;
 
 /**
  * Configuration used when constructing a Signaler.
@@ -341,7 +396,7 @@ struct SignalingDeviceConfig {
     /**
      * Token provider implementation the SDK can use to generate JWTs used to connect to the Nabto Signaling Service
      */
-    SignalingTokenProvider tokenProvider;
+    SignalingTokenGeneratorPtr tokenProvider;
 
     /**
      * Optional signaling URL. If left empty, the SDK will construct a default URL.
@@ -393,7 +448,7 @@ class SignalingDevice {
     /**
      * Connect the Signaler to the Nabto Backend
      */
-    virtual void connect() = 0;
+    virtual void start() = 0;
 
     /**
      * Close the Signaler
@@ -401,18 +456,37 @@ class SignalingDevice {
     virtual void close() = 0;
 
     /**
+     * Trigger the Signaler to validate that its Websocket connection is alive. If the connection is still alive, nothing happens. Otherwise, the Signaler will reconnect to the backend and trigger a Signaling Event.
+     */
+    virtual void checkAlive() = 0;
+
+    /**
+     * Request ICE servers from the Nabto Backend
+     *
+     * @param callback callback to be invoked when the request is resolved
+     */
+    virtual void requestIceServers(IceServersResponse callback) = 0;
+
+    /**
      * Set handler to be called when a new Client connects
      *
      * @param handler Handler to be called when a client connects
      */
-    virtual void setConnectionHandler(std::function<void(SignalingChannelPtr conn)> handler) = 0;
+    virtual void setNewChannelHandler(NewSignalingChannelHandler handler) = 0;
 
     /**
-     * Set a handler to be invoked when an event occurs on the connection.
+     * Set a handler to be invoked when the device state changes.
      *
      * @param handler the handler to set
      */
-    virtual void setEventHandler(SignalingDeviceEventHandler handler) = 0;
+    virtual void setStateChangeHandler(SignalingDeviceStateHandler handler) = 0;
+
+    /**
+     * Set a handler to be invoked when the connection is reconnected.
+     *
+     * @param handler the handler to set
+     */
+    virtual void setReconnectHandler(SignalingReconnectHandler handler) = 0;
 };
 
 /**
@@ -435,11 +509,11 @@ class SignalingChannel {
     virtual void setMessageHandler(SignalingMessageHandler handler) = 0;
 
     /**
-     * Set a handler to be invoked when an event occurs on the connection.
+     * Set a handler to be invoked when the channel state changes.
      *
      * @param handler the handler to set
      */
-    virtual void setEventHandler(SignalingChannelEventHandler handler) = 0;
+    virtual void setStateChangeHandler(SignalingChannelStateHandler handler) = 0;
 
     /**
      * Set a handler to be invoked if an error occurs on the connection
@@ -453,7 +527,7 @@ class SignalingChannel {
      *
      * @param message The message to send
      */
-    virtual void sendMessage(const std::string& message) = 0;
+    virtual void sendMessage(const nlohmann::json& message) = 0;
 
     /**
      * Send a signaling error to the client
@@ -463,41 +537,19 @@ class SignalingChannel {
     virtual void sendError(const SignalingError& error) = 0;
 
     /**
-     * Trigger the Signaler to validate that its Websocket connection is alive. If the connection is still alive, nothing happens. Otherwise, the Signaler will reconnect to the backend and trigger a Signaling Event.
-     */
-    virtual void checkAlive() = 0;
-
-    /**
-     * Request ICE servers from the Nabto Backend
-     *
-     * @param callback callback to be invoked when the request is resolved
-     */
-    virtual void requestIceServers(IceServersResponse callback) = 0;
-
-    /**
      * Close the Signaling channel
      */
     virtual void close() = 0;
 
     /**
-     * If the underlying signaling type is a device return true. This can be
-     * used in perfect negotiation where the default convention is that devices
-     * are always polite and clients are impolite.
+     * Get the channel ID of the channel.
      *
-     * @returns Boolean indicating if this is a device implementation
+     * This can be used to correlate events between the device and the client
+     * implementations.
+     *
+     * @return The channel ID string
      */
-    virtual bool isDevice() = 0;
-
-    /**
-     * Is authorized
-     *
-     * This function returns true if the channel is created from a client
-     * which has been authorized through client access tokens to access the
-     * device
-     *
-     * @returns Boolean indicating if the signaling channel is authorized by the Nabto Signaling Service.
-     */
-    virtual bool isAuthorized() = 0;
+    virtual std::string getChannelId() = 0;
 };
 
 }  // namespace signaling

@@ -12,6 +12,8 @@ set(src
     src/signaling_channel_impl.cpp
     src/signaling_device_factory.cpp
     src/websocket_connection.cpp
+    src/signaling_error.cpp
+    src/signaling.cpp
 )
 
 add_library(nabto_signaling_core ${src})

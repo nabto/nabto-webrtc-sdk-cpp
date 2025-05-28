@@ -22,24 +22,24 @@ void WebrtcConnection::init()
     sig_->setMessageHandler([self](const std::string& msg) {
         self->handleMessage(msg);
     });
-    sig_->setEventHandler([self](nabto::signaling::SignalingChannelEventType event) {
+    sig_->setStateChangeHandler([self](nabto::signaling::SignalingChannelState event) {
 
         switch(event) {
-            case nabto::signaling::SignalingChannelEventType::CLIENT_OFFLINE:
+            case nabto::signaling::SignalingChannelState::CLIENT_OFFLINE:
                 NPLOGD << "Got CLIENT_OFFLINE";
                 // This means we tried to send a signaling message but the client is not connected to the backend.
                 // If we expect the client to connect momentarily, we will then get a CLIENT_CONNECTED event and the reliability layer will fix it and we can ignore this event.
                 // Otherwise we should handle the error.
                 break;
-            case nabto::signaling::SignalingChannelEventType::SIGNALING_CLOSED:
+            case nabto::signaling::SignalingChannelState::SIGNALING_CLOSED:
                 NPLOGD << "Got SIGNALING_CLOSED";
                 self->pc_->close();
                 break;
-            case nabto::signaling::SignalingChannelEventType::CLIENT_CONNECTED:
+            case nabto::signaling::SignalingChannelState::CLIENT_CONNECTED:
                 NPLOGD << "Got CLIENT_CONNECTED";
                 // TODO: This means client reconnected, we should probably checkAlive(), but really the client should do ICE restart if needed and we can just ignore. Also, if we had unacked messages the reliability layer will have resent them.
                 break;
-            case nabto::signaling::SignalingChannelEventType::SIGNALING_RECONNECT:
+            case nabto::signaling::SignalingChannelState::SIGNALING_RECONNECT:
                 NPLOGD << "Got SIGNALING_RECONNECT";
                 // TODO: our WS connection reconnected, our webrtc connection may also be affected by the cause of this reconnect, so we may have to call iceRestart();
                 break;

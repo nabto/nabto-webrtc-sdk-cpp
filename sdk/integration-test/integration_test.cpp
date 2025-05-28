@@ -20,7 +20,7 @@ TEST(connect, ok) {
     std::promise<void> closeProm;
     std::vector<nabto::signaling::SignalingDeviceState> states;
 
-    dev->setEventHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
             promise.set_value();
@@ -30,7 +30,7 @@ TEST(connect, ok) {
         }
 
     });
-    dev->connect();
+    dev->start();
     std::future<void> f = promise.get_future();
     f.get();
 
@@ -53,7 +53,7 @@ TEST(connect, http_fail) {
     std::promise<void> closeProm;
     std::vector<nabto::signaling::SignalingDeviceState> states;
 
-    dev->setEventHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::WAIT_RETRY) {
             promise.set_value();
@@ -63,7 +63,7 @@ TEST(connect, http_fail) {
         }
 
     });
-    dev->connect();
+    dev->start();
     std::future<void> f = promise.get_future();
     f.get();
 
@@ -85,7 +85,7 @@ TEST(connect, ws_fail) {
     std::promise<void> closeProm;
     std::vector<nabto::signaling::SignalingDeviceState> states;
 
-    dev->setEventHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::WAIT_RETRY) {
             promise.set_value();
@@ -95,7 +95,7 @@ TEST(connect, ws_fail) {
         }
 
     });
-    dev->connect();
+    dev->start();
     std::future<void> f = promise.get_future();
     f.get();
 
@@ -118,7 +118,7 @@ TEST(connect, reconnect_on_server_close) {
     std::promise<void> closeProm;
     std::vector<nabto::signaling::SignalingDeviceState> states;
 
-    dev->setEventHandler([&promise, &closeProm, &waitPromise, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&promise, &closeProm, &waitPromise, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
             promise.set_value();
@@ -131,7 +131,7 @@ TEST(connect, reconnect_on_server_close) {
         }
 
     });
-    dev->connect();
+    dev->start();
     std::future<void> f = promise.get_future();
     f.get();
 
@@ -160,12 +160,12 @@ TEST(connect, connect_a_client) {
     std::promise<void> closeProm;
     std::vector<nabto::signaling::SignalingDeviceState> states;
 
-    dev->setConnectionHandler([&cliProm](nabto::signaling::SignalingChannelPtr conn) {
+    dev->setNewChannelHandler([&cliProm](nabto::signaling::SignalingChannelPtr conn, bool authorized) {
         cliProm.set_value();
     });
 
 
-    dev->setEventHandler([&connProm, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&connProm, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
             connProm.set_value();
@@ -176,7 +176,7 @@ TEST(connect, connect_a_client) {
 
     });
 
-    dev->connect();
+    dev->start();
 
     std::future<void> f = connProm.get_future();
     f.get();
@@ -208,7 +208,7 @@ TEST(connect, connect_multiple_clients) {
     size_t numberOfClients = 10;
     size_t n = 0;
 
-    dev->setConnectionHandler([&cliProm, &n, numberOfClients](nabto::signaling::SignalingChannelPtr conn) {
+    dev->setNewChannelHandler([&cliProm, &n, numberOfClients](nabto::signaling::SignalingChannelPtr conn, bool authorized) {
         n++;
         if (n == numberOfClients) {
             cliProm.set_value();
@@ -216,7 +216,7 @@ TEST(connect, connect_multiple_clients) {
     });
 
 
-    dev->setEventHandler([&closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&closeProm, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
@@ -252,13 +252,13 @@ TEST(connect, client_disconnect_after_connect) {
 
     nabto::signaling::SignalingChannelPtr cliConn = nullptr;
 
-    dev->setConnectionHandler([&cliProm, &cliConn](nabto::signaling::SignalingChannelPtr conn) {
+    dev->setNewChannelHandler([&cliProm, &cliConn](nabto::signaling::SignalingChannelPtr conn, bool authorized) {
         cliConn = conn;
         cliProm.set_value();
     });
 
 
-    dev->setEventHandler([&closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&closeProm, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
@@ -276,8 +276,8 @@ TEST(connect, client_disconnect_after_connect) {
     std::promise<void> connEventProm;
 
     ASSERT_TRUE(cliConn != nullptr);
-    cliConn->setEventHandler([&connEventProm](nabto::signaling::SignalingChannelEventType event) {
-        if(event == nabto::signaling::SignalingChannelEventType::CLIENT_OFFLINE) {
+    cliConn->setStateChangeHandler([&connEventProm](nabto::signaling::SignalingChannelState event) {
+        if(event == nabto::signaling::SignalingChannelState::OFFLINE) {
             connEventProm.set_value();
         }
     });
@@ -301,7 +301,7 @@ TEST(connect, device_send_error) {
     auto dev = ti->createDeviceWithConnectedCli();
     std::promise<void> closeProm;
 
-    dev.device->setEventHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev.device->setStateChangeHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }
@@ -327,7 +327,7 @@ TEST(connect, device_send_error_no_msg) {
     auto dev = ti->createDeviceWithConnectedCli();
     std::promise<void> closeProm;
 
-    dev.device->setEventHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev.device->setStateChangeHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }
@@ -354,7 +354,7 @@ TEST(connect, device_receive_error) {
     std::promise<void> errorProm;
     std::promise<void> closeProm;
 
-    dev.device->setEventHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev.device->setStateChangeHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }
@@ -385,7 +385,7 @@ TEST(connect, device_receive_error_no_msg) {
     std::promise<void> errorProm;
     std::promise<void> closeProm;
 
-    dev.device->setEventHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev.device->setStateChangeHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }
@@ -417,7 +417,7 @@ TEST(data_formats, extra_device_connect_response_data) {
     std::promise<void> closeProm;
     std::vector<nabto::signaling::SignalingDeviceState> states;
 
-    dev->setEventHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([&promise, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
         states.push_back(state);
         if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
             promise.set_value();
@@ -427,7 +427,7 @@ TEST(data_formats, extra_device_connect_response_data) {
         }
 
         });
-    dev->connect();
+    dev->start();
     std::future<void> f = promise.get_future();
     f.get();
 
@@ -447,7 +447,7 @@ TEST(data_formats, ws_can_handle_unknown_message_types) {
     auto dev = ti->createConnectedDevice();
     std::promise<void> closeProm;
 
-    dev->setEventHandler([ &closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev->setStateChangeHandler([ &closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }
@@ -469,7 +469,7 @@ TEST(reliablity, client_receives_all_messages) {
     auto dev = ti->createDeviceWithConnectedCli();
     std::promise<void> closeProm;
 
-    dev.device->setEventHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev.device->setStateChangeHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }
@@ -500,7 +500,7 @@ TEST(reliablity, device_receives_all_messages) {
     auto dev = ti->createDeviceWithConnectedCli();
     std::promise<void> closeProm;
 
-    dev.device->setEventHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev.device->setStateChangeHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }
@@ -542,7 +542,7 @@ TEST(reliablity, client_receives_all_messages_after_reconnect) {
     auto dev = ti->createDeviceWithConnectedCli();
     std::promise<void> closeProm;
 
-    dev.device->setEventHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
+    dev.device->setStateChangeHandler([&closeProm](nabto::signaling::SignalingDeviceState state) {
         if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
             closeProm.set_value();
         }

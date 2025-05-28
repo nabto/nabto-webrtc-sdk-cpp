@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     };
 
     auto sig = nabto::signaling::SignalingDeviceFactory::create(conf);
-    sig->setConnectionHandler([trackHandler, &opts/*, &conns*/](nabto::signaling::SignalingChannelPtr conn) {
+    sig->setNewChannelHandler([trackHandler, &opts/*, &conns*/](nabto::signaling::SignalingChannelPtr conn) {
         // Handle authorization
         if (opts.centralAuthorization) {
             if (!conn->isAuthorized()) {
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         auto webConn = nabto::example::WebrtcConnection::create(conn, signer, trackHandler);
         // conns.push_back(webConn);
     });
-    sig->connect();
+    sig->start();
 
     int n;
     std::cin >> n;
