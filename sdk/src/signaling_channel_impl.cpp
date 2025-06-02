@@ -26,11 +26,11 @@ SignalingChannelImpl::SignalingChannelImpl(SignalingDeviceImplPtr signaler, std:
 void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
     try {
         auto type = msg["type"].get<std::string>();
-        if (type == "MESSAGE") {
-            NABTO_SIGNALING_LOGD << "Handling MESSAGE";
+        if (type == "DATA") {
+            NABTO_SIGNALING_LOGD << "Handling DATA";
             sendAck(msg);
             if (signalingMessageHandler_) {
-                auto str = msg["message"].get<std::string>();
+                auto str = msg["data"];
                 signalingMessageHandler_(str);
             }
         } else if (type == "ACK") {
@@ -55,9 +55,9 @@ void SignalingChannelImpl::wsClosed() {
 
 void SignalingChannelImpl::sendMessage(const nlohmann::json& message) {
     const nlohmann::json root = {
-        {"type", "MESSAGE"},
+        {"type", "DATA"},
         {"seq", sendSeq_},
-        {"message", message}};
+        {"data", message}};
     sendSeq_++;
     unackedMessages_.push_back(root);
     signaler_->websocketSendMessage(channelId_, root);
@@ -124,7 +124,7 @@ bool SignalingChannelImpl::isInitialMessage(const nlohmann::json& msg) {
     try {
         auto type = msg["type"].get<std::string>();
         auto seq = msg["seq"].get<int>();
-        return type == "MESSAGE" && seq == 0;
+        return type == "DATA" && seq == 0;
     } catch (std::exception& e) {
         return false;
     }
