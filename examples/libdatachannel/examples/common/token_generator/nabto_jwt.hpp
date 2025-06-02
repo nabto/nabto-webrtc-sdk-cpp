@@ -16,7 +16,7 @@ namespace example {
 class NabtoJwt;
 typedef std::shared_ptr<NabtoJwt> NabtoJwtPtr;
 
-class NabtoJwt : public std::enable_shared_from_this<NabtoJwt> {
+class NabtoJwt : public nabto::signaling::SignalingTokenGenerator, public std::enable_shared_from_this<NabtoJwt> {
    public:
 
     static NabtoJwtPtr create(std::string productId, std::string deviceId, std::string privateKey) {
@@ -25,7 +25,7 @@ class NabtoJwt : public std::enable_shared_from_this<NabtoJwt> {
 
     NabtoJwt(std::string productId, std::string deviceId, std::string privateKey) : productId_(productId), deviceId_(deviceId), privateKey_(privateKey) {}
 
-    bool createAttachToken(std::string& token) {
+    bool generateToken(std::string& token) {
         std::string keyId;
 
         if (!getKeyIdFromPrivateKey(privateKey_, keyId)) {

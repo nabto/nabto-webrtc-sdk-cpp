@@ -171,6 +171,7 @@ void SignalingDeviceImpl::connectWs() {
 }
 
 void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type, const nlohmann::json& message) {
+    NABTO_SIGNALING_LOGD << "handleWsMessage of type: " << type << " message: " << message.dump();
     if (type == SignalingMessageType::PING) {
         sendPong();
         return;

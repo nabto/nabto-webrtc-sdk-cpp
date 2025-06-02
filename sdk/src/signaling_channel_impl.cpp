@@ -40,7 +40,7 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
             NABTO_SIGNALING_LOGE << "Got unknown signaling message type: " << type;
         }
     } catch (std::exception& ex) {
-        NABTO_SIGNALING_LOGE << "Failed to parse Signaling message: " << msg << " with error: " << ex.what();
+        NABTO_SIGNALING_LOGE << "Failed to parse Signaling message: " << msg.dump() << " with error: " << ex.what();
     }
 }
 

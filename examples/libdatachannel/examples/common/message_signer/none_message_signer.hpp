@@ -14,55 +14,34 @@ namespace example {
 
 class NoneMessageSigner : public MessageSigner {
    public:
-    static MessageSignerPtr create(std::string& keyId) {
-        auto sig = std::make_shared<NoneMessageSigner>(keyId);
-        return sig;
+    static MessageSignerPtr create() {
+        auto signer = std::make_shared<NoneMessageSigner>();
+        return signer;
     }
 
-    NoneMessageSigner(std::string& secretId) : secretId_(secretId) {
+    NoneMessageSigner() {
+
     }
 
-    std::string signMessage(const std::string& msg) override {
-        auto seq = signSeq_;
-        signSeq_++;
-        auto jwt = jwt::create()
-                       .set_payload_claim("message", jwt::claim(msg))
-                       .set_payload_claim("messageSeq", jwt::claim(picojson::value(seq)))
-                       .set_key_id(secretId_);
-
-        auto token = jwt.sign(jwt::algorithm::none());
-        return token;
+    nlohmann::json signMessage(const nlohmann::json& msg) override {
+        nlohmann::json data = {
+            {"type", "NONE"},
+            {"message", msg}
+        };
+        return data;
     }
 
-    std::string verifyMessage(const std::string& msg) override {
+    nlohmann::json verifyMessage(const nlohmann::json& msg) override {
         NPLOGD << "signaling signer handle msg" << msg;
         try {
-            auto decoded = jwt::decode(msg);
-            //auto keyId = decoded.get_key_id();
-            // TODO: find secret based on key ID
-            auto verifier = jwt::verify()
-                                .allow_algorithm(jwt::algorithm::none());
-            verifier.verify(decoded);
-            std::string pl = decoded.get_payload();
-            auto data = nlohmann::json::parse(pl);
-            auto message = data["message"].get<std::string>();
-            // TODO verify message sequence number
-            return message;
+            auto data = msg["message"];
+            return data;
         } catch (std::exception& ex) {
-            NPLOGE << "Failed to validate JWT: " << ex.what();
-            std::string err = "VERIFICATION_ERROR";
+            NPLOGE << "Failed to parse JSON: " << ex.what();
             throw VerificationError();
         }
     }
 
-   private:
-    /**
-     * Incrementing number on signed messages
-     */
-    double signSeq_ = 0;
-
-    std::string secret_;
-    std::string secretId_;
 };
 
 }  // namespace example
