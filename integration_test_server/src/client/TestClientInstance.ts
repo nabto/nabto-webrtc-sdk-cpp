@@ -75,11 +75,11 @@ class TestClientInstance {
     this.wsSender?.(JSON.stringify(msg));
   }
 
-  async waitForMessages(messages: string[], timeout: number): Promise<string[]>
+  async waitForMessages(messages: unknown[], timeout: number): Promise<unknown[]>
   {
     return await this.device.waitForMessages(messages, timeout)
   }
-  getReceivedMessages(): string[] {
+  getReceivedMessages(): unknown[] {
     return this.device.receivedMessages;
   }
 
@@ -96,7 +96,7 @@ class TestClientInstance {
     }
   }
 
-  async deviceSendMessages(messages: string[]) {
+  async deviceSendMessages(messages: unknown[]) {
     await this.device.sendMessages(messages);
   }
 

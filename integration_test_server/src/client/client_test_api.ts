@@ -108,12 +108,12 @@ export const clientTestApi = new Elysia({ prefix: "/test/client" })
   },
     {
       body: t.Object({
-        messages: t.Array(t.String()),
+        messages: t.Array(t.Unknown()),
         timeout: t.Number()
       }),
       response: {
         200: t.Object({
-          messages: t.Optional(t.Array(t.String()))
+          messages: t.Optional(t.Array(t.Unknown()))
         }, { description: "success"}
       ),
       404: t.String({ description: "failure"})
@@ -130,7 +130,7 @@ export const clientTestApi = new Elysia({ prefix: "/test/client" })
   },
     {
       body: t.Object({
-        messages: t.Array(t.String())
+        messages: t.Array(t.Unknown())
       }),
       response: {
         200: t.Object({}, { description: "success"}),

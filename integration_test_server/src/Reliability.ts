@@ -34,11 +34,11 @@ export class Reliability {
    *
    * @param message The message to send.
    */
-  sendReliableMessage(message: string): void {
+  sendReliableMessage(message: unknown): void {
     const encoded: ReliabilityMessage = {
-      type: ReliabilityTypes.MESSAGE,
+      type: ReliabilityTypes.DATA,
       seq: this.sendSeq,
-      message: message
+      data: message
     }
     this.sendSeq++;
     this.unackedMessages.push(encoded);
@@ -53,11 +53,11 @@ export class Reliability {
    * @return if the received message is an expected ReliabilityMessage the
    * function returns the payload from that packet.
    */
-  handleRoutingMessage(message: ReliabilityUnion) : string | undefined {
+  handleRoutingMessage(message: ReliabilityUnion) : unknown | undefined {
     if (message.type === ReliabilityTypes.ACK) {
       this.handleAck(message)
       return undefined;
-    } else if (message.type === ReliabilityTypes.MESSAGE) {
+    } else if (message.type === ReliabilityTypes.DATA) {
       return this.handleReliabilityMessage(message);
     }
     return undefined;
@@ -69,7 +69,7 @@ export class Reliability {
    * @param message
    * @returns
    */
-  private handleReliabilityMessage(message: ReliabilityMessage) : string | undefined {
+  private handleReliabilityMessage(message: ReliabilityMessage) : unknown | undefined {
 
     if (message.seq <= this.recvSeq) {
       // This is either an expected message or a message from the past
@@ -90,7 +90,7 @@ export class Reliability {
     }
 
     this.recvSeq++;
-    return message.message;
+    return message.data;
   }
 
   /**
@@ -165,6 +165,6 @@ export class Reliability {
    * after a device restart.
    */
   isInitialMessage(message: ReliabilityUnion): boolean {
-    return message.type === ReliabilityTypes.MESSAGE && message.seq === 0;
+    return message.type === ReliabilityTypes.DATA && message.seq === 0;
   }
 }

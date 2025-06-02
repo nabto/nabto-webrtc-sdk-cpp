@@ -127,12 +127,12 @@ export const deviceTestApi = new Elysia({ prefix: "/test/device" })
       parse: 'application/json', // This is supposed to work but does not: https://github.com/elysiajs/elysia-swagger/issues/192
       type: 'application/json' as never, // So we have this instead
       body: t.Object({
-        messages: t.Array(t.String()),
+        messages: t.Array(t.Unknown()),
         timeout: t.Number()
       }),
       response: {
         200: t.Object({
-          messages: t.Optional(t.Array(t.String()))
+          messages: t.Optional(t.Array(t.Unknown()))
         }, { description: "success"}),
         404: t.String({ description: "failure"})
       }
@@ -150,7 +150,7 @@ export const deviceTestApi = new Elysia({ prefix: "/test/device" })
       parse: 'application/json', // This is supposed to work but does not: https://github.com/elysiajs/elysia-swagger/issues/192
       type: 'application/json' as never, // So we have this instead
       body: t.Object({
-        messages: t.Array(t.String())
+        messages: t.Array(t.Unknown())
       }),
       response: {
         200: t.Object({}, { description: "success"}),

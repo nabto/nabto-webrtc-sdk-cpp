@@ -15,7 +15,7 @@ export class SimulatedDevice {
 
   reliability: Reliability;
 
-  receivedMessages: Array<string> = new Array();
+  receivedMessages: Array<unknown> = new Array();
 
   eventEmitter: EventEmitter = new EventEmitter();
 
@@ -28,7 +28,7 @@ export class SimulatedDevice {
         this.wsSender({
           type: RoutingTypes.MESSAGE,
           channelId: this.channelId,
-          message: JSON.stringify(message)
+          message: message
         })
       }
     })
@@ -70,8 +70,7 @@ export class SimulatedDevice {
   }
   handleRouting(routing: Routing) {
     if (routing.type === RoutingTypes.MESSAGE) {
-      const json = JSON.parse(routing.message);
-      const reliability = Value.Decode(ReliabilityUnionScheme, json);
+      const reliability = Value.Decode(ReliabilityUnionScheme, routing.message);
       const reliableMessage = this.reliability.handleRoutingMessage(reliability);
       if (reliableMessage) {
         this.handleReliableMessage(reliableMessage);
@@ -83,19 +82,19 @@ export class SimulatedDevice {
     this.reliability.handlePeerConnected();
   }
 
-  handleReliableMessage(message: string) {
+  handleReliableMessage(message: unknown) {
     this.receivedMessages.push(message);
     this.eventEmitter.emit("message", message)
   }
 
-  hasReceivedMessages(messages: string[]): boolean {
+  hasReceivedMessages(messages: unknown[]): boolean {
     if (JSON.stringify(this.receivedMessages) === JSON.stringify(messages)) {
       return true;
     }
     return false;
   }
 
-  async waitForMessages(messages: string[], timeout: number): Promise<string[]> {
+  async waitForMessages(messages: unknown[], timeout: number): Promise<unknown[]> {
     if (this.hasReceivedMessages(messages)) {
       return this.receivedMessages;
     }
@@ -111,7 +110,7 @@ export class SimulatedDevice {
     return this.receivedMessages;
   }
 
-  async sendMessages(messages: string[]) {
+  async sendMessages(messages: unknown[]) {
     for (const msg of messages) {
       await this.reliability.sendReliableMessage(msg);
     }
@@ -120,8 +119,10 @@ export class SimulatedDevice {
     await this.wsSender({
       type: RoutingTypes.ERROR,
       channelId: this.channelId,
-      errorCode: errorCode,
-      errorMessage: errorMessage
+      error: {
+        code: errorCode,
+        message: errorMessage,
+      },
     })
   }
 }
