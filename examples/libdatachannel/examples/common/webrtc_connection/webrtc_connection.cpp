@@ -101,7 +101,7 @@ void WebrtcConnection::handleMessage(const nlohmann::json& msgIn)
         }
     } catch (nabto::example::VerificationError& ex) {
         NPLOGE << "Could not verify the incoming signaling message: " << msgIn.dump() << " with: " << ex.what();
-        channel_->sendError(nabto::signaling::SignalingError("VERIFICATION_ERROR", "Could not verify the incoming signaling message"));
+        channel_->sendError(nabto::signaling::SignalingError(nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR, "Could not verify the incoming signaling message"));
     } catch (std::exception& ex) {
         NPLOGE << "Failed to handle message: " << msgIn.dump() << " with: " << ex.what();
     }

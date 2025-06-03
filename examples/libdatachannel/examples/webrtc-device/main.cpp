@@ -75,17 +75,15 @@ int main(int argc, char** argv) {
         // Handle authorization
         if (opts.centralAuthorization) {
             if (!authorized) {
-                auto authorizationError = "AUTHORIZATION_ERROR";
                 auto authorizationErrorMessage = "Rejecting connection as central authorization is required";
                 NPLOGE << authorizationErrorMessage;
-                channel->sendError(nabto::signaling::SignalingError(authorizationError, authorizationErrorMessage));
+                channel->sendError(nabto::signaling::SignalingError(nabto::signaling::SignalingErrorCode::ACCESS_DENIED, authorizationErrorMessage));
                 channel->close();
                 return;
             }
         } else if (opts.sharedSecret.empty()) {
-            auto authorizationError = "AUTHORIZATION_ERROR";
             auto authorizationErrorMessage = "Not accepting connection as it is neither central authorization or shared secret message signing is used";
-            channel->sendError(nabto::signaling::SignalingError(authorizationError, authorizationErrorMessage));
+            channel->sendError(nabto::signaling::SignalingError(nabto::signaling::SignalingErrorCode::ACCESS_DENIED, authorizationErrorMessage));
             channel->close();
             return;
         }

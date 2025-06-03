@@ -218,6 +218,9 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type, const nlohm
                 channels_.insert(std::make_pair(connId, chan));
                 if (channelHandler_) {
                     channelHandler_(chan, authorized);
+                } else {
+                    websocketSendError(connId, SignalingError(SignalingErrorCode::INTERNAL_ERROR, "No NewChannelHandler was set, dropping the channel."));
+                    return;
                 }
             }
             chan->handleMessage(msg);

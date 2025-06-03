@@ -72,8 +72,13 @@ class SignalingHttpResponse {
 };
 
 enum class SignalingErrorCode {
+    DECODE_ERROR,
+    VERIFICATION_ERROR,
     CHANNEL_CLOSED,
-    CHANNEL_NOT_FOUND
+    CHANNEL_NOT_FOUND,
+    NO_MORE_CHANNELS,
+    ACCESS_DENIED,
+    INTERNAL_ERROR
 };
 
 /**

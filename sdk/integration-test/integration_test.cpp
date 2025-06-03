@@ -162,7 +162,7 @@ TEST(connect, connect_a_client) {
 
     dev->setNewChannelHandler([&cliProm](nabto::signaling::SignalingChannelPtr conn, bool authorized) {
         cliProm.set_value();
-    });
+        });
 
 
     dev->setStateChangeHandler([&connProm, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
@@ -174,7 +174,7 @@ TEST(connect, connect_a_client) {
             closeProm.set_value();
         }
 
-    });
+        });
 
     dev->start();
 
@@ -189,6 +189,48 @@ TEST(connect, connect_a_client) {
     std::future<void> f2 = cliProm.get_future();
     f2.get();
 
+    dev->close();
+
+    std::future<void> f3 = closeProm.get_future();
+    f3.get();
+}
+
+TEST(connect, connect_without_channel_handler) {
+    auto ti = nabto::test::TestInstance::create();
+
+    auto dev = ti->createDevice();
+
+    std::promise<void> connProm;
+    std::promise<void> closeProm;
+    std::vector<nabto::signaling::SignalingDeviceState> states;
+
+
+    dev->setStateChangeHandler([&connProm, &closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+        states.push_back(state);
+        if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
+            connProm.set_value();
+        }
+        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+            closeProm.set_value();
+        }
+
+        });
+
+    dev->start();
+
+    std::future<void> f = connProm.get_future();
+    f.get();
+
+    auto cliId = ti->createClient();
+
+    ASSERT_TRUE(ti->connectClient(cliId));
+    bool exceptionCaught = false;
+    try {
+        nabto::test::ProtocolError err = ti->clientWaitForErrorReceived(cliId);
+    }catch (std::exception& e) {
+        exceptionCaught = true;
+    }
+    ASSERT_TRUE(exceptionCaught);
     dev->close();
 
     std::future<void> f3 = closeProm.get_future();
