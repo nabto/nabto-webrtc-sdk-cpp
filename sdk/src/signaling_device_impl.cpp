@@ -30,13 +30,13 @@ SignalingDeviceImpl::SignalingDeviceImpl(const SignalingDeviceConfig& conf) : ws
     }
 }
 
-void SignalingDeviceImpl::connect() {
+void SignalingDeviceImpl::start() {
     const std::lock_guard<std::mutex> lock(mutex_);
 
     if (state_ == SignalingDeviceState::NEW) {
         doConnect();
     } else {
-        NABTO_SIGNALING_LOGE << "Connect called from invalid state: " << state_;
+        NABTO_SIGNALING_LOGE << "Connect called from invalid state: " << signalingDeviceStateToString(state_);
     }
 }
 
@@ -53,7 +53,7 @@ void SignalingDeviceImpl::doConnect() {
 
     SignalingHttpRequest req;
     std::string token;
-    if (!tokenProvider_(token)) {
+    if (!tokenProvider_->generateToken(token)) {
         NABTO_SIGNALING_LOGE << "Cannot create an access token using the provided token provider.";
         changeState(SignalingDeviceState::FAILED);
         return;
@@ -79,7 +79,7 @@ void SignalingDeviceImpl::doConnect() {
     });
 }
 
-void SignalingDeviceImpl::websocketSendMessage(const std::string& channelId, const std::string& message) {
+void SignalingDeviceImpl::websocketSendMessage(const std::string& channelId, const nlohmann::json& message) {
     const std::lock_guard<std::mutex> lock(mutex_);
     if (state_ == SignalingDeviceState::CONNECTED) {
         const nlohmann::json msg = {
@@ -99,10 +99,8 @@ void SignalingDeviceImpl::websocketSendError(const std::string& channelId, const
         nlohmann::json msg = {
             {"type", "ERROR"},
             {"channelId", channelId},
-            {"errorCode", error.errorCode()}};
-        if (!error.errorMessage().empty()) {
-            msg["errorMessage"] = error.errorMessage();
-        }
+            {"error", signalingErrorToJson(error)}
+        };
         NABTO_SIGNALING_LOGD << "Sending WS Error: " << msg.dump();
         ws_->send(msg.dump());
     } else {
@@ -140,9 +138,11 @@ void SignalingDeviceImpl::connectWs() {
     ws_ = WebsocketConnection::create(wsImpl_, timerFactory_);
     ws_->onOpen([self]() {
         NABTO_SIGNALING_LOGI << "WebSocket open";
-        for (auto const& channel : self->channels_) {
-            // inform all channels that the WS was reconnected. If this is not a reconnection, but the initial connect, we can not have any open channels so this loop will not run.
-            channel.second->wsReconnected();
+        if (self->firstConnect_) {
+            self->firstConnect_ = false;
+            if (self->reconnectHandler_) {
+                self->reconnectHandler_();
+            }
         }
         self->changeState(SignalingDeviceState::CONNECTED);
     });
@@ -171,30 +171,26 @@ void SignalingDeviceImpl::connectWs() {
 }
 
 void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type, const nlohmann::json& message) {
+    NABTO_SIGNALING_LOGD << "handleWsMessage of type: " << type << " message: " << message.dump();
     if (type == SignalingMessageType::PING) {
         sendPong();
         return;
     }
-    SignalingChannelImplPtr conn = nullptr;
+    SignalingChannelImplPtr chan = nullptr;
     try {
         const std::string connId = message["channelId"].get<std::string>();
         try {
-            conn = channels_.at(connId);
+            chan = channels_.at(connId);
             if (type == SignalingMessageType::PEER_OFFLINE) {
-                conn->peerOffline();
+                chan->peerOffline();
                 return;
             }
             if (type == SignalingMessageType::PEER_CONNECTED) {
-                conn->peerConnected();
+                chan->peerConnected();
                 return;
             }
             if (type == SignalingMessageType::ERROR) {
-                std::string msg;
-                if (message.contains("errorMessage")) {
-                    msg = message["errorMessage"].get<std::string>();
-                }
-
-                conn->handleError(SignalingError(message["errorCode"].get<std::string>(), msg));
+                chan->handleError(signalingErrorFromJson(message["error"]));
                 return;
             }
         } catch (std::exception& exception) {
@@ -209,23 +205,26 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type, const nlohm
             } else {
                 NABTO_SIGNALING_LOGD << "authorized bit not contained in incoming message" << message.dump();
             }
-            auto msg = message["message"].get<std::string>();
-            if (conn == nullptr) {
+            auto msg = message["message"];
+            if (chan == nullptr) {
                 // channel is unknown
                 if (!SignalingChannelImpl::isInitialMessage(msg)) {
                     NABTO_SIGNALING_LOGE << "Got an message for an unknown channel, but the message is not an initial message. Discarding the message";
-                    websocketSendError(connId, SignalingError("CHANNEL_NOT_FOUND", "Got a message for a signaling channel which does not exist."));
+                    websocketSendError(connId, SignalingError(SignalingErrorCode::CHANNEL_NOT_FOUND, "Got a message for a signaling channel which does not exist."));
                     return;
                 }
                 auto self = shared_from_this();
-                conn = SignalingChannelImpl::create(self, connId, true /*isDevice*/, authorized);
-                channels_.insert(std::make_pair(connId, conn));
+                chan = SignalingChannelImpl::create(self, connId);
+                channels_.insert(std::make_pair(connId, chan));
                 if (channelHandler_) {
-                    channelHandler_(conn);
+                    channelHandler_(chan, authorized);
+                } else {
+                    websocketSendError(connId, SignalingError(SignalingErrorCode::INTERNAL_ERROR, "No NewChannelHandler was set, dropping the channel."));
+                    return;
                 }
             }
-            conn->handleMessage(msg);
-        } else if (conn == nullptr) {
+            chan->handleMessage(msg);
+        } else if (chan == nullptr) {
             NABTO_SIGNALING_LOGD << "Got unhandled message from unknown channel ID. SignalingMessageType: " << type << " " << message.dump();
         } else {
             NABTO_SIGNALING_LOGE << "Got unhandled message. SignalingMessageType: " << type << " " << message.dump();
@@ -257,7 +256,7 @@ void SignalingDeviceImpl::checkAlive() {
         state_ != SignalingDeviceState::FAILED) {
         ws_->checkAlive();
     } else {
-        NABTO_SIGNALING_LOGE << "checkAlive called from invalid state: " << state_;
+        NABTO_SIGNALING_LOGE << "checkAlive called from invalid state: " << signalingDeviceStateToString(state_);
     }
 }
 
@@ -290,12 +289,12 @@ void SignalingDeviceImpl::waitReconnect() {
     });
 }
 
-void SignalingDeviceImpl::requestIceServers(const IceServersResponse& callback) {
+void SignalingDeviceImpl::requestIceServers(IceServersResponse callback) {
     const std::lock_guard<std::mutex> lock(mutex_);
     const std::string method = "POST";
     const std::string url = httpHost_ + "/v1/ice-servers";
     std::string token;
-    if (!tokenProvider_(token)) {
+    if (!tokenProvider_->generateToken(token)) {
         NABTO_SIGNALING_LOGE << "Cannot create an access token using the provided token provider.";
     }
     SignalingHttpRequest req;
@@ -320,7 +319,7 @@ void SignalingDeviceImpl::requestIceServers(const IceServersResponse& callback) 
 }
 
 void SignalingDeviceImpl::channelClosed(const std::string& channelId) {
-    websocketSendError(channelId, SignalingError("CHANNEL_CLOSED", "The signaling channel has been closed in the device."));
+    websocketSendError(channelId, SignalingError(SignalingErrorCode::CHANNEL_CLOSED, "The signaling channel has been closed in the device."));
     channels_.erase(channelId);
 }
 

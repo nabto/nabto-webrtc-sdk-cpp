@@ -86,7 +86,7 @@ class DeviceTestInstance {
     this.wsSender?.(JSON.stringify(msg));
   }
 
-  async waitForMessages(clientId: string, messages: string[], timeout: number): Promise<string[]>
+  async waitForMessages(clientId: string, messages: unknown[], timeout: number): Promise<unknown[]>
   {
     const client = this.clients.get(clientId);
     if (!client) {
@@ -102,7 +102,7 @@ class DeviceTestInstance {
     }
     return await client.waitForError(timeout)
   }
-  getReceivedMssages(clientId: string): string[] {
+  getReceivedMssages(clientId: string): unknown[] {
     const client = this.clients.get(clientId);
     if (!client) {
       throw new Error("No such simulated client");
@@ -127,7 +127,7 @@ class DeviceTestInstance {
     }
   }
 
-  async clientSendMessages(clientId: string, messages: string[])
+  async clientSendMessages(clientId: string, messages: unknown[])
   {
     const client = this.clients.get(clientId);
     if (!client) {

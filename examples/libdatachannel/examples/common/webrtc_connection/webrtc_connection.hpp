@@ -13,13 +13,17 @@ typedef std::shared_ptr<WebrtcConnection> WebrtcConnectionPtr;
 
 class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
 public:
-    static WebrtcConnectionPtr create(nabto::signaling::SignalingChannelPtr sig, MessageSignerPtr messageSigner, WebrtcTrackHandlerPtr trackHandler);
-    WebrtcConnection(nabto::signaling::SignalingChannelPtr sig, MessageSignerPtr messageSigner, WebrtcTrackHandlerPtr trackHandler);
+    static WebrtcConnectionPtr create(nabto::signaling::SignalingDevicePtr device, nabto::signaling::SignalingChannelPtr sig, MessageSignerPtr messageSigner, WebrtcTrackHandlerPtr trackHandler);
+    WebrtcConnection(nabto::signaling::SignalingDevicePtr device, nabto::signaling::SignalingChannelPtr channel, MessageSignerPtr messageSigner, WebrtcTrackHandlerPtr trackHandler);
 
-    void handleMessage(const std::string& msg);
+    void handleMessage(const nlohmann::json& msg);
+
+    // TODO: add this
+    // void handleReconnect();
 
 private:
-    nabto::signaling::SignalingChannelPtr sig_;
+    nabto::signaling::SignalingChannelPtr channel_;
+    nabto::signaling::SignalingDevicePtr device_;
     MessageSignerPtr messageSigner_;
     std::shared_ptr<rtc::PeerConnection> pc_ = nullptr;
     bool canTrickle_ = true;
@@ -30,7 +34,7 @@ private:
     std::vector<rtc::IceServer> iceServers_;
     size_t trackRef_ = 0;
 
-    std::vector<std::string> messageQueue_;
+    std::vector<nlohmann::json> messageQueue_;
 
     void init();
     void deinit();
@@ -47,7 +51,7 @@ private:
     void requestIceServers();
     void parseIceServers(std::vector<struct nabto::signaling::IceServer> &servers);
 
-    void sendSignalingMessage(const std::string& message);
+    void sendSignalingMessage(const nlohmann::json& message);
 
     void addTrack();
 

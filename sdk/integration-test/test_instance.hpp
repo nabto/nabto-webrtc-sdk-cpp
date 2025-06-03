@@ -20,12 +20,27 @@ public:
     std::string id;
     nabto::signaling::SignalingDevicePtr device;
     nabto::signaling::SignalingChannelPtr channel;
+    bool authorized;
 };
 
 class ProtocolError {
 public:
     std::string code;
     std::string message;
+};
+
+class TestTokenGen : public nabto::signaling::SignalingTokenGenerator, public std::enable_shared_from_this<TestTokenGen> {
+public:
+    std::string token_;
+    static nabto::signaling::SignalingTokenGeneratorPtr create(std::string token) {
+        return std::make_shared<TestTokenGen>(token);
+    }
+    TestTokenGen(std::string& token) : token_(token) {}
+
+    bool generateToken(std::string& token) override {
+        token = token_;
+        return true;
+    }
 };
 
 class TestInstance : public std::enable_shared_from_this<TestInstance> {
@@ -81,15 +96,13 @@ public:
         http_ = nabto::example::CurlHttpClient::create();
         ws_ = nabto::example::RtcWebsocketWrapper::create();
         tf_ = nabto::example::StdTimerFactory::create();
+        tokGen_ = TestTokenGen::create(accessToken_);
         auto self = shared_from_this();
 
         conf_ = {
             deviceId_,
             productId_,
-            [self](std::string& token) -> bool {
-                token = self->accessToken_;
-                return true;
-            },
+            tokGen_,
             epUrl_,
             ws_,
             http_,
@@ -103,12 +116,12 @@ public:
     nabto::signaling::SignalingDevicePtr createConnectedDevice() {
         auto dev = createDevice();
         std::promise<void> connProm;
-        dev->setEventHandler([&connProm](nabto::signaling::SignalingDeviceState state) {
+        dev->setStateChangeHandler([&connProm](nabto::signaling::SignalingDeviceState state) {
             if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
                 connProm.set_value();
             }
         });
-        dev->connect();
+        dev->start();
         std::future<void> f = connProm.get_future();
         f.get();
         return dev;
@@ -143,8 +156,9 @@ public:
         res.id = createClient();
         std::promise<void> prom;
 
-        res.device->setConnectionHandler([&res, &prom](nabto::signaling::SignalingChannelPtr conn) {
+        res.device->setNewChannelHandler([&res, &prom](nabto::signaling::SignalingChannelPtr conn, bool authorized) {
             res.channel = conn;
+            res.authorized = authorized;
             prom.set_value();
         });
         connectClient(res.id);
@@ -265,6 +279,7 @@ private:
     nabto::signaling::SignalingTimerFactoryPtr tf_;
     nabto::signaling::SignalingDeviceConfig conf_;
     nabto::signaling::SignalingDevicePtr sig_;
+    nabto::signaling::SignalingTokenGeneratorPtr tokGen_;
 };
 
 }

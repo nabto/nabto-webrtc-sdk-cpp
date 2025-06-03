@@ -12,15 +12,17 @@ export enum RoutingTypes {
 
 export const RoutingMessageScheme = t.Object({
   type: t.Literal(RoutingTypes.MESSAGE),
-  message: t.String(),
+  message: t.Unknown(),
   channelId: t.String(),
   authorized: t.Optional(t.Boolean()),
 })
 
 export const RoutingErrorScheme = t.Object({
   type: t.Literal(RoutingTypes.ERROR),
-  errorCode: t.String(),
-  errorMessage: t.Optional(t.String()),
+  error: t.Object({
+    code: t.String(),
+    message: t.Optional(t.String()),
+  }),
   channelId: t.String()
 })
 
@@ -52,7 +54,7 @@ export type Routing = Static<typeof RoutingUnionScheme>
 
 export enum ReliabilityTypes {
   ACK = "ACK",
-  MESSAGE = "MESSAGE"
+  DATA = "DATA"
 }
 
 export const ReliabilityAckScheme = t.Object({
@@ -61,9 +63,9 @@ export const ReliabilityAckScheme = t.Object({
 })
 
 export const ReliabilityMessageScheme = t.Object({
-  type: t.Literal(ReliabilityTypes.MESSAGE),
+  type: t.Literal(ReliabilityTypes.DATA),
   seq: t.Number(),
-  message: t.String()
+  data: t.Unknown()
 })
 
 export const ReliabilityUnionScheme = t.Union([ReliabilityAckScheme, ReliabilityMessageScheme])

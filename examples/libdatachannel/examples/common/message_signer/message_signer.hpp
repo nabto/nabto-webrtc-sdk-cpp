@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+
 #include <memory>
 #include <string>
 
@@ -22,12 +24,12 @@ class MessageSigner {
     /**
      * Verify a message and return the resulting message
      */
-    virtual std::string verifyMessage(const std::string& message) = 0;
+    virtual nlohmann::json verifyMessage(const nlohmann::json& message) = 0;
 
     /**
      * Sign a message and return the signed message
      */
-    virtual std::string signMessage(const std::string& message) = 0;
+    virtual nlohmann::json signMessage(const nlohmann::json& message) = 0;
 };
 }  // namespace signaling
 }  // namespace nabto

@@ -16,73 +16,63 @@
 namespace nabto {
 namespace signaling {
 
-SignalingChannelImplPtr SignalingChannelImpl::create(SignalingDeviceImplPtr signaler, const std::string& channelId, bool isDevice, bool isAuthorized) {
-    return std::make_shared<SignalingChannelImpl>(std::move(signaler), channelId, isDevice, isAuthorized);
+SignalingChannelImplPtr SignalingChannelImpl::create(SignalingDeviceImplPtr signaler, const std::string& channelId) {
+    return std::make_shared<SignalingChannelImpl>(std::move(signaler), channelId);
 }
 
-SignalingChannelImpl::SignalingChannelImpl(SignalingDeviceImplPtr signaler, std::string channelId, bool isDevice, bool isAuthorized) : signaler_(std::move(signaler)), channelId_(std::move(channelId)), isDevice_(isDevice), isAuthorized_(isAuthorized) {
+SignalingChannelImpl::SignalingChannelImpl(SignalingDeviceImplPtr signaler, std::string channelId) : signaler_(std::move(signaler)), channelId_(std::move(channelId)) {
 }
 
-void SignalingChannelImpl::handleMessage(const std::string& msg) {
+void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
     try {
-        nlohmann::json parsedMsg = nlohmann::json::parse(msg);
-        auto type = parsedMsg["type"].get<std::string>();
-        if (type == "MESSAGE") {
-            NABTO_SIGNALING_LOGD << "Handling MESSAGE";
-            sendAck(parsedMsg);
+        auto type = msg["type"].get<std::string>();
+        if (type == "DATA") {
+            NABTO_SIGNALING_LOGD << "Handling DATA";
+            sendAck(msg);
             if (signalingMessageHandler_) {
-                auto str = parsedMsg["message"].get<std::string>();
+                auto str = msg["data"];
                 signalingMessageHandler_(str);
             }
         } else if (type == "ACK") {
             NABTO_SIGNALING_LOGD << "Handling ACK";
-            handleAck(parsedMsg);
+            handleAck(msg);
         } else {
             NABTO_SIGNALING_LOGE << "Got unknown signaling message type: " << type;
         }
     } catch (std::exception& ex) {
-        NABTO_SIGNALING_LOGE << "Failed to parse Signaling message: " << msg << " with error: " << ex.what();
-    }
-}
-
-void SignalingChannelImpl::wsReconnected() {
-    for (auto const& message : unackedMessages_) {
-        signaler_->websocketSendMessage(channelId_, message.dump());
-    }
-    if (signalingEventHandler_) {
-        signalingEventHandler_(SIGNALING_RECONNECT);
+        NABTO_SIGNALING_LOGE << "Failed to parse Signaling message: " << msg.dump() << " with error: " << ex.what();
     }
 }
 
 void SignalingChannelImpl::wsClosed() {
     if (signalingEventHandler_) {
-        signalingEventHandler_(SIGNALING_CLOSED);
+        signalingEventHandler_(SignalingChannelState::CLOSED);
     }
     signalingMessageHandler_ = nullptr;
     signalingEventHandler_ = nullptr;
     signalingErrorHandler_ = nullptr;
 }
 
-void SignalingChannelImpl::sendMessage(const std::string& message) {
+void SignalingChannelImpl::sendMessage(const nlohmann::json& message) {
     const nlohmann::json root = {
-        {"type", "MESSAGE"},
+        {"type", "DATA"},
         {"seq", sendSeq_},
-        {"message", message}};
+        {"data", message}};
     sendSeq_++;
     unackedMessages_.push_back(root);
-    signaler_->websocketSendMessage(channelId_, root.dump());
+    signaler_->websocketSendMessage(channelId_, root);
 }
 
 void SignalingChannelImpl::sendError(const SignalingError& error) {
     signaler_->websocketSendError(channelId_, error);
 }
 
-void SignalingChannelImpl::sendAck(nlohmann::json& msg) {
+void SignalingChannelImpl::sendAck(const nlohmann::json& msg) {
     const nlohmann::json ack = {{"type", "ACK"}, {"seq", msg["seq"].get<uint32_t>()}};
-    signaler_->websocketSendMessage(channelId_, ack.dump());
+    signaler_->websocketSendMessage(channelId_, ack);
 }
 
-void SignalingChannelImpl::handleAck(nlohmann::json& msg) {
+void SignalingChannelImpl::handleAck(const nlohmann::json& msg) {
     if (unackedMessages_.empty()) {
         NABTO_SIGNALING_LOGE << "Got an ack but we have no unacked messages";
         return;
@@ -101,17 +91,17 @@ void SignalingChannelImpl::handleAck(nlohmann::json& msg) {
 
 void SignalingChannelImpl::peerConnected() {
     for (auto const& message : unackedMessages_) {
-        signaler_->websocketSendMessage(channelId_, message.dump());
+        signaler_->websocketSendMessage(channelId_, message);
     }
     if (signalingEventHandler_) {
-        signalingEventHandler_(SignalingChannelEventType::CLIENT_CONNECTED);
+        signalingEventHandler_(SignalingChannelState::ONLINE);
     }
 }
 
 void SignalingChannelImpl::peerOffline() {
     NABTO_SIGNALING_LOGI << "Peer: " << channelId_ << " went offline";
     if (signalingEventHandler_) {
-        signalingEventHandler_(SignalingChannelEventType::CLIENT_OFFLINE);
+        signalingEventHandler_(SignalingChannelState::OFFLINE);
     }
 }
 
@@ -122,14 +112,6 @@ void SignalingChannelImpl::handleError(const SignalingError& error) {
     }
 }
 
-void SignalingChannelImpl::checkAlive() {
-    signaler_->checkAlive();
-}
-
-void SignalingChannelImpl::requestIceServers(IceServersResponse callback) {
-    signaler_->requestIceServers(callback);
-}
-
 void SignalingChannelImpl::close() {
     signaler_->channelClosed(channelId_);
     // signaler_ = nullptr;
@@ -138,15 +120,19 @@ void SignalingChannelImpl::close() {
     signalingErrorHandler_ = nullptr;
 }
 
-bool SignalingChannelImpl::isInitialMessage(const std::string& msg) {
+bool SignalingChannelImpl::isInitialMessage(const nlohmann::json& msg) {
     try {
-        nlohmann::json json = nlohmann::json::parse(msg);
-        auto type = json["type"].get<std::string>();
-        auto seq = json["seq"].get<int>();
-        return type == "MESSAGE" && seq == 0;
+        auto type = msg["type"].get<std::string>();
+        auto seq = msg["seq"].get<int>();
+        return type == "DATA" && seq == 0;
     } catch (std::exception& e) {
         return false;
     }
+}
+
+std::string SignalingChannelImpl::getChannelId()
+{
+    return channelId_;
 }
 
 }  // namespace signaling

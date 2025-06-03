@@ -62,12 +62,17 @@ export const clientWs = new Elysia()
         ws.close(4040, `No such test with id ${testId}.`)
         return;
       }
-      test.clientConnected((msg: string) => { console.log("sending ws message"); ws.send(msg) }, (errorCode: number, message: string) => { ws.close(errorCode, message) });
+      test.clientConnected((msg: string) => { console.log(`sending ws message ${msg}`); ws.send(msg) }, (errorCode: number, message: string) => { ws.close(errorCode, message) });
     },
     message(ws, message) {
       const test = ws.data.testClients.getByTestId(ws.data.params.testId)
       if (test) {
-        test.handleWsMessage(message)
+        try {
+          console.log(`Got message ${JSON.stringify(message)}`)
+          test.handleWsMessage(message);
+        } catch (e) {
+          console.error(`${e} message: ${JSON.stringify(message)}`);
+        }
       }
     },
     body: RoutingUnionScheme

@@ -16,7 +16,7 @@ export class SimulatedClient {
 
   reliability: Reliability;
 
-  receivedMessages: Array<string> = new Array();
+  receivedMessages: Array<unknown> = new Array();
   receivedError?: RoutingProtocolError;
   eventEmitter: EventEmitter = new EventEmitter();
 
@@ -30,7 +30,7 @@ export class SimulatedClient {
         this.wsSender({
           type: RoutingTypes.MESSAGE,
           channelId: this.channelId,
-          message: JSON.stringify(message)
+          message: message
         })
       }
     })
@@ -72,8 +72,7 @@ export class SimulatedClient {
   }
   handleRouting(routing: Routing) {
     if (routing.type === RoutingTypes.MESSAGE) {
-      const json = JSON.parse(routing.message);
-      const reliability = Value.Decode(ReliabilityUnionScheme, json);
+      const reliability = Value.Decode(ReliabilityUnionScheme, routing.message);
       const reliableMessage = this.reliability.handleRoutingMessage(reliability);
       if (reliableMessage) {
         this.handleReliableMessage(reliableMessage);
@@ -87,25 +86,25 @@ export class SimulatedClient {
     this.reliability.handlePeerConnected();
   }
 
-  handleReliableMessage(message: string) {
+  handleReliableMessage(message: unknown) {
     this.receivedMessages.push(message);
     this.eventEmitter.emit("message", message)
   }
 
   handleError(err: RoutingError) {
-    this.receivedError = {errorCode: err.errorCode, errorMessage: err.errorMessage};
+    this.receivedError = {errorCode: err.error.code, errorMessage: err.error.message};
     this.eventEmitter.emit("test_error", this.receivedError);
 
   }
 
-  hasReceivedMessages(messages: string[]): boolean {
+  hasReceivedMessages(messages: unknown[]): boolean {
     if (JSON.stringify(this.receivedMessages) === JSON.stringify(messages)) {
       return true;
     }
     return false;
   }
 
-  async waitForMessages(messages: string[], timeout: number): Promise<string[]> {
+  async waitForMessages(messages: unknown[], timeout: number): Promise<unknown[]> {
     if (this.hasReceivedMessages(messages)) {
       return this.receivedMessages;
     }
@@ -121,7 +120,7 @@ export class SimulatedClient {
     return this.receivedMessages;
   }
 
-  async sendMessages(messages: string[]) {
+  async sendMessages(messages: unknown[]) {
     for (const msg of messages) {
       await this.reliability.sendReliableMessage(msg);
     }
@@ -131,8 +130,10 @@ export class SimulatedClient {
     await this.wsSender({
       type: RoutingTypes.ERROR,
       channelId: this.channelId,
-      errorCode: errorCode,
-      errorMessage: errorMessage
+      error: {
+        code: errorCode,
+        message: errorMessage,
+      },
     })
   }
 

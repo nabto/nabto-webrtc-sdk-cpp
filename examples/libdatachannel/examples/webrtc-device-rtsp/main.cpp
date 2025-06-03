@@ -56,46 +56,42 @@ int main(int argc, char** argv) {
     nabto::signaling::SignalingDeviceConfig conf = {
         opts.deviceId,
         opts.productId,
-        [jwtPtr](std::string& token) -> bool {
-            return jwtPtr->createAttachToken(token);
-        },
+        jwtPtr,
         opts.signalingUrl,
         ws,
         http,
         tf
     };
 
-    auto sig = nabto::signaling::SignalingDeviceFactory::create(conf);
-    sig->setConnectionHandler([trackHandler, &opts/*, &conns*/](nabto::signaling::SignalingChannelPtr conn) {
+    auto device = nabto::signaling::SignalingDeviceFactory::create(conf);
+    device->setNewChannelHandler([device, trackHandler, &opts/*, &conns*/](nabto::signaling::SignalingChannelPtr channel, bool authorized) {
         // Handle authorization
         if (opts.centralAuthorization) {
-            if (!conn->isAuthorized()) {
+            if (!authorized) {
                 NPLOGE << "Rejecting connection as central authorization is required";
-                auto authorizationError = "AUTHORIZATION_ERROR";
                 auto authorizationErrorMessage = "Rejecting connection as central authorization is required";
                 NPLOGE << authorizationErrorMessage;
-                conn->sendError(nabto::signaling::SignalingError(authorizationError, authorizationErrorMessage));
-                conn->close();
+                channel->sendError(nabto::signaling::SignalingError(nabto::signaling::SignalingErrorCode::ACCESS_DENIED, authorizationErrorMessage));
+                channel->close();
                 return;
             }
         } else if (opts.sharedSecret.empty()) {
-            auto authorizationError = "AUTHORIZATION_ERROR";
             auto authorizationErrorMessage = "Not accepting connection as it is neither central authorization or shared secret message signing is used";
             NPLOGE << authorizationErrorMessage;
-            conn->sendError(nabto::signaling::SignalingError(authorizationError, authorizationErrorMessage));
-            conn->close();
+            channel->sendError(nabto::signaling::SignalingError(nabto::signaling::SignalingErrorCode::ACCESS_DENIED, authorizationErrorMessage));
+            channel->close();
             return;
         }
         nabto::example::MessageSignerPtr signer;
         if (opts.sharedSecret.empty()) {
-            signer = nabto::example::NoneMessageSigner::create(opts.sharedSecretId);
+            signer = nabto::example::NoneMessageSigner::create();
         } else {
             signer = nabto::example::SharedSecretMessageSigner::create(opts.sharedSecret, opts.sharedSecretId);
         }
-        auto webConn = nabto::example::WebrtcConnection::create(conn, signer, trackHandler);
+        auto webConn = nabto::example::WebrtcConnection::create(device, channel, signer, trackHandler);
         // conns.push_back(webConn);
     });
-    sig->connect();
+    device->start();
 
     int n;
     std::cin >> n;

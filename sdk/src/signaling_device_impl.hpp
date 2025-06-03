@@ -26,52 +26,42 @@ class SignalingDeviceImpl : public SignalingDevice, public std::enable_shared_fr
      */
     static SignalingDeviceImplPtr create(const SignalingDeviceConfig& conf);
     explicit SignalingDeviceImpl(const SignalingDeviceConfig& conf);
-    //~SignalingDeviceImpl() = default;
 
-    /**
-     * Connect the Signaler to the Nabto Backend
-     */
-    void connect() override;
-
-    /**
-     * Close the Signaler
-     */
+    void start() override;
     void close() override;
-
-    /**
-     * Set handler to be called when a new Client connects
-     *
-     * @param handler Handler to be called when a client connects
-     */
-    void setConnectionHandler(std::function<void(SignalingChannelPtr conn)> handler) override {
+    void checkAlive() override;
+    void requestIceServers(IceServersResponse callback) override;
+    void setNewChannelHandler(NewSignalingChannelHandler handler) override {
         channelHandler_ = handler;
     }
-
-    void setEventHandler(SignalingDeviceEventHandler handler) override {
+    void setStateChangeHandler(SignalingDeviceStateHandler handler) override {
         eventHandler_ = handler;
+    };
+    void setReconnectHandler(SignalingReconnectHandler handler) override {
+        reconnectHandler_ = handler;
     };
 
     // #### END OF SDK FUNCTIONS ####
 
     // #### INTERNAL FUNCTIONS ####
-    void websocketSendMessage(const std::string& channelId, const std::string& message);
+    void websocketSendMessage(const std::string& channelId, const nlohmann::json& message);
     void websocketSendError(const std::string& channelId, const SignalingError& error);
 
-    void checkAlive();
-    void requestIceServers(const IceServersResponse& callback);
     void channelClosed(const std::string& channelId);
 
    private:
     SignalingWebsocketPtr wsImpl_;
     SignalingHttpClientPtr httpCli_;
     std::map<std::string, SignalingChannelImplPtr> channels_;  // channel ID to channel impl
-    std::function<void(SignalingChannelPtr conn)> channelHandler_;
-    SignalingDeviceEventHandler eventHandler_;
+    NewSignalingChannelHandler channelHandler_;
+    SignalingDeviceStateHandler eventHandler_;
+    SignalingReconnectHandler reconnectHandler_;
     std::string deviceId_;
     std::string productId_;
-    SignalingTokenProvider tokenProvider_;
+    SignalingTokenGeneratorPtr tokenProvider_;
     std::string httpHost_;
     bool closed_ = false;
+    bool firstConnect_ = true;
     SignalingDeviceState state_ = SignalingDeviceState::NEW;
     std::mutex mutex_;
 
