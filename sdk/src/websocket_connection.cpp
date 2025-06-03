@@ -6,9 +6,11 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>
+#include <exception>
 #include <functional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace nabto {
 namespace signaling {

@@ -1,4 +1,6 @@
 #include <nabto/signaling/signaling.hpp>
+#include <string>
+#include <utility>
 
 namespace nabto {
 namespace signaling {
@@ -28,4 +30,5 @@ std::string SignalingError::errorCodeToString(SignalingErrorCode code)
 }
 
 
-} } // namespaces
+} // namespace signaling
+} // namespace nabto

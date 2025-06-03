@@ -27,23 +27,5 @@ enum SignalingMessageType : std::uint8_t {
     PONG,
 };
 
-/**
- * converts the SignalingError object to json format:
- * {
- *  code: ...,
- *  message: ...
- * }
- */
-nlohmann::json signalingErrorToJson(const SignalingError& err);
-
-/**
- * Creates a SignalingError object from the json format:
- * {
- *   code: ...,
- *   message: ...
- * }
- */
-SignalingError signalingErrorFromJson(const nlohmann::json& err);
-
 }  // namespace signaling
 }  // namespace nabto

@@ -38,11 +38,12 @@
         },
         {
             "name": "clang_tidy",
-            "inherits": ["release"],
+            "inherits": ["debug"],
             "cacheVariables": {
                 "CMAKE_C_CLANG_TIDY": "clang-tidy",
-                "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
-            }
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+           }
         },
         {
             "name": "test",
