@@ -1,0 +1,26 @@
+# The following rules are not used:
+#
+# llvmlibc-* is for llvm libc so they are disabled.
+# altera-struct-pack-align: We do not need to pack the structs that tightly. We hope the compiler takes appropriate decisions.
+# modernize-use-trailing-return-type: it seems a bit aggressive to force `auto foo() -> int`; instead of `int foo()`;
+# llvm-header-guard: We use #pragma once for now.
+# modernize-concat-nested-namespaces: We are probably not ready yet to be 100% c++17 committed.
+# fuchsia-default-arguments-calls: defaults are used in a lots of places.
+# altera-unroll-loops: no need to add nonstandard pragmas.
+# modernize-use-nodiscard: We are not fully comitted to c++17 yet.
+
+Checks: >
+  *,
+  -llvmlibc-*,
+  -modernize-use-trailing-return-type,
+  -altera-struct-pack-align,
+  -altera-unroll-loops,
+  -fuchsia-default-arguments-calls,
+  -llvm-header-guard,
+  -modernize-concat-nested-namespaces,
+  -modernize-use-nodiscard
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'
+
+CheckOptions:
+  readability-function-cognitive-complexity.IgnoreMacros: true

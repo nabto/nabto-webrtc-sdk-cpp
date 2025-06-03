@@ -5,7 +5,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cstdint>
 #include <memory>
+#include <string>
 
 namespace nabto {
 namespace signaling {
@@ -78,7 +80,6 @@ class SignalingChannelImpl : public SignalingChannel, public std::enable_shared_
    private:
     SignalingDeviceImplPtr signaler_;
     std::string channelId_;
-    bool isDevice_;
     SignalingMessageHandler signalingMessageHandler_;
     SignalingChannelStateHandler signalingEventHandler_;
     SignalingErrorHandler signalingErrorHandler_;

@@ -30,7 +30,7 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
             NABTO_SIGNALING_LOGD << "Handling DATA";
             sendAck(msg);
             if (signalingMessageHandler_) {
-                auto str = msg["data"];
+                const auto& str = msg["data"];
                 signalingMessageHandler_(str);
             }
         } else if (type == "ACK") {

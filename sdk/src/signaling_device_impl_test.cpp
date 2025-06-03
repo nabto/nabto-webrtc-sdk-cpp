@@ -1,6 +1,7 @@
 #include "signaling_device_impl.hpp"
 
 #include <gtest/gtest.h>
+#include <string>
 
 TEST(signaling_device_impl, parseIceServersTest) {
     std::string iceServers = R"(

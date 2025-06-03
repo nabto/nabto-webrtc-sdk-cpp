@@ -1,7 +1,7 @@
 #pragma once
 
-#include <plog/Log.h>
 #include <nlohmann/json.hpp>
+#include <plog/Log.h>
 
 #include <cstdint>
 #include <functional>
@@ -71,7 +71,7 @@ class SignalingHttpResponse {
     std::string body;
 };
 
-enum class SignalingErrorCode {
+enum class SignalingErrorCode : std::uint8_t {
     DECODE_ERROR,
     VERIFICATION_ERROR,
     CHANNEL_CLOSED,

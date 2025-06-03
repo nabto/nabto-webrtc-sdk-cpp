@@ -1,4 +1,5 @@
 #include <nabto/signaling/signaling.hpp>
+#include <string>
 
 namespace nabto {
 namespace signaling {
@@ -30,38 +31,5 @@ std::string signalingChannelStateToString(SignalingChannelState state)
     }
 }
 
-/**
- * converts the SignalingError object to json format:
- * {
- *  code: ...,
- *  message: ...
- * }
- */
-nlohmann::json signalingErrorToJson(const SignalingError& err)
-{
-    nlohmann::json error = {
-        {"code", err.errorCode()},
-        {"message", err.errorMessage()}
-    };
-    return error;
-}
-
-/**
- * Creates a SignalingError object from the json format:
- * {
- *   code: ...,
- *   message: ...
- * }
- */
-SignalingError signalingErrorFromJson(const nlohmann::json& err)
-{
-    std::string msg;
-    if (err.contains("message")) {
-        msg = err["message"].get<std::string>();
-    }
-
-    return SignalingError(err["code"].get<std::string>(), msg);
-}
-
-}
-} // namespaces
+} // namespace signaling
+} // namespace nabto

@@ -14,8 +14,32 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
 #include <utility>
 #include <vector>
+
+namespace {
+nlohmann::json signalingErrorToJson(const nabto::signaling::SignalingError& err)
+{
+    nlohmann::json error = {
+        {"code", err.errorCode()},
+        {"message", err.errorMessage()}
+    };
+    return error;
+}
+
+nabto::signaling::SignalingError signalingErrorFromJson(const nlohmann::json& err)
+{
+    std::string msg;
+    if (err.contains("message")) {
+        msg = err["message"].get<std::string>();
+    }
+
+    return { err["code"].get<std::string>(), msg };
+}
+
+} //namespace
 
 namespace nabto {
 namespace signaling {
@@ -96,7 +120,7 @@ void SignalingDeviceImpl::websocketSendMessage(const std::string& channelId, con
 void SignalingDeviceImpl::websocketSendError(const std::string& channelId, const SignalingError& error) {
     const std::lock_guard<std::mutex> lock(mutex_);
     if (state_ == SignalingDeviceState::CONNECTED) {
-        nlohmann::json msg = {
+        nlohmann::json const msg = {
             {"type", "ERROR"},
             {"channelId", channelId},
             {"error", signalingErrorToJson(error)}
@@ -205,7 +229,7 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type, const nlohm
             } else {
                 NABTO_SIGNALING_LOGD << "authorized bit not contained in incoming message" << message.dump();
             }
-            auto msg = message["message"];
+            const auto& msg = message["message"];
             if (chan == nullptr) {
                 // channel is unknown
                 if (!SignalingChannelImpl::isInitialMessage(msg)) {
