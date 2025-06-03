@@ -15,9 +15,10 @@
 
 namespace nabto {
 namespace example {
-static void initLogger(enum plog::Severity severity = plog::Severity::none, plog::IAppender* appender = NULL) {
-    plog::init<NABTO_LOG_ID>(severity, appender);
-    return;
+static void initLogger(enum plog::Severity severity = plog::Severity::none,
+                       plog::IAppender* appender = NULL) {
+  plog::init<NABTO_LOG_ID>(severity, appender);
+  return;
 }
 }  // namespace example
 }  // namespace nabto
