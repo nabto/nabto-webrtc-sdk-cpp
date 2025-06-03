@@ -5,8 +5,9 @@
 namespace nabto {
 namespace signaling {
 
-SignalingDevicePtr SignalingDeviceFactory::create(const SignalingDeviceConfig& conf) {
-    return SignalingDeviceImpl::create(conf);
+SignalingDevicePtr SignalingDeviceFactory::create(
+    const SignalingDeviceConfig& conf) {
+  return SignalingDeviceImpl::create(conf);
 }
 }  // namespace signaling
 }  // namespace nabto

@@ -2,9 +2,10 @@
 
 #include <nabto/signaling/signaling.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <cstdint>
 #include <memory>
-#include <nlohmann/json.hpp>
 
 namespace nabto {
 namespace signaling {
@@ -19,12 +20,12 @@ using SignalingChannelImplPtr = std::shared_ptr<SignalingChannelImpl>;
  * Signaling message types used in the SDK when talking to the backend
  */
 enum SignalingMessageType : std::uint8_t {
-    MESSAGE,
-    ERROR,
-    PEER_OFFLINE,
-    PEER_CONNECTED,
-    PING,
-    PONG,
+  MESSAGE,
+  ERROR,
+  PEER_OFFLINE,
+  PEER_CONNECTED,
+  PING,
+  PONG,
 };
 
 }  // namespace signaling
