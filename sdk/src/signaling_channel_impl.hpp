@@ -5,7 +5,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cstdint>
 #include <memory>
+#include <string>
 
 namespace nabto {
 namespace signaling {

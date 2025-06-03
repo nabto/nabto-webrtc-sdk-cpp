@@ -4,10 +4,10 @@
 
 #include <nabto/signaling/signaling.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <vector>
 
 namespace nabto {
 namespace signaling {

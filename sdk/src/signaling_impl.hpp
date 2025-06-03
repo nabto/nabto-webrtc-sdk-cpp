@@ -2,9 +2,9 @@
 
 #include <nabto/signaling/signaling.hpp>
 
-#include <nlohmann/json.hpp>
 #include <cstdint>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace nabto {
 namespace signaling {

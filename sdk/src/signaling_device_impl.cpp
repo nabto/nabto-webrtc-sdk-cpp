@@ -4,18 +4,15 @@
 #include "logging.hpp"
 #include "signaling_channel_impl.hpp"
 #include "signaling_impl.hpp"
-#include "websocket_connection.hpp"
 
 #include "nabto/signaling/signaling.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <exception>
-#include <map>
 #include <memory>
 #include <mutex>
-#include <utility>
-#include <vector>
+#include <string>
 
 namespace nabto {
 namespace signaling {

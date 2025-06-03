@@ -6,6 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <string>
