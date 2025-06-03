@@ -1,7 +1,4 @@
 #include "test_instance.hpp"
-#include <curl_http_client/curl_async.hpp>
-#include <libdatachannel_websocket/rtc_websocket_wrapper.hpp>
-#include <timer/timer.hpp>
 
 #include <nabto/signaling/signaling.hpp>
 

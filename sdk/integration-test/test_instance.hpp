@@ -1,9 +1,17 @@
 #pragma once
 
+// Required. See: https://github.com/microsoft/cpprestsdk/issues/230
+#define _TURN_OFF_PLATFORM_STRING
+
 #include <CppRestOpenAPIClient/api/DefaultApi.h>
+#include <curl_http_client/curl_async.hpp>
+#include <libdatachannel_websocket/rtc_websocket_wrapper.hpp>
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Init.h>
+#include <timer/timer.hpp>
+
+#include <nabto/signaling/signaling.hpp>
 
 #include <iostream>
 #include <memory>
