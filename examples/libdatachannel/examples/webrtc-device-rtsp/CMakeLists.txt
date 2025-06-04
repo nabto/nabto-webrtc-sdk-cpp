@@ -23,7 +23,7 @@ find_package(cxxopts)
 find_package(LibDataChannel REQUIRED)
 find_package(CURL REQUIRED)
 
-find_package(NabtoSignaling REQUIRED)
+find_package(NabtoWebrtcSignaling REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 target_link_libraries(webrtc_device_rtsp
@@ -32,7 +32,7 @@ target_link_libraries(webrtc_device_rtsp
     LibDataChannel::LibDataChannel
     CURL::libcurl
     plog::plog
-    NabtoSignaling::core
+    NabtoWebrtcSignaling::device
     OpenSSL::Crypto
 )
 

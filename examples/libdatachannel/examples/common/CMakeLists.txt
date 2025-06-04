@@ -9,7 +9,7 @@ find_package(CURL REQUIRED)
 find_package(LibDataChannel REQUIRED)
 find_package(plog REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(NabtoSignaling REQUIRED)
+find_package(NabtoWebrtcSignaling REQUIRED)
 
 
 target_link_libraries(webrtc_example_common
@@ -17,7 +17,7 @@ target_link_libraries(webrtc_example_common
     CURL::libcurl
     plog::plog
     OpenSSL::Crypto
-    NabtoSignaling::core
+    NabtoWebrtcSignaling::device
 )
 
 target_include_directories(webrtc_example_common

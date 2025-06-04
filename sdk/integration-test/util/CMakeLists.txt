@@ -13,7 +13,7 @@ target_link_libraries(integration_test_util
     LibDataChannel::LibDataChannel
     CURL::libcurl
     OpenSSL::Crypto
-    nabto_signaling_core
+    nabto_webrtc_signaling_device
 )
 
 target_include_directories(integration_test_util
