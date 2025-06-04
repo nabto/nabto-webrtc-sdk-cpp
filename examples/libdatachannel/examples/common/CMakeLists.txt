@@ -17,6 +17,7 @@ target_link_libraries(webrtc_example_common
     NabtoWebrtcSignaling::util_logging
     NabtoWebrtcSignaling::util_curl_client
     NabtoWebrtcSignaling::util_std_timer
+    NabtoWebrtcSignaling::util_uuid
     NabtoWebrtcSignaling::device
 )
 
@@ -37,7 +38,6 @@ target_sources(webrtc_example_common PUBLIC
         message_signer/shared_secret_message_signer.hpp
         token_generator/nabto_jwt.hpp
         token_generator/openssl_key_id.hpp
-        token_generator/uuid.hpp
 )
 
 

@@ -8,6 +8,7 @@ add_subdirectory(src/signaling_device)
 add_subdirectory(src/signaling_util/logging)
 add_subdirectory(src/signaling_util/curl_http_client)
 add_subdirectory(src/signaling_util/std_timer)
+add_subdirectory(src/signaling_util/uuid)
 
 option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
 
@@ -17,7 +18,7 @@ if (NABTO_SIGNALING_BUILD_TESTS)
     add_executable(
         nabto_signaling_test
         test/create_destroy_signaling_device.cpp
-        src/signaling-device/signaling_device_impl_test.cpp
+        src/signaling_device/signaling_device_impl_test.cpp
     )
     target_link_libraries(
         nabto_signaling_test
@@ -64,8 +65,10 @@ add_library("${PROJECT_NAME}::util_curl_client" ALIAS nabto_webrtc_curl_client)
 
 add_library("${PROJECT_NAME}::util_std_timer" ALIAS nabto_webrtc_std_timer)
 
+add_library("${PROJECT_NAME}::util_uuid" ALIAS nabto_webrtc_uuid)
+
 install(
-    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client
+    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid
     EXPORT "${TARGETS_EXPORT_NAME}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"

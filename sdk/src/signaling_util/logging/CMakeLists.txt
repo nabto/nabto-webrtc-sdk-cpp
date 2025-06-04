@@ -1,18 +1,16 @@
-set(log_src
-)
 
-add_library( nabto_webrtc_logging "${log_src}")
+add_library( nabto_webrtc_logging INTERFACE)
 
 set_target_properties(nabto_webrtc_logging PROPERTIES LINKER_LANGUAGE CXX)
 
 find_package(plog REQUIRED)
 
-target_link_libraries(nabto_webrtc_logging
+target_link_libraries(nabto_webrtc_logging INTERFACE
     plog::plog
 )
 
 target_include_directories(nabto_webrtc_logging
-  PUBLIC
+  INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )

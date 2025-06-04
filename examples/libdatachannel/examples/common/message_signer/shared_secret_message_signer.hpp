@@ -2,7 +2,7 @@
 
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 
-#include "../token_generator/uuid.hpp"
+#include <uuid/uuid.hpp>
 // #include <jwt-cpp/jwt.h>
 
 #include <logging/logging.hpp>

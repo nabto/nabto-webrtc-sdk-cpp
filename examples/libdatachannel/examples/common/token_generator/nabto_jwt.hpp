@@ -7,7 +7,7 @@
 #include <string>
 
 #include "openssl_key_id.hpp"
-#include "uuid.hpp"
+#include <uuid/uuid.hpp>
 
 namespace nabto {
 namespace example {
