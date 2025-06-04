@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <message_signer/message_signer.hpp>
-#include <nabto/signaling/signaling.hpp>
+#include <nabto/webrtc/device.hpp>
 #include <rtc/rtc.hpp>
 
 #include "track_handler.hpp"

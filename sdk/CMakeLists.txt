@@ -1,65 +1,15 @@
 cmake_minimum_required(VERSION 3.30)
-project(NabtoSignaling
+project(NabtoWebrtcSignaling
     VERSION 0.0.1
     LANGUAGES CXX
 )
 
-
-option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
-
-set(src
-    src/signaling_device_impl.cpp
-    src/signaling_channel_impl.cpp
-    src/signaling_device_factory.cpp
-    src/websocket_connection.cpp
-    src/signaling_error.cpp
-    src/signaling.cpp
-)
-
-add_library(nabto_signaling_core ${src})
-
-target_include_directories(nabto_signaling_core PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-find_package(nlohmann_json REQUIRED)
-find_package(plog REQUIRED)
-
-target_link_libraries(nabto_signaling_core nlohmann_json::nlohmann_json plog::plog)
-
-if (NABTO_SIGNALING_BUILD_TESTS)
-    find_package(GTest CONFIG REQUIRED)
-    enable_testing()
-    add_executable(
-        nabto_signaling_test
-        test/create_destroy_signaling_device.cpp
-        src/signaling_device_impl_test.cpp
-    )
-    target_link_libraries(
-        nabto_signaling_test
-        nabto_signaling_core
-        GTest::gtest_main
-    )
-    include(GoogleTest)
-    gtest_discover_tests(nabto_signaling_test)
-
-    add_subdirectory(integration-test/generated/cpp)
-    add_subdirectory(integration-test/util)
-
-    add_executable(
-        nabto_integration_test
-        integration-test/integration_test.cpp
-    )
-    target_link_libraries(
-        nabto_integration_test
-        CppRestOpenAPIClient
-        integration_test_util
-        nabto_signaling_core
-        GTest::gtest_main
-    )
-
-endif()
+add_subdirectory(src/signaling_device)
+add_subdirectory(src/signaling_util/logging)
+add_subdirectory(src/signaling_util/curl_http_client)
+add_subdirectory(src/signaling_util/std_timer)
+add_subdirectory(src/signaling_util/uuid)
+add_subdirectory(src/signaling_util/token_generator)
 
 
 include(GNUInstallDirs)
@@ -73,10 +23,20 @@ set(namespace "${PROJECT_NAME}::")
 
 include(CMakePackageConfigHelpers)
 
-add_library("${PROJECT_NAME}::core" ALIAS nabto_signaling_core)
+add_library("${PROJECT_NAME}::device" ALIAS nabto_webrtc_signaling_device)
+
+add_library("${PROJECT_NAME}::util_logging" ALIAS nabto_webrtc_logging)
+
+add_library("${PROJECT_NAME}::util_curl_client" ALIAS nabto_webrtc_curl_client)
+
+add_library("${PROJECT_NAME}::util_std_timer" ALIAS nabto_webrtc_std_timer)
+
+add_library("${PROJECT_NAME}::util_uuid" ALIAS nabto_webrtc_uuid)
+
+add_library("${PROJECT_NAME}::util_token_generator" ALIAS nabto_webrtc_token_generator)
 
 install(
-    TARGETS nabto_signaling_core
+    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid nabto_webrtc_token_generator
     EXPORT "${TARGETS_EXPORT_NAME}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -90,7 +50,7 @@ write_basic_package_version_file(
 )
 
 configure_package_config_file(
-    "cmake-scripts/Config.cmake.in"
+    "cmake_scripts/Config.cmake.in"
     "${project_config}"
     INSTALL_DESTINATION "${config_install_dir}"
 )
@@ -110,3 +70,44 @@ install(
     NAMESPACE "${namespace}"
     DESTINATION "${config_install_dir}"
 )
+
+option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
+
+if (NABTO_SIGNALING_BUILD_TESTS)
+    find_package(GTest CONFIG REQUIRED)
+    find_package(OpenSSL REQUIRED)
+    find_package(LibDataChannel REQUIRED)
+
+    enable_testing()
+    add_executable(
+        nabto_signaling_test
+        test/create_destroy_signaling_device.cpp
+        src/signaling_device/src/signaling_device_impl_test.cpp
+        src/signaling_util/token_generator/src/openssl_key_id_test.cpp
+    )
+    target_link_libraries(
+        nabto_signaling_test
+        nabto_webrtc_signaling_device
+        OpenSSL::Crypto
+        GTest::gtest_main
+    )
+    include(GoogleTest)
+    gtest_discover_tests(nabto_signaling_test)
+
+    add_subdirectory(integration_test/generated/cpp)
+
+    add_executable(
+        nabto_integration_test
+        integration_test/integration_test.cpp
+    )
+    target_link_libraries(
+        nabto_integration_test
+        NabtoWebrtcSignaling::util_curl_client
+        NabtoWebrtcSignaling::util_std_timer
+        LibDataChannel::LibDataChannel
+        CppRestOpenAPIClient
+        nabto_webrtc_signaling_device
+        GTest::gtest_main
+    )
+
+endif()

@@ -1,6 +1,6 @@
 #include "webrtc_connection.hpp"
 
-#include <logging/logging.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 #include <nlohmann/json.hpp>
 
 namespace nabto {

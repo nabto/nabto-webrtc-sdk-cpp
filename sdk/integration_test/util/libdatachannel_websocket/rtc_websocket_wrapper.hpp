@@ -1,10 +1,10 @@
 #pragma once
 
-#include <nabto/webrtc/util/logging.hpp>
 #include <rtc/rtc.hpp>
-#include <variant>
 
 #include <nabto/webrtc/device.hpp>
+
+#include <variant>
 
 namespace nabto {
 namespace example {
@@ -35,7 +35,6 @@ class RtcWebsocketWrapper
             return callback(msg);
           } else {
             // TODO: support binary messages
-            NPLOGE << "GOT BINARY MESSAGE FIX HANDLE";
             return;
             // auto bin = std::get<rtc::binary>(message);
             // msg = std::string(bin.begin(), bin.end());

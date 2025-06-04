@@ -2,15 +2,15 @@
 
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 
-#include "../token_generator/uuid.hpp"
+#include <nabto/webrtc/util/uuid.hpp>
 // #include <jwt-cpp/jwt.h>
 
-#include <logging/logging.hpp>
 #include <memory>
+#include <nabto/webrtc/device.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 #include <nlohmann/json.hpp>
 
 #include "message_signer.hpp"
-#include "nabto/signaling/signaling.hpp"
 
 namespace nabto {
 namespace example {

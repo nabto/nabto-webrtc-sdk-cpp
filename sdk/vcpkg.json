@@ -11,6 +11,7 @@
         "name": "libdatachannel",
         "features": ["srtp", "ws"]
       },
-      "boost-uuid"
+      "boost-uuid",
+      "openssl"
     ]
   }
