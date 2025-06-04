@@ -18,8 +18,9 @@ target_link_libraries(webrtc_device
     CURL::libcurl
     plog::plog
     NabtoWebrtcSignaling::device
-    NabtoWebrtcSignaling::utilLogging
-    NabtoWebrtcSignaling::utilCurlClient
+    NabtoWebrtcSignaling::util_logging
+    NabtoWebrtcSignaling::util_curl_client
+    NabtoWebrtcSignaling::util_std_timer
     OpenSSL::Crypto
     webrtc_example_common
 )

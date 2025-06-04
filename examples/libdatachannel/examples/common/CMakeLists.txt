@@ -14,8 +14,9 @@ target_link_libraries(webrtc_example_common
     LibDataChannel::LibDataChannel
     CURL::libcurl
     OpenSSL::Crypto
-    NabtoWebrtcSignaling::utilLogging
-    NabtoWebrtcSignaling::utilCurlClient
+    NabtoWebrtcSignaling::util_logging
+    NabtoWebrtcSignaling::util_curl_client
+    NabtoWebrtcSignaling::util_std_timer
     NabtoWebrtcSignaling::device
 )
 
@@ -34,7 +35,6 @@ target_sources(webrtc_example_common PUBLIC
         message_signer/message_signer.hpp
         message_signer/none_message_signer.hpp
         message_signer/shared_secret_message_signer.hpp
-        timer/timer.hpp
         token_generator/nabto_jwt.hpp
         token_generator/openssl_key_id.hpp
         token_generator/uuid.hpp

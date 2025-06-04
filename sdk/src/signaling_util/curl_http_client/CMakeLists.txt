@@ -5,10 +5,11 @@ set(curl_src
 add_library( nabto_webrtc_curl_client "${curl_src}")
 
 find_package(CURL REQUIRED)
+find_package(NabtoWebrtcSignaling REQUIRED)
 
 target_link_libraries(nabto_webrtc_curl_client
     CURL::libcurl
-    nabto_webrtc_logging
+    NabtoWebrtcSignaling::util_logging
     NabtoWebrtcSignaling::device
 )
 

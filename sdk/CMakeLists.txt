@@ -4,9 +4,10 @@ project(NabtoWebrtcSignaling
     LANGUAGES CXX
 )
 
-add_subdirectory(src/signaling-device)
-add_subdirectory(src/signaling-util/logging)
-add_subdirectory(src/signaling-util/curl_http_client)
+add_subdirectory(src/signaling_device)
+add_subdirectory(src/signaling_util/logging)
+add_subdirectory(src/signaling_util/curl_http_client)
+add_subdirectory(src/signaling_util/std_timer)
 
 option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
 
@@ -57,9 +58,11 @@ include(CMakePackageConfigHelpers)
 
 add_library("${PROJECT_NAME}::device" ALIAS nabto_webrtc_signaling_device)
 
-add_library("${PROJECT_NAME}::utilLogging" ALIAS nabto_webrtc_logging)
+add_library("${PROJECT_NAME}::util_logging" ALIAS nabto_webrtc_logging)
 
-add_library("${PROJECT_NAME}::utilCurlClient" ALIAS nabto_webrtc_curl_client)
+add_library("${PROJECT_NAME}::util_curl_client" ALIAS nabto_webrtc_curl_client)
+
+add_library("${PROJECT_NAME}::util_std_timer" ALIAS nabto_webrtc_std_timer)
 
 install(
     TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client

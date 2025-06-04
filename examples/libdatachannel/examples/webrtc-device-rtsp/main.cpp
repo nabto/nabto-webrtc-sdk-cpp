@@ -9,7 +9,7 @@
 #include <logging/logging.hpp>
 #include <message_signer/none_message_signer.hpp>
 #include <message_signer/shared_secret_message_signer.hpp>
-#include <timer/timer.hpp>
+#include <std_timer/std_timer.hpp>
 #include <token_generator/nabto_jwt.hpp>
 #include <webrtc_connection/webrtc_connection.hpp>
 
