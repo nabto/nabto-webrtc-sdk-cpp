@@ -2,7 +2,7 @@
 
 #include <plog/Log.h>
 
-#include <nabto/signaling/signaling.hpp>
+#include <nabto/webrtc/device.hpp>
 
 #define NABTO_SIGNALING_LOGV \
   PLOGV_(nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID)

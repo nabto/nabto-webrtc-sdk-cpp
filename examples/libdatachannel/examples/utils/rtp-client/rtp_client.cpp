@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include <iomanip>  // For std::setfill and std::setw
-#include <logging/logging.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 
 const int RTP_BUFFER_SIZE = 2048;
 

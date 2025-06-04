@@ -11,7 +11,7 @@
 #include <plog/Init.h>
 #include <timer/timer.hpp>
 
-#include <nabto/signaling/signaling.hpp>
+#include <nabto/webrtc/device.hpp>
 
 #include <iostream>
 #include <memory>

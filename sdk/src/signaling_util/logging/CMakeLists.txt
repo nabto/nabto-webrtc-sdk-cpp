@@ -11,15 +11,15 @@ target_link_libraries(nabto_webrtc_logging INTERFACE
 
 target_include_directories(nabto_webrtc_logging
   INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 target_sources(nabto_webrtc_logging PUBLIC
     FILE_SET public_headers
     TYPE HEADERS
-    BASE_DIRS ..
+    BASE_DIRS ./include
     FILES
-        logging.hpp
+        include/nabto/webrtc/util/logging.hpp
 )
 

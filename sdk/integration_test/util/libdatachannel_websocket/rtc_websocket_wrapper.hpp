@@ -2,7 +2,7 @@
 
 #include <rtc/rtc.hpp>
 
-#include "nabto/signaling/signaling.hpp"
+#include <nabto/webrtc/device.hpp>
 
 #include <variant>
 

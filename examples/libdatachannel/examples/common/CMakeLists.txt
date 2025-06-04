@@ -36,34 +36,4 @@ target_sources(webrtc_example_common PUBLIC
         message_signer/message_signer.hpp
         message_signer/none_message_signer.hpp
         message_signer/shared_secret_message_signer.hpp
-        token_generator/nabto_jwt.hpp
-        token_generator/openssl_key_id.hpp
 )
-
-
-if(NOT CMAKE_CROSSCOMPILING)
-    message(STATUS "Configuring tests: Native build detected.")
-
-    find_package(GTest CONFIG REQUIRED)
-    enable_testing()
-
-    add_executable(
-        webrtc_device_test
-        ../common/token_generator/openssl_key_id_test.cpp
-    )
-
-    target_link_libraries(
-        webrtc_device_test
-        PRIVATE
-        GTest::gtest
-        GTest::gtest_main
-        OpenSSL::Crypto
-    )
-
-    add_test(NAME webrtc_device_test COMMAND webrtc_device_test)
-
-    include(GoogleTest)
-    gtest_discover_tests(webrtc_device_test)
-else()
-    message(STATUS "Skipping tests: Cross-compilation detected.")
-endif()

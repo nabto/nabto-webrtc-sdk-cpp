@@ -2,7 +2,7 @@
 
 #include <curl/curl.h>
 
-#include <nabto/signaling/signaling.hpp>
+#include <nabto/webrtc/device.hpp>
 
 #include <functional>
 #include <memory>

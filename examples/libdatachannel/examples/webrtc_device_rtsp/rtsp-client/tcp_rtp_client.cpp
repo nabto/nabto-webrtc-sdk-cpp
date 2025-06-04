@@ -2,7 +2,7 @@
 
 #include <curl/curl.h>
 
-#include <logging/logging.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 #include <rtc/rtc.hpp>
 
 namespace nabto {

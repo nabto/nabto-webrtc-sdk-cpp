@@ -1,6 +1,6 @@
 #include "curl_async.hpp"
 
-#include <logging/logging.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 
 namespace nabto {
 namespace example {

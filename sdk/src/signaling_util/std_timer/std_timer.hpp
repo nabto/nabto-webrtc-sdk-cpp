@@ -3,7 +3,7 @@
 #include <chrono>
 #include <thread>
 
-#include "nabto/signaling/signaling.hpp"
+#include <nabto/webrtc/device.hpp>
 
 namespace nabto {
 namespace example {

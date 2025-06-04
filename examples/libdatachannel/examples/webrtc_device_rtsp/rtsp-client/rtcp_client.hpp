@@ -2,7 +2,7 @@
 
 #include <sys/socket.h>
 
-#include <logging/logging.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 #include <rtc/rtc.hpp>
 typedef int SOCKET;
 

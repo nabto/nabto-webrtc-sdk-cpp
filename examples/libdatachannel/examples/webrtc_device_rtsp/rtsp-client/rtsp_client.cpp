@@ -1,6 +1,6 @@
 #include "rtsp_client.hpp"
 
-#include <logging/logging.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 
 #include "../../utils/rtp-client/rtp_client.hpp"
 

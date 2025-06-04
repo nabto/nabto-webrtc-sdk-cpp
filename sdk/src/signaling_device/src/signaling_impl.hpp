@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nabto/signaling/signaling.hpp>
+#include <nabto/webrtc/device.hpp>
 
 #include <nlohmann/json.hpp>
 

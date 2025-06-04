@@ -2,7 +2,7 @@
 #include "signaling_impl.hpp"
 #include "websocket_connection.hpp"
 
-#include <nabto/signaling/signaling.hpp>
+#include <nabto/webrtc/device.hpp>
 
 #include <cstddef>
 #include <memory>

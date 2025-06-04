@@ -1,7 +1,7 @@
 #pragma once
 
-#include <logging/logging.hpp>
 #include <memory>
+#include <nabto/webrtc/util/logging.hpp>
 #include <rtc/rtc.hpp>
 #include <webrtc_connection/track_handler.hpp>
 

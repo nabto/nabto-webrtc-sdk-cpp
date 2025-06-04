@@ -6,15 +6,15 @@
 #include <fstream>
 #include <iostream>
 #include <libdatachannel_websocket/rtc_websocket_wrapper.hpp>
-#include <logging/logging.hpp>
 #include <message_signer/none_message_signer.hpp>
 #include <message_signer/shared_secret_message_signer.hpp>
+#include <nabto/webrtc/device.hpp>
+#include <nabto/webrtc/util/logging.hpp>
 #include <std_timer/std_timer.hpp>
-#include <token_generator/nabto_jwt.hpp>
+#include <token_generator/token_generator.hpp>
 #include <webrtc_connection/webrtc_connection.hpp>
 
 #include "h264_handler.hpp"
-#include "nabto/signaling/signaling.hpp"
 
 struct options {
   std::string signalingUrl;

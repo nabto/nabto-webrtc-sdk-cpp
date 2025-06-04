@@ -9,20 +9,25 @@ add_subdirectory(src/signaling_util/logging)
 add_subdirectory(src/signaling_util/curl_http_client)
 add_subdirectory(src/signaling_util/std_timer)
 add_subdirectory(src/signaling_util/uuid)
+add_subdirectory(src/signaling_util/token_generator)
 
 option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
 
 if (NABTO_SIGNALING_BUILD_TESTS)
     find_package(GTest CONFIG REQUIRED)
+    find_package(OpenSSL REQUIRED)
+
     enable_testing()
     add_executable(
         nabto_signaling_test
         test/create_destroy_signaling_device.cpp
-        src/signaling_device/signaling_device_impl_test.cpp
+        src/signaling_device/src/signaling_device_impl_test.cpp
+        src/signaling_util/token_generator/openssl_key_id_test.cpp
     )
     target_link_libraries(
         nabto_signaling_test
         nabto_webrtc_signaling_device
+        OpenSSL::Crypto
         GTest::gtest_main
     )
     include(GoogleTest)
@@ -67,8 +72,10 @@ add_library("${PROJECT_NAME}::util_std_timer" ALIAS nabto_webrtc_std_timer)
 
 add_library("${PROJECT_NAME}::util_uuid" ALIAS nabto_webrtc_uuid)
 
+add_library("${PROJECT_NAME}::util_token_generator" ALIAS nabto_webrtc_token_generator)
+
 install(
-    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid
+    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid nabto_webrtc_token_generator
     EXPORT "${TARGETS_EXPORT_NAME}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"

@@ -1,6 +1,6 @@
 #include "test_instance.hpp"
 
-#include <nabto/signaling/signaling.hpp>
+#include <nabto/webrtc/device.hpp>
 
 #include <gtest/gtest.h>
 
