@@ -20,7 +20,8 @@ target_link_libraries(webrtc_device
     NabtoWebrtcSignaling::device
     NabtoWebrtcSignaling::util_logging
     NabtoWebrtcSignaling::util_curl_client
-    # NabtoWebrtcSignaling::util_std_timer
+    NabtoWebrtcSignaling::util_std_timer
+    NabtoWebrtcSignaling::util_token_generator
     OpenSSL::Crypto
     webrtc_example_common
 )

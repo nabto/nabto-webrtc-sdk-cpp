@@ -1,6 +1,6 @@
 #pragma once
 
-#include <curl_http_client/curl_async.hpp>
+#include <nabto/webrtc/util/curl_async.hpp>
 
 #include "../../utils/rtp-repacketizer/rtp_repacketizer.hpp"
 

@@ -35,6 +35,7 @@ target_link_libraries(webrtc_device_rtsp
     NabtoWebrtcSignaling::device
     NabtoWebrtcSignaling::util_logging
     NabtoWebrtcSignaling::util_curl_client
+    NabtoWebrtcSignaling::util_token_generator
     OpenSSL::Crypto
 )
 

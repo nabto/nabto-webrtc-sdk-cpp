@@ -1,7 +1,6 @@
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 
-#include <curl_http_client/curl_async.hpp>
 #include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
@@ -9,9 +8,10 @@
 #include <message_signer/none_message_signer.hpp>
 #include <message_signer/shared_secret_message_signer.hpp>
 #include <nabto/webrtc/device.hpp>
+#include <nabto/webrtc/util/curl_async.hpp>
 #include <nabto/webrtc/util/logging.hpp>
-#include <std_timer/std_timer.hpp>
-#include <token_generator/token_generator.hpp>
+#include <nabto/webrtc/util/std_timer.hpp>
+#include <nabto/webrtc/util/token_generator.hpp>
 #include <webrtc_connection/webrtc_connection.hpp>
 
 #include "h264_opus_rtsp_handler.hpp"

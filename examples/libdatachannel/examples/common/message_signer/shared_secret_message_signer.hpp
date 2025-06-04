@@ -2,7 +2,7 @@
 
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 
-#include <uuid/uuid.hpp>
+#include <nabto/webrtc/util/uuid.hpp>
 // #include <jwt-cpp/jwt.h>
 
 #include <memory>

@@ -22,7 +22,7 @@ if (NABTO_SIGNALING_BUILD_TESTS)
         nabto_signaling_test
         test/create_destroy_signaling_device.cpp
         src/signaling_device/src/signaling_device_impl_test.cpp
-        src/signaling_util/token_generator/openssl_key_id_test.cpp
+        src/signaling_util/token_generator/src/openssl_key_id_test.cpp
     )
     target_link_libraries(
         nabto_signaling_test

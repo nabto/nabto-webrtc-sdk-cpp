@@ -3,7 +3,7 @@
 #include <curl/curl.h>
 #include <sys/socket.h>
 
-#include <curl_http_client/curl_async.hpp>
+#include <nabto/webrtc/util/curl_async.hpp>
 #include <rtc/rtc.hpp>
 
 #include "../../utils/rtp-client/rtp_client.hpp"
