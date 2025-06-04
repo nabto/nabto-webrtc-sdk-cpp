@@ -5,6 +5,8 @@ project(NabtoWebrtcSignaling
 )
 
 add_subdirectory(src/signaling-device)
+add_subdirectory(src/signaling-util/logging)
+add_subdirectory(src/signaling-util/curl_http_client)
 
 option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
 
@@ -55,8 +57,12 @@ include(CMakePackageConfigHelpers)
 
 add_library("${PROJECT_NAME}::device" ALIAS nabto_webrtc_signaling_device)
 
+add_library("${PROJECT_NAME}::utilLogging" ALIAS nabto_webrtc_logging)
+
+add_library("${PROJECT_NAME}::utilCurlClient" ALIAS nabto_webrtc_curl_client)
+
 install(
-    TARGETS nabto_webrtc_signaling_device
+    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client
     EXPORT "${TARGETS_EXPORT_NAME}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"

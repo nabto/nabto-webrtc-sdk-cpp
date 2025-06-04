@@ -1,5 +1,4 @@
 set(src
-    curl_http_client/curl_async.cpp
     webrtc_connection/webrtc_connection.cpp
 )
 
@@ -7,7 +6,6 @@ add_library( webrtc_example_common "${src}")
 
 find_package(CURL REQUIRED)
 find_package(LibDataChannel REQUIRED)
-find_package(plog REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(NabtoWebrtcSignaling REQUIRED)
 
@@ -15,8 +13,9 @@ find_package(NabtoWebrtcSignaling REQUIRED)
 target_link_libraries(webrtc_example_common
     LibDataChannel::LibDataChannel
     CURL::libcurl
-    plog::plog
     OpenSSL::Crypto
+    NabtoWebrtcSignaling::utilLogging
+    NabtoWebrtcSignaling::utilCurlClient
     NabtoWebrtcSignaling::device
 )
 
@@ -31,9 +30,7 @@ target_sources(webrtc_example_common PUBLIC
     TYPE HEADERS
     BASE_DIRS .
     FILES
-        curl_http_client/curl_async.hpp
         libdatachannel_websocket/rtc_websocket_wrapper.hpp
-        logging/logging.hpp
         message_signer/message_signer.hpp
         message_signer/none_message_signer.hpp
         message_signer/shared_secret_message_signer.hpp
