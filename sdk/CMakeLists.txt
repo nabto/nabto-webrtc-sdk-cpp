@@ -11,45 +11,6 @@ add_subdirectory(src/signaling_util/std_timer)
 add_subdirectory(src/signaling_util/uuid)
 add_subdirectory(src/signaling_util/token_generator)
 
-option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
-
-if (NABTO_SIGNALING_BUILD_TESTS)
-    find_package(GTest CONFIG REQUIRED)
-    find_package(OpenSSL REQUIRED)
-
-    enable_testing()
-    add_executable(
-        nabto_signaling_test
-        test/create_destroy_signaling_device.cpp
-        src/signaling_device/src/signaling_device_impl_test.cpp
-        src/signaling_util/token_generator/src/openssl_key_id_test.cpp
-    )
-    target_link_libraries(
-        nabto_signaling_test
-        nabto_webrtc_signaling_device
-        OpenSSL::Crypto
-        GTest::gtest_main
-    )
-    include(GoogleTest)
-    gtest_discover_tests(nabto_signaling_test)
-
-    add_subdirectory(integration_test/generated/cpp)
-    add_subdirectory(integration_test/util)
-
-    add_executable(
-        nabto_integration_test
-        integration_test/integration_test.cpp
-    )
-    target_link_libraries(
-        nabto_integration_test
-        CppRestOpenAPIClient
-        integration_test_util
-        nabto_webrtc_signaling_device
-        GTest::gtest_main
-    )
-
-endif()
-
 
 include(GNUInstallDirs)
 set(config_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
@@ -109,3 +70,44 @@ install(
     NAMESPACE "${namespace}"
     DESTINATION "${config_install_dir}"
 )
+
+option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
+
+if (NABTO_SIGNALING_BUILD_TESTS)
+    find_package(GTest CONFIG REQUIRED)
+    find_package(OpenSSL REQUIRED)
+    find_package(LibDataChannel REQUIRED)
+
+    enable_testing()
+    add_executable(
+        nabto_signaling_test
+        test/create_destroy_signaling_device.cpp
+        src/signaling_device/src/signaling_device_impl_test.cpp
+        src/signaling_util/token_generator/src/openssl_key_id_test.cpp
+    )
+    target_link_libraries(
+        nabto_signaling_test
+        nabto_webrtc_signaling_device
+        OpenSSL::Crypto
+        GTest::gtest_main
+    )
+    include(GoogleTest)
+    gtest_discover_tests(nabto_signaling_test)
+
+    add_subdirectory(integration_test/generated/cpp)
+
+    add_executable(
+        nabto_integration_test
+        integration_test/integration_test.cpp
+    )
+    target_link_libraries(
+        nabto_integration_test
+        NabtoWebrtcSignaling::util_curl_client
+        NabtoWebrtcSignaling::util_std_timer
+        LibDataChannel::LibDataChannel
+        CppRestOpenAPIClient
+        nabto_webrtc_signaling_device
+        GTest::gtest_main
+    )
+
+endif()
