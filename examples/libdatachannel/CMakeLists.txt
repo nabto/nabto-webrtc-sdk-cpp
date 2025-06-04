@@ -18,5 +18,5 @@ FetchContent_Declare(NabtoWebrtcSignaling OVERRIDE_FIND_PACKAGE SOURCE_DIR "${CM
 FetchContent_MakeAvailable(NabtoWebrtcSignaling)
 
 add_subdirectory(examples/common)
-add_subdirectory(examples/webrtc-device)
-add_subdirectory(examples/webrtc-device-rtsp)
+add_subdirectory(examples/webrtc_device)
+add_subdirectory(examples/webrtc_device_rtsp)

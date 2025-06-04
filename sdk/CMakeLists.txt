@@ -27,12 +27,12 @@ if (NABTO_SIGNALING_BUILD_TESTS)
     include(GoogleTest)
     gtest_discover_tests(nabto_signaling_test)
 
-    add_subdirectory(integration-test/generated/cpp)
-    add_subdirectory(integration-test/util)
+    add_subdirectory(integration_test/generated/cpp)
+    add_subdirectory(integration_test/util)
 
     add_executable(
         nabto_integration_test
-        integration-test/integration_test.cpp
+        integration_test/integration_test.cpp
     )
     target_link_libraries(
         nabto_integration_test
@@ -79,7 +79,7 @@ write_basic_package_version_file(
 )
 
 configure_package_config_file(
-    "cmake-scripts/Config.cmake.in"
+    "cmake_scripts/Config.cmake.in"
     "${project_config}"
     INSTALL_DESTINATION "${config_install_dir}"
 )
