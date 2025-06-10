@@ -1,5 +1,9 @@
 #include "message_transport_impl.hpp"
 
+#include "message_signer.hpp"
+#include "none_message_signer.hpp"
+#include "shared_secret_message_signer.hpp"
+
 namespace nabto {
 namespace util {
 
@@ -11,14 +15,27 @@ MessageTransportPtr MessageTransportImpl::create(
 
 MessageTransportImpl::MessageTransportImpl(signaling::SignalingDevicePtr device,
                                            signaling::SignalingChannelPtr sig,
-                                           SecurityMode mode) {}
+                                           SecurityMode mode)
+    : device_(device), sig_(sig) {
+  if (mode == SecurityMode::NONE) {
+    signer_ = NoneMessageSigner::create();
+  } else if (mode == SecurityMode::SHARED_SECRET) {
+    std::string sec = "foo";
+    std::string secId = "bar";
+    signer_ = SharedSecretMessageSigner::create(sec, secId);  // TODO: fix this
+  }
+}
 
 void MessageTransportImpl::setSharedSecretHandler(
-    std::function<std::string(const std::string keyId)> callback) {}
+    std::function<std::string(const std::string keyId)> handler) {
+  secretHandler_ = handler;
+}
 
 void MessageTransportImpl::setSetupDoneHandler(
     std::function<void(const std::vector<rtc::IceServer>& iceServers)>
-        callback) {}
+        handler) {
+  setupHandler_ = handler;
+}
 
 /**
  * Set a handler to be invoked whenever a message is available on the
@@ -27,7 +44,9 @@ void MessageTransportImpl::setSetupDoneHandler(
  * @param handler the handler to set
  */
 void MessageTransportImpl::setMessageHandler(
-    signaling::SignalingMessageHandler handler) {}
+    signaling::SignalingMessageHandler handler) {
+  msgHandler_ = handler;
+}
 
 /**
  * Set a handler to be invoked if an error occurs on the connection
@@ -35,7 +54,9 @@ void MessageTransportImpl::setMessageHandler(
  * @param handler the handler to set
  */
 void MessageTransportImpl::setErrorHandler(
-    signaling::SignalingErrorHandler handler) {}
+    signaling::SignalingErrorHandler handler) {
+  errHandler_ = handler;
+}
 
 void MessageTransportImpl::sendMessage(const nlohmann::json& message) {}
 

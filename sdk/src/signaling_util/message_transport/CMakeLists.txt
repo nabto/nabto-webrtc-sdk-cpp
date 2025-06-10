@@ -6,6 +6,7 @@ set(curl_src
 add_library( nabto_webrtc_message_transport "${curl_src}")
 
 target_link_libraries(nabto_webrtc_message_transport
+    NabtoWebrtcSignaling::util_uuid
     NabtoWebrtcSignaling::util_logging
     NabtoWebrtcSignaling::device
 )

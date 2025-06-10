@@ -6,7 +6,9 @@ namespace nabto {
 namespace util {
 MessageTransportPtr MessageTransportFactory::create(
     signaling::SignalingDevicePtr device, signaling::SignalingChannelPtr sig,
-    SecurityMode mode) {}
+    SecurityMode mode) {
+  return MessageTransportImpl::create(device, sig, mode);
+}
 
 }  // namespace util
 }  // namespace nabto

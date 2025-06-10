@@ -5,15 +5,17 @@
 #include <nabto/webrtc/util/uuid.hpp>
 // #include <jwt-cpp/jwt.h>
 
-#include <memory>
-#include <nabto/webrtc/device.hpp>
-#include <nabto/webrtc/util/logging.hpp>
-#include <nlohmann/json.hpp>
-
 #include "message_signer.hpp"
 
+#include <nabto/webrtc/device.hpp>
+#include <nabto/webrtc/util/logging.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include <memory>
+
 namespace nabto {
-namespace example {
+namespace util {
 
 class SharedSecretMessageSigner : public MessageSigner {
  public:
@@ -24,7 +26,7 @@ class SharedSecretMessageSigner : public MessageSigner {
 
   SharedSecretMessageSigner(std::string& secret, std::string& secretId)
       : secret_(secret), secretId_(secretId) {
-    myNonce_ = generate_uuid_v4();
+    myNonce_ = example::generate_uuid_v4();
   }
 
   nlohmann::json signMessage(const nlohmann::json& msg) override {
@@ -106,5 +108,5 @@ class SharedSecretMessageSigner : public MessageSigner {
   std::string remoteNonce_;
 };
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

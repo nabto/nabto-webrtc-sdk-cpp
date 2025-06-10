@@ -17,11 +17,11 @@ class MessageTransportImpl
                        signaling::SignalingChannelPtr sig, SecurityMode mode);
 
   void setSharedSecretHandler(
-      std::function<std::string(const std::string keyId)> callback) override;
+      std::function<std::string(const std::string keyId)> handler) override;
 
   void setSetupDoneHandler(
       std::function<void(const std::vector<rtc::IceServer>& iceServers)>
-          callback) override;
+          handler) override;
 
   /**
    * Set a handler to be invoked whenever a message is available on the
@@ -43,6 +43,13 @@ class MessageTransportImpl
  private:
   signaling::SignalingDevicePtr device_;
   signaling::SignalingChannelPtr sig_;
+  MessageSignerPtr signer_;
+
+  signaling::SignalingMessageHandler msgHandler_ = nullptr;
+  signaling::SignalingErrorHandler errHandler_ = nullptr;
+  std::function<std::string(const std::string keyId)> secretHandler_ = nullptr;
+  std::function<void(const std::vector<rtc::IceServer>& iceServers)>
+      setupHandler_ = nullptr;
 };
 
 }  // namespace util

@@ -26,11 +26,11 @@ class MessageTransportFactory {
 class MessageTransport {
  public:
   virtual void setSharedSecretHandler(
-      std::function<std::string(const std::string keyId)> callback) = 0;
+      std::function<std::string(const std::string keyId)> handler) = 0;
 
   virtual void setSetupDoneHandler(
       std::function<void(const std::vector<rtc::IceServer>& iceServers)>
-          callback) = 0;
+          handler) = 0;
 
   /**
    * Set a handler to be invoked whenever a message is available on the
