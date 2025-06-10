@@ -2,18 +2,18 @@
 
 #include <curl/curl.h>
 
+#include <nabto/webrtc/device.hpp>
+
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
 
-#include <nabto/webrtc/device.hpp>
-
 namespace nabto {
 namespace example {
 
 class CurlAsync;
-typedef std::shared_ptr<CurlAsync> CurlAsyncPtr;
+using CurlAsyncPtr = std::shared_ptr<CurlAsync>;
 
 class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
                        public std::enable_shared_from_this<CurlHttpClient> {
@@ -22,9 +22,8 @@ class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
     return std::make_shared<CurlHttpClient>();
   }
   CurlHttpClient();
-  bool sendRequest(const std::string& method, const std::string& url,
-                   const nabto::signaling::SignalingHttpRequest& request,
-                   nabto::signaling::HttpResponseCallback cb);
+  bool sendRequest(const nabto::signaling::SignalingHttpRequest& request,
+                   nabto::signaling::HttpResponseCallback cb) override;
 
  private:
   CurlAsyncPtr curl_ = nullptr;
@@ -33,7 +32,7 @@ class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
   std::string authHeader_;
   std::string ctHeader_;
 
-  struct curl_slist* curlReqHeaders_ = NULL;
+  struct curl_slist* curlReqHeaders_ = nullptr;
 
   static size_t readFunc(void* ptr, size_t size, size_t nmemb, void* s);
   static size_t writeFunc(void* ptr, size_t size, size_t nmemb, void* s);
@@ -42,8 +41,12 @@ class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
 class CurlAsync : public std::enable_shared_from_this<CurlAsync> {
  public:
   static CurlAsyncPtr create();
-  CurlAsync();
+  CurlAsync() = default;
   ~CurlAsync();
+  CurlAsync(const CurlAsync&) = delete;
+  CurlAsync& operator=(const CurlAsync&) = delete;
+  CurlAsync(CurlAsync&&) = delete;
+  CurlAsync& operator=(CurlAsync&&) = delete;
 
   bool init();
   void stop();
@@ -56,14 +59,14 @@ class CurlAsync : public std::enable_shared_from_this<CurlAsync> {
   // invoked synchroneusly. The callback is invoked from the created thread once
   // the request is resolved. Returns false if a thread is already running
   bool asyncInvoke(
-      std::function<void(CURLcode res, uint16_t statusCode)> callback);
+      const std::function<void(CURLcode res, uint16_t statusCode)>& callback);
 
   // Reinvoke the request. This must be called from the callback of a previous
   // request. This request will reuse the std::thread created for the first
   // request. getCurl() can be used to build a new request in the first callback
   // before calling this.
   void asyncReinvoke(
-      std::function<void(CURLcode res, uint16_t statusCode)> callback);
+      const std::function<void(CURLcode res, uint16_t statusCode)>& callback);
 
   // Reinvoke the request. This must be called from the callback of a previous
   // request and is a direct blocking invocation of the curl_easy_perform.
@@ -73,7 +76,7 @@ class CurlAsync : public std::enable_shared_from_this<CurlAsync> {
  private:
   static void threadRunner(CurlAsync* self);
 
-  CURL* curl_;
+  CURL* curl_ = nullptr;
   std::thread thread_;
   std::mutex mutex_;
   std::function<void(CURLcode res, uint16_t statusCode)> callback_;

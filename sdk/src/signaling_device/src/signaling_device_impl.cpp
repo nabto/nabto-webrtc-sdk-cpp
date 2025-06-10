@@ -85,6 +85,8 @@ void SignalingDeviceImpl::doConnect() {
   const std::string url = httpHost_ + "/v1/device/connect";
 
   SignalingHttpRequest req;
+  req.method = method;
+  req.url = url;
   std::string token;
   if (!tokenProvider_->generateToken(token)) {
     NABTO_SIGNALING_LOGE
@@ -100,8 +102,7 @@ void SignalingDeviceImpl::doConnect() {
 
   auto self = shared_from_this();
   httpCli_->sendRequest(
-      method, url, req,
-      [self](const std::unique_ptr<SignalingHttpResponse>& response) {
+      req, [self](const std::unique_ptr<SignalingHttpResponse>& response) {
         const int httpOkStartRange = 200;
         const int httpOkEndRange = 299;
         if (response == nullptr) {
@@ -359,6 +360,8 @@ void SignalingDeviceImpl::requestIceServers(IceServersResponse callback) {
         << "Cannot create an access token using the provided token provider.";
   }
   SignalingHttpRequest req;
+  req.method = method;
+  req.url = url;
   req.headers.emplace_back("Authorization", "Bearer " + token);
   req.headers.emplace_back("Content-Type", "application/json");
   req.body =
@@ -367,7 +370,7 @@ void SignalingDeviceImpl::requestIceServers(IceServersResponse callback) {
 
   auto self = shared_from_this();
   httpCli_->sendRequest(
-      method, url, req,
+      req,
       [self, callback](const std::unique_ptr<SignalingHttpResponse>& response) {
         if (response == nullptr) {
           callback({});

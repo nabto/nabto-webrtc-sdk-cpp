@@ -41,6 +41,15 @@ using SignalingTokenGeneratorPtr = std::shared_ptr<SignalingTokenGenerator>;
 class SignalingHttpRequest {
  public:
   /**
+   * Method of the request. "GET" | "POST"
+   */
+  std::string method;
+
+  /**
+   * URL to send the request to
+   */
+  std::string url;
+  /**
    * List of HTTP headers as key-value pairs.
    */
   std::vector<std::pair<std::string, std::string> > headers;
@@ -54,7 +63,8 @@ class SignalingHttpRequest {
 /**
  * HTTP Response abstraction used by the SDK.
  */
-class SignalingHttpResponse {
+class
+    SignalingHttpResponse {  // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
  public:
   /**
    * The HTTP status code of the response.
@@ -158,8 +168,7 @@ class SignalingHttpClient {
    * @param callback callback to be invoked when the request is resolved.
    * @return true if the request was accepted.
    */
-  virtual bool sendRequest(const std::string& method, const std::string& url,
-                           const SignalingHttpRequest& request,
+  virtual bool sendRequest(const SignalingHttpRequest& request,
                            HttpResponseCallback callback) = 0;
 };
 

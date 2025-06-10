@@ -18,7 +18,8 @@ Checks: >
   -fuchsia-default-arguments-calls,
   -llvm-header-guard,
   -modernize-concat-nested-namespaces,
-  -modernize-use-nodiscard
+  -modernize-use-nodiscard,
+  -readability-identifier-length
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*'
 

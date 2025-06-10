@@ -40,8 +40,8 @@
             "name": "clang_tidy",
             "inherits": ["debug"],
             "cacheVariables": {
-                "CMAKE_C_CLANG_TIDY": "clang-tidy;--allow-no-checks",
-                "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--allow-no-checks",
+                "CMAKE_C_CLANG_TIDY": "clang-tidy",
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
            }
         },
