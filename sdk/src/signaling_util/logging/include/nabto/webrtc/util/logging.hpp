@@ -3,7 +3,7 @@
 #include <plog/Init.h>
 #include <plog/Log.h>
 
-#define NABTO_LOG_ID 42
+constexpr int NABTO_LOG_ID = 42;
 
 #define NPLOGV PLOGV_(NABTO_LOG_ID)
 #define NPLOGD PLOGD_(NABTO_LOG_ID)
@@ -15,10 +15,9 @@
 
 namespace nabto {
 namespace example {
-static void initLogger(enum plog::Severity severity = plog::Severity::none,
-                       plog::IAppender* appender = NULL) {
+static void initLogger(enum plog::Severity severity,
+                       plog::IAppender* appender) {
   plog::init<NABTO_LOG_ID>(severity, appender);
-  return;
 }
 }  // namespace example
 }  // namespace nabto
