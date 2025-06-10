@@ -33,7 +33,4 @@ target_sources(webrtc_example_common PUBLIC
     BASE_DIRS .
     FILES
         libdatachannel_websocket/rtc_websocket_wrapper.hpp
-        message_signer/message_signer.hpp
-        message_signer/none_message_signer.hpp
-        message_signer/shared_secret_message_signer.hpp
 )

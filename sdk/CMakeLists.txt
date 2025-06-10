@@ -10,6 +10,7 @@ add_subdirectory(src/signaling_util/curl_http_client)
 add_subdirectory(src/signaling_util/std_timer)
 add_subdirectory(src/signaling_util/uuid)
 add_subdirectory(src/signaling_util/token_generator)
+add_subdirectory(src/signaling_util/message_transport)
 
 
 include(GNUInstallDirs)
@@ -35,8 +36,10 @@ add_library("${PROJECT_NAME}::util_uuid" ALIAS nabto_webrtc_uuid)
 
 add_library("${PROJECT_NAME}::util_token_generator" ALIAS nabto_webrtc_token_generator)
 
+add_library("${PROJECT_NAME}::util_message_transport" ALIAS nabto_webrtc_message_transport)
+
 install(
-    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid nabto_webrtc_token_generator
+    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid nabto_webrtc_token_generator nabto_webrtc_message_transport
     EXPORT "${TARGETS_EXPORT_NAME}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"

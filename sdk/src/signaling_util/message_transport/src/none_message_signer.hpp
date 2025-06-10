@@ -1,16 +1,17 @@
 #pragma once
 
+#include "message_signer.hpp"
 #include <jwt-cpp/jwt.h>
 
-#include <memory>
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
+
 #include <nlohmann/json.hpp>
 
-#include "message_signer.hpp"
+#include <memory>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 class NoneMessageSigner : public MessageSigner {
  public:
@@ -38,5 +39,5 @@ class NoneMessageSigner : public MessageSigner {
   }
 };
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

@@ -1,11 +1,12 @@
 #pragma once
 
-#include <memory>
 #include <nlohmann/json.hpp>
+
+#include <memory>
 #include <string>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 class MessageSigner;
 typedef std::shared_ptr<MessageSigner> MessageSignerPtr;
@@ -29,5 +30,5 @@ class MessageSigner {
    */
   virtual nlohmann::json signMessage(const nlohmann::json& message) = 0;
 };
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

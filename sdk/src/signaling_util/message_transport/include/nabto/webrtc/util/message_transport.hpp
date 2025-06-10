@@ -1,0 +1,55 @@
+#pragma once
+
+#include <rtc/rtc.hpp>
+
+#include <nabto/webrtc/device.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include <memory>
+
+namespace nabto {
+namespace util {
+
+class MessageTransport;
+using MessageTransportPtr = std::shared_ptr<MessageTransport>;
+
+enum class SecurityMode : std::uint8_t { SHARED_SECRET, NONE };
+
+class MessageTransportFactory {
+ public:
+  static MessageTransportPtr create(signaling::SignalingDevicePtr device,
+                                    signaling::SignalingChannelPtr sig,
+                                    SecurityMode mode);
+};
+
+class MessageTransport {
+ public:
+  virtual void setSharedSecretHandler(
+      std::function<std::string(const std::string keyId)> callback) = 0;
+
+  virtual void setSetupDoneHandler(
+      std::function<void(const std::vector<rtc::IceServer>& iceServers)>
+          callback) = 0;
+
+  /**
+   * Set a handler to be invoked whenever a message is available on the
+   * connection
+   *
+   * @param handler the handler to set
+   */
+  virtual void setMessageHandler(
+      signaling::SignalingMessageHandler handler) = 0;
+
+  /**
+   * Set a handler to be invoked if an error occurs on the connection
+   *
+   * @param handler the handler to set
+   */
+  virtual void setErrorHandler(signaling::SignalingErrorHandler handler) = 0;
+
+  virtual void sendMessage(const nlohmann::json& message) = 0;
+};
+
+}  // namespace util
+}  // namespace nabto
