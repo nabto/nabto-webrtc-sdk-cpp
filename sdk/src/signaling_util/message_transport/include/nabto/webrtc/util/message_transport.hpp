@@ -14,22 +14,20 @@ namespace util {
 class MessageTransport;
 using MessageTransportPtr = std::shared_ptr<MessageTransport>;
 
-enum class SecurityMode : std::uint8_t { SHARED_SECRET, NONE };
-
 class MessageTransportFactory {
  public:
-  static MessageTransportPtr create(signaling::SignalingDevicePtr device,
-                                    signaling::SignalingChannelPtr sig,
-                                    SecurityMode mode);
+  static MessageTransportPtr createSharedSecretTransport(
+      signaling::SignalingDevicePtr device, signaling::SignalingChannelPtr sig,
+      std::function<std::string(const std::string keyId)> handler);
+
+  static MessageTransportPtr createNoneTransport(
+      signaling::SignalingDevicePtr device, signaling::SignalingChannelPtr sig);
 };
 
 class MessageTransport {
  public:
-  virtual void setSharedSecretHandler(
-      std::function<std::string(const std::string keyId)> handler) = 0;
-
   virtual void setSetupDoneHandler(
-      std::function<void(const std::vector<rtc::IceServer>& iceServers)>
+      std::function<void(const std::vector<signaling::IceServer>& iceServers)>
           handler) = 0;
 
   /**

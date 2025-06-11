@@ -29,6 +29,21 @@ class SharedSecretMessageSigner : public MessageSigner {
     myNonce_ = example::generate_uuid_v4();
   }
 
+  static std::string getKeyId(const nlohmann::json& message) {
+    NPLOGD << "signaling signer handle msg" << message.dump();
+    try {
+      auto jwt = message["jwt"].get<std::string>();
+      auto decoded = jwt::decode<jwt::traits::nlohmann_json>(jwt);
+      auto kidClaim = decoded.get_header_claim("kid");
+      auto keyId = kidClaim.as_string();
+      return keyId;
+    } catch (std::exception& ex) {
+      NPLOGE << "Failed to validate JWT: " << ex.what();
+      std::string err = "VERIFICATION_ERROR";
+      throw VerificationError();
+    }
+  }
+
   nlohmann::json signMessage(const nlohmann::json& msg) override {
     if (nextMessageSignSeq_ != 0 && remoteNonce_.empty()) {
       NPLOGE << "Tried to sign message with seq: " << nextMessageSignSeq_

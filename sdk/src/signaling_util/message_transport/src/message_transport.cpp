@@ -4,10 +4,16 @@
 
 namespace nabto {
 namespace util {
-MessageTransportPtr MessageTransportFactory::create(
+
+MessageTransportPtr MessageTransportFactory::createSharedSecretTransport(
     signaling::SignalingDevicePtr device, signaling::SignalingChannelPtr sig,
-    SecurityMode mode) {
-  return MessageTransportImpl::create(device, sig, mode);
+    std::function<std::string(const std::string keyId)> handler) {
+  return MessageTransportImpl::createSharedSecret(device, sig, handler);
+}
+
+MessageTransportPtr MessageTransportFactory::createNoneTransport(
+    signaling::SignalingDevicePtr device, signaling::SignalingChannelPtr sig) {
+  return MessageTransportImpl::createNone(device, sig);
 }
 
 }  // namespace util
