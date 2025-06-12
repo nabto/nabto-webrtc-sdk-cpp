@@ -18,6 +18,7 @@ target_link_libraries(webrtc_example_common
     NabtoWebrtcSignaling::util_curl_client
     NabtoWebrtcSignaling::util_std_timer
     NabtoWebrtcSignaling::util_uuid
+    NabtoWebrtcSignaling::util_message_transport
     NabtoWebrtcSignaling::device
 )
 

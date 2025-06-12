@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
-#include <message_signer/message_signer.hpp>
 #include <nabto/webrtc/device.hpp>
+#include <nabto/webrtc/util/message_transport.hpp>
 #include <rtc/rtc.hpp>
 
 #include "track_handler.hpp"
@@ -13,13 +13,14 @@ typedef std::shared_ptr<WebrtcConnection> WebrtcConnectionPtr;
 
 class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
  public:
-  static WebrtcConnectionPtr create(nabto::signaling::SignalingDevicePtr device,
-                                    nabto::signaling::SignalingChannelPtr sig,
-                                    MessageSignerPtr messageSigner,
-                                    WebrtcTrackHandlerPtr trackHandler);
+  static WebrtcConnectionPtr create(
+      nabto::signaling::SignalingDevicePtr device,
+      nabto::signaling::SignalingChannelPtr sig,
+      nabto::util::MessageTransportPtr messageTransport,
+      WebrtcTrackHandlerPtr trackHandler);
   WebrtcConnection(nabto::signaling::SignalingDevicePtr device,
                    nabto::signaling::SignalingChannelPtr channel,
-                   MessageSignerPtr messageSigner,
+                   nabto::util::MessageTransportPtr messageTransport,
                    WebrtcTrackHandlerPtr trackHandler);
 
   void handleMessage(const nlohmann::json& msg);
@@ -30,7 +31,7 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
  private:
   nabto::signaling::SignalingChannelPtr channel_;
   nabto::signaling::SignalingDevicePtr device_;
-  MessageSignerPtr messageSigner_;
+  nabto::util::MessageTransportPtr messageTransport_;
   std::shared_ptr<rtc::PeerConnection> pc_ = nullptr;
   bool canTrickle_ = true;
   bool ignoreOffer_ = false;
@@ -57,7 +58,7 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
       const std::vector<struct nabto::signaling::IceServer>& iceServers);
   void requestIceServers();
   void parseIceServers(
-      std::vector<struct nabto::signaling::IceServer>& servers);
+      const std::vector<struct nabto::signaling::IceServer>& servers);
 
   void sendSignalingMessage(const nlohmann::json& message);
 

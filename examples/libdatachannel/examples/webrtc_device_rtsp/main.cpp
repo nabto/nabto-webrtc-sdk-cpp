@@ -5,11 +5,10 @@
 #include <fstream>
 #include <iostream>
 #include <libdatachannel_websocket/rtc_websocket_wrapper.hpp>
-#include <message_signer/none_message_signer.hpp>
-#include <message_signer/shared_secret_message_signer.hpp>
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/curl_async.hpp>
 #include <nabto/webrtc/util/logging.hpp>
+#include <nabto/webrtc/util/message_transport.hpp>
 #include <nabto/webrtc/util/std_timer.hpp>
 #include <nabto/webrtc/util/token_generator.hpp>
 #include <webrtc_connection/webrtc_connection.hpp>
@@ -87,15 +86,20 @@ int main(int argc, char** argv) {
           channel->close();
           return;
         }
-        nabto::example::MessageSignerPtr signer;
+        nabto::util::MessageTransportPtr transport;
         if (opts.sharedSecret.empty()) {
-          signer = nabto::example::NoneMessageSigner::create();
+          transport = nabto::util::MessageTransportFactory::createNoneTransport(
+              device, channel);
         } else {
-          signer = nabto::example::SharedSecretMessageSigner::create(
-              opts.sharedSecret, opts.sharedSecretId);
+          transport =
+              nabto::util::MessageTransportFactory::createSharedSecretTransport(
+                  device, channel,
+                  [&opts](const std::string keyId) -> std::string {
+                    return opts.sharedSecret;
+                  });
         }
         auto webConn = nabto::example::WebrtcConnection::create(
-            device, channel, signer, trackHandler);
+            device, channel, transport, trackHandler);
         // conns.push_back(webConn);
       });
   device->start();

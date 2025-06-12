@@ -38,9 +38,8 @@ class SharedSecretMessageSigner : public MessageSigner {
       auto keyId = kidClaim.as_string();
       return keyId;
     } catch (std::exception& ex) {
-      NPLOGE << "Failed to validate JWT: " << ex.what();
-      std::string err = "VERIFICATION_ERROR";
-      throw VerificationError();
+      NPLOGE << "Failed to get key ID from JWT: " << ex.what();
+      return "";
     }
   }
 

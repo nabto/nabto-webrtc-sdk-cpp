@@ -9,8 +9,9 @@ namespace example {
 WebrtcConnectionPtr WebrtcConnection::create(
     nabto::signaling::SignalingDevicePtr device,
     nabto::signaling::SignalingChannelPtr channel,
-    MessageSignerPtr messageSigner, WebrtcTrackHandlerPtr trackHandler) {
-  auto p = std::make_shared<WebrtcConnection>(device, channel, messageSigner,
+    nabto::util::MessageTransportPtr messageTransport,
+    WebrtcTrackHandlerPtr trackHandler) {
+  auto p = std::make_shared<WebrtcConnection>(device, channel, messageTransport,
                                               trackHandler);
   p->init();
   return p;
@@ -19,18 +20,37 @@ WebrtcConnectionPtr WebrtcConnection::create(
 WebrtcConnection::WebrtcConnection(
     nabto::signaling::SignalingDevicePtr device,
     nabto::signaling::SignalingChannelPtr channel,
-    MessageSignerPtr messageSigner, WebrtcTrackHandlerPtr trackHandler)
+    nabto::util::MessageTransportPtr messageTransport,
+    WebrtcTrackHandlerPtr trackHandler)
     : device_(device),
       channel_(channel),
-      messageSigner_(messageSigner),
+      messageTransport_(messageTransport),
       videoTrack_(trackHandler),
       polite_(true) {}
 
 void WebrtcConnection::init() {
   // createPeerConnection();
   auto self = shared_from_this();
-  channel_->setMessageHandler(
+
+  messageTransport_->setMessageHandler(
       [self](const nlohmann::json& msg) { self->handleMessage(msg); });
+
+  messageTransport_->setSetupDoneHandler(
+      [self](const std::vector<signaling::IceServer>& iceServers) {
+        self->parseIceServers(iceServers);
+      });
+
+  messageTransport_->setErrorHandler(
+      [self](const nabto::signaling::SignalingError& error) {
+        NPLOGE << "Got errorCode: " << error.errorCode();
+        // All errors are fatal, so we clean up no matter what the error was
+        if (self->pc_) {
+          self->pc_->close();
+        } else {
+          self->deinit();
+        }
+      });
+
   channel_->setStateChangeHandler(
       [self](nabto::signaling::SignalingChannelState event) {
         switch (event) {
@@ -71,61 +91,45 @@ void WebrtcConnection::init() {
         }
       });
 }
-void WebrtcConnection::handleMessage(const nlohmann::json& msgIn) {
+void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
   try {
-    NPLOGI << "Webrtc got signaling message IN: " << msgIn.dump();
-    auto msg = messageSigner_->verifyMessage(msgIn);
-
     NPLOGI << "Webrtc got signaling message: " << msg.dump();
     auto type = msg["type"].get<std::string>();
 
-    if (type == "SETUP_REQUEST") {
-      requestIceServers();
-    } else if (!hasIce_) {
-      messageQueue_.push_back(msgIn);
-      return;
-    } else {
-      if (type == "DESCRIPTION") {
-        rtc::Description remDesc(msg["description"]["sdp"].get<std::string>(),
-                                 msg["description"]["type"].get<std::string>());
+    if (type == "DESCRIPTION") {
+      rtc::Description remDesc(msg["description"]["sdp"].get<std::string>(),
+                               msg["description"]["type"].get<std::string>());
 
-        bool offerCollision = remDesc.type() == rtc::Description::Type::Offer &&
-                              pc_->signalingState() !=
-                                  rtc::PeerConnection::SignalingState::Stable;
+      bool offerCollision =
+          remDesc.type() == rtc::Description::Type::Offer &&
+          pc_->signalingState() != rtc::PeerConnection::SignalingState::Stable;
 
-        ignoreOffer_ = !polite_ && offerCollision;
-        if (ignoreOffer_) {
-          NPLOGD << "The device is impolite and there is a collision so we are "
-                    "discarding the received offer";
-          return;
-        }
-
-        pc_->setRemoteDescription(remDesc);
-      } else if (type == "CANDIDATE") {
-        try {
-          rtc::Candidate cand(msg["candidate"]["candidate"].get<std::string>(),
-                              msg["candidate"]["sdpMid"].get<std::string>());
-          pc_->addRemoteCandidate(cand);
-        } catch (nlohmann::json::exception& ex) {
-          NPLOGE << "handleIce json exception: " << ex.what();
-        } catch (std::logic_error& ex) {
-          if (!this->ignoreOffer_) {
-            NPLOGE << "Failed to add remote ICE candidate with logic error: "
-                   << ex.what();
-          }
-        }
-      } else {
-        NPLOGE << "Got unknown message type: " << type;
+      ignoreOffer_ = !polite_ && offerCollision;
+      if (ignoreOffer_) {
+        NPLOGD << "The device is impolite and there is a collision so we are "
+                  "discarding the received offer";
+        return;
       }
+
+      pc_->setRemoteDescription(remDesc);
+    } else if (type == "CANDIDATE") {
+      try {
+        rtc::Candidate cand(msg["candidate"]["candidate"].get<std::string>(),
+                            msg["candidate"]["sdpMid"].get<std::string>());
+        pc_->addRemoteCandidate(cand);
+      } catch (nlohmann::json::exception& ex) {
+        NPLOGE << "handleIce json exception: " << ex.what();
+      } catch (std::logic_error& ex) {
+        if (!this->ignoreOffer_) {
+          NPLOGE << "Failed to add remote ICE candidate with logic error: "
+                 << ex.what();
+        }
+      }
+    } else {
+      NPLOGE << "Got unknown message type: " << type;
     }
-  } catch (nabto::example::VerificationError& ex) {
-    NPLOGE << "Could not verify the incoming signaling message: "
-           << msgIn.dump() << " with: " << ex.what();
-    channel_->sendError(nabto::signaling::SignalingError(
-        nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR,
-        "Could not verify the incoming signaling message"));
   } catch (std::exception& ex) {
-    NPLOGE << "Failed to handle message: " << msgIn.dump()
+    NPLOGE << "Failed to handle message: " << msg.dump()
            << " with: " << ex.what();
   }
 }
@@ -290,31 +294,6 @@ void WebrtcConnection::handleGatherinsStateChange(
   }
 }
 
-void WebrtcConnection::sendCreateResponse(
-    const std::vector<struct nabto::signaling::IceServer>& iceServers) {
-  nlohmann::json root;
-  root["type"] = "SETUP_RESPONSE";
-  root["iceServers"] = nlohmann::json::array();
-  for (auto iceServer : iceServers) {
-    nlohmann::json is;
-    nlohmann::json urls = nlohmann::json::array();
-
-    for (auto url : iceServer.urls) {
-      urls.push_back(nlohmann::json::string_t(url));
-    }
-
-    is["urls"] = urls;
-    if (!iceServer.credential.empty()) {
-      is["credential"] = iceServer.credential;
-    }
-    if (!iceServer.username.empty()) {
-      is["username"] = iceServer.username;
-    }
-    root["iceServers"].push_back(is);
-  }
-  sendSignalingMessage(root);
-}
-
 void WebrtcConnection::sendDescription(
     rtc::optional<rtc::Description> description) {
   NPLOGD << "SendDescription with: "
@@ -342,24 +321,15 @@ void WebrtcConnection::sendDescription(
 
 void WebrtcConnection::sendSignalingMessage(const nlohmann::json& message) {
   try {
-    auto signedMessage = messageSigner_->signMessage(message);
-    channel_->sendMessage(signedMessage);
+    messageTransport_->sendMessage(message);
   } catch (std::exception& e) {
     NPLOGE << "Failed to sign the message: " << message.dump()
            << ", error: " << e.what();
   }
 }
 
-void WebrtcConnection::requestIceServers() {
-  auto self = shared_from_this();
-  device_->requestIceServers(
-      [self](std::vector<struct nabto::signaling::IceServer> servers) {
-        self->parseIceServers(servers);
-      });
-}
-
 void WebrtcConnection::parseIceServers(
-    std::vector<struct nabto::signaling::IceServer>& servers) {
+    const std::vector<struct nabto::signaling::IceServer>& servers) {
   for (auto s : servers) {
     std::string proto = "";
     if (s.username.empty()) {
@@ -402,14 +372,8 @@ void WebrtcConnection::parseIceServers(
       iceServers_.push_back(server);
     }
   }
-  sendCreateResponse(servers);
   createPeerConnection();
-  hasIce_ = true;
-  for (auto m : messageQueue_) {
-    handleMessage(m);
-  }
   addTrack();
-  messageQueue_.clear();
 }
 
 void WebrtcConnection::deinit() {
@@ -418,6 +382,7 @@ void WebrtcConnection::deinit() {
   }
   videoTrack_ = nullptr;
   channel_->close();
+  messageTransport_ = nullptr;
   // sig_ = nullptr;
   //  pc_->close();
   pc_ = nullptr;
