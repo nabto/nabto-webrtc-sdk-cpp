@@ -26,6 +26,15 @@ class MessageTransportFactory {
 
 class MessageTransport {
  public:
+  virtual ~MessageTransport() = default;
+  MessageTransport() = default;
+  MessageTransport(const MessageTransport&) = delete;
+  MessageTransport& operator=(const MessageTransport&) = delete;
+  MessageTransport(MessageTransport&&) = delete;
+  MessageTransport& operator=(MessageTransport&&) = delete;
+
+  // TODO(tk): switch from set...Handler to add...Handler and add
+  // remove...Handler
   virtual void setSetupDoneHandler(
       std::function<void(const std::vector<signaling::IceServer>& iceServers)>
           handler) = 0;

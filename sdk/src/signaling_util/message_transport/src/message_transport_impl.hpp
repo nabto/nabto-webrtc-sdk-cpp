@@ -67,7 +67,7 @@ class MessageTransportImpl
   void requestIceServers();
   void sendSetupResponse(
       const std::vector<struct nabto::signaling::IceServer>& iceServers);
-  void handleError(signaling::SignalingError err);
+  void handleError(const signaling::SignalingError& err);
 };
 
 }  // namespace util

@@ -4,13 +4,27 @@
 #include "none_message_signer.hpp"
 #include "shared_secret_message_signer.hpp"
 
+#include <nabto/webrtc/device.hpp>
+#include <nabto/webrtc/util/logging.hpp>
+#include <nabto/webrtc/util/message_transport.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include <exception>
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace nabto {
 namespace util {
 
 MessageTransportPtr MessageTransportImpl::createNone(
     signaling::SignalingDevicePtr device,
     signaling::SignalingChannelPtr channel) {
-  auto ptr = std::make_shared<MessageTransportImpl>(device, channel);
+  auto ptr = std::make_shared<MessageTransportImpl>(std::move(device),
+                                                    std::move(channel));
   if (ptr) {
     ptr->init();
   }
@@ -21,8 +35,8 @@ MessageTransportPtr MessageTransportImpl::createSharedSecret(
     signaling::SignalingDevicePtr device,
     signaling::SignalingChannelPtr channel,
     std::function<std::string(const std::string keyId)> sharedSecretHandler) {
-  auto ptr = std::make_shared<MessageTransportImpl>(device, channel,
-                                                    sharedSecretHandler);
+  auto ptr = std::make_shared<MessageTransportImpl>(
+      std::move(device), std::move(channel), std::move(sharedSecretHandler));
   if (ptr) {
     ptr->init();
   }
@@ -32,23 +46,25 @@ MessageTransportPtr MessageTransportImpl::createSharedSecret(
 MessageTransportImpl::MessageTransportImpl(
     signaling::SignalingDevicePtr device,
     signaling::SignalingChannelPtr channel)
-    : device_(device), channel_(channel) {
-  mode_ = SigningMode::NONE;
-}
+    : device_(std::move(device)),
+      channel_(std::move(channel)),
+      mode_(SigningMode::NONE) {}
 
 MessageTransportImpl::MessageTransportImpl(
     signaling::SignalingDevicePtr device,
     signaling::SignalingChannelPtr channel,
     std::function<std::string(const std::string keyId)> sharedSecretHandler)
-    : device_(device),
-      channel_(channel),
-      sharedSecretHandler_(sharedSecretHandler) {
-  mode_ = SigningMode::SHARED_SECRET;
-}
+    : device_(std::move(device)),
+      channel_(std::move(channel)),
+      sharedSecretHandler_(std::move(sharedSecretHandler)),
+      mode_(SigningMode::SHARED_SECRET) {}
 
 void MessageTransportImpl::init() {
   auto self = shared_from_this();
   channel_->setMessageHandler(
+      // for some reason clang tidy complains that nlohmann is not directly
+      // included here. It does not fail 3 lines later but it does fail here.
+      // NOLINTNEXTLINE(misc-include-cleaner)
       [self](const nlohmann::json& msg) { self->handleMessage(msg); });
 }
 
@@ -75,15 +91,16 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
   } catch (nabto::util::VerificationError& ex) {
     NPLOGE << "Could not verify the incoming signaling message: "
            << msgIn.dump() << " with: " << ex.what();
-    handleError(nabto::signaling::SignalingError(
+    auto err = nabto::signaling::SignalingError(
         nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR,
-        "Could not verify the incoming signaling message"));
+        "Could not verify the incoming signaling message");
+    handleError(err);
   } catch (std::exception& ex) {
     NPLOGE << "Failed to handle message: " << msgIn.dump()
            << " with: " << ex.what();
-    // TODO: handle exception
+    // TODO(tk): handle exception
   }
-  // TODO: catch json exceptions
+  // TODO(tk): catch json exceptions
 };
 
 void MessageTransportImpl::setSetupDoneHandler(
@@ -109,7 +126,7 @@ void MessageTransportImpl::sendMessage(const nlohmann::json& message) {
   } catch (std::exception& e) {
     NPLOGE << "Failed to sign the message: " << message.dump()
            << ", error: " << e.what();
-    // TODO: handle exception
+    // TODO(tk): handle exception
   }
 }
 
@@ -121,13 +138,13 @@ void MessageTransportImpl::setupSigner(const nlohmann::json& msg) {
     auto secret = sharedSecretHandler_(keyId);
     signer_ = SharedSecretMessageSigner::create(secret, keyId);
   }
-  // TODO: if something fails here handle the error
+  // TODO(tk): if something fails here handle the error
 }
 
 void MessageTransportImpl::requestIceServers() {
   auto self = shared_from_this();
   device_->requestIceServers(
-      [self](std::vector<struct nabto::signaling::IceServer> servers) {
+      [self](const std::vector<struct nabto::signaling::IceServer>& servers) {
         self->sendSetupResponse(servers);
         if (self->setupHandler_) {
           self->setupHandler_(servers);
@@ -140,11 +157,11 @@ void MessageTransportImpl::sendSetupResponse(
   nlohmann::json root;
   root["type"] = "SETUP_RESPONSE";
   root["iceServers"] = nlohmann::json::array();
-  for (auto iceServer : iceServers) {
+  for (const auto& iceServer : iceServers) {
     nlohmann::json is;
     nlohmann::json urls = nlohmann::json::array();
 
-    for (auto url : iceServer.urls) {
+    for (const auto& url : iceServer.urls) {
       urls.push_back(nlohmann::json::string_t(url));
     }
 
@@ -160,9 +177,9 @@ void MessageTransportImpl::sendSetupResponse(
   sendMessage(root);
 }
 
-void MessageTransportImpl::handleError(signaling::SignalingError err) {
+void MessageTransportImpl::handleError(const signaling::SignalingError& err) {
   channel_->sendError(err);
-  // TODO: Emit error to application and send error to client
+  // TODO(tk): Emit error to application and send error to client
 }
 
 }  // namespace util

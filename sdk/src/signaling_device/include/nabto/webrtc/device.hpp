@@ -397,7 +397,8 @@ using SignalingErrorHandler = std::function<void(const SignalingError& error)>;
 /**
  * Callback function definition when a new ICE servers response is received.
  */
-using IceServersResponse = std::function<void(std::vector<struct IceServer>)>;
+using IceServersResponse =
+    std::function<void(const std::vector<struct IceServer>&)>;
 
 /**
  * Configuration used when constructing a Signaler.
@@ -500,6 +501,9 @@ class SignalingDevice {
    * @param callback callback to be invoked when the request is resolved
    */
   virtual void requestIceServers(IceServersResponse callback) = 0;
+
+  // TODO(tk): switch from set...Handler to add...Handler and add
+  // remove...Handler
 
   /**
    * Set handler to be called when a new Client connects

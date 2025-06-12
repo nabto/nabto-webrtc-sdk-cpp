@@ -20,7 +20,7 @@ class NoneMessageSigner : public MessageSigner {
     return signer;
   }
 
-  NoneMessageSigner() {}
+  NoneMessageSigner() = default;
 
   nlohmann::json signMessage(const nlohmann::json& msg) override {
     nlohmann::json data = {{"type", "NONE"}, {"message", msg}};
