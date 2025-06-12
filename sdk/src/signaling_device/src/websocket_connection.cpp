@@ -32,7 +32,7 @@ void WebsocketConnection::onMessage(
   ws_->onMessage([self, callback](const std::string& msg) {
     try {
       auto root = nlohmann::json::parse(msg);
-      auto type = parseWsMsgType(root["type"].get<std::string>());
+      auto type = parseWsMsgType(root.at("type").get<std::string>());
       if (type == SignalingMessageType::PONG) {
         self->handlePong();
       } else {

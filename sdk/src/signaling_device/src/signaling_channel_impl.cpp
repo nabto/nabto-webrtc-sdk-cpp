@@ -27,12 +27,12 @@ SignalingChannelImpl::SignalingChannelImpl(SignalingDeviceImplPtr signaler,
 
 void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
   try {
-    auto type = msg["type"].get<std::string>();
+    auto type = msg.at("type").get<std::string>();
     if (type == "DATA") {
       NABTO_SIGNALING_LOGD << "Handling DATA";
       sendAck(msg);
       if (signalingMessageHandler_) {
-        const auto& str = msg["data"];
+        const auto& str = msg.at("data");
         signalingMessageHandler_(str);
       }
     } else if (type == "ACK") {
@@ -70,7 +70,7 @@ void SignalingChannelImpl::sendError(const SignalingError& error) {
 
 void SignalingChannelImpl::sendAck(const nlohmann::json& msg) {
   const nlohmann::json ack = {{"type", "ACK"},
-                              {"seq", msg["seq"].get<uint32_t>()}};
+                              {"seq", msg.at("seq").get<uint32_t>()}};
   signaler_->websocketSendMessage(channelId_, ack);
 }
 
@@ -81,11 +81,11 @@ void SignalingChannelImpl::handleAck(const nlohmann::json& msg) {
   }
   auto firstItem = unackedMessages_[0];
   try {
-    if (firstItem["seq"].get<uint32_t>() != msg["seq"].get<uint32_t>()) {
+    if (firstItem.at("seq").get<uint32_t>() != msg.at("seq").get<uint32_t>()) {
       NABTO_SIGNALING_LOGE << "Got an ack for seq "
-                           << msg["seq"].get<uint32_t>()
+                           << msg.at("seq").get<uint32_t>()
                            << " but the first item in unacked was seq: "
-                           << firstItem["seq"].get<uint32_t>();
+                           << firstItem.at("seq").get<uint32_t>();
       return;
     }
     unackedMessages_.erase(unackedMessages_.begin());
@@ -129,8 +129,8 @@ void SignalingChannelImpl::close() {
 
 bool SignalingChannelImpl::isInitialMessage(const nlohmann::json& msg) {
   try {
-    auto type = msg["type"].get<std::string>();
-    auto seq = msg["seq"].get<int>();
+    auto type = msg.at("type").get<std::string>();
+    auto seq = msg.at("seq").get<int>();
     return type == "DATA" && seq == 0;
   } catch (std::exception& e) {
     return false;

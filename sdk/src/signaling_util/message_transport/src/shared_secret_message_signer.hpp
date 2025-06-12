@@ -30,7 +30,7 @@ class SharedSecretMessageSigner : public MessageSigner {
   static std::string getKeyId(const nlohmann::json& message) {
     NPLOGD << "signaling signer handle msg" << message.dump();
     try {
-      auto jwt = message["jwt"].get<std::string>();
+      auto jwt = message.at("jwt").get<std::string>();
       auto decoded = jwt::decode<jwt::traits::nlohmann_json>(jwt);
       auto kidClaim = decoded.get_header_claim("kid");
       auto keyId = kidClaim.as_string();
@@ -76,7 +76,7 @@ class SharedSecretMessageSigner : public MessageSigner {
   nlohmann::json verifyMessage(const nlohmann::json& msg) override {
     NPLOGD << "signaling signer handle msg" << msg.dump();
     try {
-      auto jwt = msg["jwt"].get<std::string>();
+      auto jwt = msg.at("jwt").get<std::string>();
       auto decoded = jwt::decode(jwt);
 
       // TODO(tk): handle optional key ID and find secret based on key ID if it
@@ -87,11 +87,11 @@ class SharedSecretMessageSigner : public MessageSigner {
       const std::string& pl = decoded.get_payload();
       auto data = nlohmann::json::parse(pl);
       NPLOGD << "DATA: " << data.dump();
-      const uint32_t claimedSeq = data["messageSeq"].get<uint32_t>();
+      const uint32_t claimedSeq = data.at("messageSeq").get<uint32_t>();
       if (claimedSeq != nextMessageVerifySeq_) {
         throw VerificationError();
       }
-      const std::string signerNonce = data["signerNonce"].get<std::string>();
+      const std::string signerNonce = data.at("signerNonce").get<std::string>();
       if (claimedSeq == 0) {
         remoteNonce_ = signerNonce;
       } else {
@@ -99,13 +99,13 @@ class SharedSecretMessageSigner : public MessageSigner {
           throw VerificationError();
         }
         const std::string verifyNonce =
-            data["verifierNonce"].get<std::string>();
+            data.at("verifierNonce").get<std::string>();
         if (verifyNonce != myNonce_) {
           throw VerificationError();
         }
       }
       nextMessageVerifySeq_++;
-      auto message = data["message"];
+      auto message = data.at("message");
       return message;
     } catch (std::exception& ex) {
       NPLOGE << "Failed to validate JWT: " << ex.what();

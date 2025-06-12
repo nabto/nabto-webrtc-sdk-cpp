@@ -21,6 +21,16 @@ class VerificationError : public std::exception {
   VerificationError& operator=(VerificationError&&) = delete;
 };
 
+class DecodeError : public std::exception {
+ public:
+  ~DecodeError() override = default;
+  DecodeError() = default;
+  DecodeError(const DecodeError&) = delete;
+  DecodeError& operator=(const DecodeError&) = delete;
+  DecodeError(DecodeError&&) = delete;
+  DecodeError& operator=(DecodeError&&) = delete;
+};
+
 class MessageSigner {
  public:
   virtual ~MessageSigner() = default;

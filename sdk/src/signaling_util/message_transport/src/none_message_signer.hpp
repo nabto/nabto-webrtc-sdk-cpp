@@ -28,13 +28,17 @@ class NoneMessageSigner : public MessageSigner {
   }
 
   nlohmann::json verifyMessage(const nlohmann::json& msg) override {
-    NPLOGD << "signaling signer handle msg" << msg;
+    NPLOGD << "signaling signer handle msg" << msg.dump();
     try {
-      auto data = msg["message"];
+      auto type = msg.at("type").get<std::string>();
+      if (type != "NONE") {
+        throw VerificationError();
+      }
+      auto data = msg.at("message");
       return data;
-    } catch (std::exception& ex) {
+    } catch (nlohmann::json::exception& ex) {
       NPLOGE << "Failed to parse JSON: " << ex.what();
-      throw VerificationError();
+      throw DecodeError();
     }
   }
 };

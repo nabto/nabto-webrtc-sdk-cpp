@@ -77,7 +77,7 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
     auto msg = signer_->verifyMessage(msgIn);
 
     NPLOGI << "Webrtc got signaling message: " << msg.dump();
-    auto type = msg["type"].get<std::string>();
+    auto type = msg.at("type").get<std::string>();
     if (type == "SETUP_REQUEST") {
       requestIceServers();
     } else if (type == "DESCRIPTION" || type == "CANDIDATE") {
@@ -95,12 +95,28 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
         nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR,
         "Could not verify the incoming signaling message");
     handleError(err);
+  } catch (nabto::util::DecodeError& ex) {
+    NPLOGE << "Could not decode the incoming signaling message: "
+           << msgIn.dump() << " with: " << ex.what();
+    auto err = nabto::signaling::SignalingError(
+        nabto::signaling::SignalingErrorCode::DECODE_ERROR,
+        "Could not decode the incoming signaling message");
+    handleError(err);
+  } catch (nlohmann::json::exception& ex) {
+    NPLOGE << "Failed to parse json: " << ex.what()
+           << " for msg: " << msgIn.dump();
+    auto err = nabto::signaling::SignalingError(
+        nabto::signaling::SignalingErrorCode::DECODE_ERROR,
+        "Could not decode the incoming signaling message");
+    handleError(err);
+
   } catch (std::exception& ex) {
     NPLOGE << "Failed to handle message: " << msgIn.dump()
            << " with: " << ex.what();
-    // TODO(tk): handle exception
+    auto err = nabto::signaling::SignalingError(
+        nabto::signaling::SignalingErrorCode::INTERNAL_ERROR, "Internal error");
+    handleError(err);
   }
-  // TODO(tk): catch json exceptions
 };
 
 void MessageTransportImpl::setSetupDoneHandler(

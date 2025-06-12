@@ -94,11 +94,12 @@ void WebrtcConnection::init() {
 void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
   try {
     NPLOGI << "Webrtc got signaling message: " << msg.dump();
-    auto type = msg["type"].get<std::string>();
+    auto type = msg.at("type").get<std::string>();
 
     if (type == "DESCRIPTION") {
-      rtc::Description remDesc(msg["description"]["sdp"].get<std::string>(),
-                               msg["description"]["type"].get<std::string>());
+      rtc::Description remDesc(
+          msg.at("description").at("sdp").get<std::string>(),
+          msg.at("description").at("type").get<std::string>());
 
       bool offerCollision =
           remDesc.type() == rtc::Description::Type::Offer &&
@@ -114,8 +115,9 @@ void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
       pc_->setRemoteDescription(remDesc);
     } else if (type == "CANDIDATE") {
       try {
-        rtc::Candidate cand(msg["candidate"]["candidate"].get<std::string>(),
-                            msg["candidate"]["sdpMid"].get<std::string>());
+        rtc::Candidate cand(
+            msg.at("candidate").at("candidate").get<std::string>(),
+            msg.at("candidate").at("sdpMid").get<std::string>());
         pc_->addRemoteCandidate(cand);
       } catch (nlohmann::json::exception& ex) {
         NPLOGE << "handleIce json exception: " << ex.what();
