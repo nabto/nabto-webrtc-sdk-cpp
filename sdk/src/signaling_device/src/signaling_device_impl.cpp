@@ -403,11 +403,11 @@ std::vector<struct IceServer> SignalingDeviceImpl::parseIceServers(
     auto servers = ice.at("iceServers").get<nlohmann::json::array_t>();
     for (auto server : servers) {
       std::string username;
-      if (!server.at("username").empty()) {
+      if (server.contains("username")) {
         username = server.at("username").get<std::string>();
       }
       std::string cred;
-      if (!server.at("credential").empty()) {
+      if (server.contains("credential")) {
         cred = server.at("credential").get<std::string>();
       }
 
