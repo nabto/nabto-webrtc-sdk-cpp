@@ -1,16 +1,17 @@
 #pragma once
 
+#include "message_signer.hpp"
 #include <jwt-cpp/jwt.h>
 
-#include <memory>
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
+
 #include <nlohmann/json.hpp>
 
-#include "message_signer.hpp"
+#include <memory>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 class NoneMessageSigner : public MessageSigner {
  public:
@@ -19,7 +20,7 @@ class NoneMessageSigner : public MessageSigner {
     return signer;
   }
 
-  NoneMessageSigner() {}
+  NoneMessageSigner() = default;
 
   nlohmann::json signMessage(const nlohmann::json& msg) override {
     nlohmann::json data = {{"type", "NONE"}, {"message", msg}};
@@ -27,16 +28,20 @@ class NoneMessageSigner : public MessageSigner {
   }
 
   nlohmann::json verifyMessage(const nlohmann::json& msg) override {
-    NPLOGD << "signaling signer handle msg" << msg;
+    NPLOGD << "signaling signer handle msg" << msg.dump();
     try {
-      auto data = msg["message"];
+      auto type = msg.at("type").get<std::string>();
+      if (type != "NONE") {
+        throw VerificationError();
+      }
+      auto data = msg.at("message");
       return data;
-    } catch (std::exception& ex) {
+    } catch (nlohmann::json::exception& ex) {
       NPLOGE << "Failed to parse JSON: " << ex.what();
-      throw VerificationError();
+      throw DecodeError();
     }
   }
 };
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

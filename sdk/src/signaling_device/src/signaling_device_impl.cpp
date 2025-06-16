@@ -32,10 +32,10 @@ nabto::signaling::SignalingError signalingErrorFromJson(
     const nlohmann::json& err) {
   std::string msg;
   if (err.contains("message")) {
-    msg = err["message"].get<std::string>();
+    msg = err.at("message").get<std::string>();
   }
 
-  return {err["code"].get<std::string>(), msg};
+  return {err.at("code").get<std::string>(), msg};
 }
 
 }  // namespace
@@ -219,7 +219,7 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
   }
   SignalingChannelImplPtr chan = nullptr;
   try {
-    const std::string connId = message["channelId"].get<std::string>();
+    const std::string connId = message.at("channelId").get<std::string>();
     try {
       chan = channels_.at(connId);
       if (type == SignalingMessageType::PEER_OFFLINE) {
@@ -231,7 +231,7 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
         return;
       }
       if (type == SignalingMessageType::ERROR) {
-        chan->handleError(signalingErrorFromJson(message["error"]));
+        chan->handleError(signalingErrorFromJson(message.at("error")));
         return;
       }
     } catch (std::exception& exception) {
@@ -244,13 +244,13 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
     if (type == SignalingMessageType::MESSAGE) {
       bool authorized = false;
       if (message.contains("authorized")) {
-        authorized = message["authorized"].get<bool>();
+        authorized = message.at("authorized").get<bool>();
       } else {
         NABTO_SIGNALING_LOGD
             << "authorized bit not contained in incoming message"
             << message.dump();
       }
-      const auto& msg = message["message"];
+      const auto& msg = message.at("message");
       if (chan == nullptr) {
         // channel is unknown
         if (!SignalingChannelImpl::isInitialMessage(msg)) {
@@ -302,7 +302,7 @@ void SignalingDeviceImpl::parseAttachResponse(const std::string& response) {
   try {
     const std::lock_guard<std::mutex> lock(mutex_);
     auto root = nlohmann::json::parse(response);
-    wsUrl_ = root["signalingUrl"].get<std::string>();
+    wsUrl_ = root.at("signalingUrl").get<std::string>();
 
   } catch (std::exception& exception) {
     NABTO_SIGNALING_LOGE << "Failed parse attach response: "
@@ -400,19 +400,19 @@ std::vector<struct IceServer> SignalingDeviceImpl::parseIceServers(
   std::vector<struct IceServer> result;
   try {
     auto ice = nlohmann::json::parse(data);
-    auto servers = ice["iceServers"].get<nlohmann::json::array_t>();
+    auto servers = ice.at("iceServers").get<nlohmann::json::array_t>();
     for (auto server : servers) {
       std::string username;
-      if (!server["username"].empty()) {
-        username = server["username"].get<std::string>();
+      if (server.contains("username")) {
+        username = server.at("username").get<std::string>();
       }
       std::string cred;
-      if (!server["credential"].empty()) {
-        cred = server["credential"].get<std::string>();
+      if (server.contains("credential")) {
+        cred = server.at("credential").get<std::string>();
       }
 
       std::vector<std::string> iceUrls;
-      auto urls = server["urls"].get<nlohmann::json::array_t>();
+      auto urls = server.at("urls").get<nlohmann::json::array_t>();
       for (auto const& url : urls) {
         iceUrls.push_back(url.get<std::string>());
       }

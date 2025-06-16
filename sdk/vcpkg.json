@@ -1,17 +1,21 @@
 {
-    "name": "nabto-signaling",
-    "version-string": "0.0.1",
-    "dependencies": [
-      "curl",
-      "plog",
-      "nlohmann-json",
-      "gtest",
-      "cpprestsdk",
-      {
-        "name": "libdatachannel",
-        "features": ["srtp", "ws"]
-      },
-      "boost-uuid",
-      "openssl"
-    ]
-  }
+  "name": "nabto-signaling",
+  "version-string": "0.0.1",
+  "dependencies": [
+    "curl",
+    "plog",
+    "nlohmann-json",
+    "gtest",
+    "cpprestsdk",
+    {
+      "name": "libdatachannel",
+      "features": [
+        "srtp",
+        "ws"
+      ]
+    },
+    "boost-uuid",
+    "jwt-cpp",
+    "openssl"
+  ]
+}

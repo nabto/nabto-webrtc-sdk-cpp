@@ -10,6 +10,7 @@ add_subdirectory(src/signaling_util/curl_http_client)
 add_subdirectory(src/signaling_util/std_timer)
 add_subdirectory(src/signaling_util/uuid)
 add_subdirectory(src/signaling_util/token_generator)
+add_subdirectory(src/signaling_util/message_transport)
 
 
 include(GNUInstallDirs)
@@ -35,8 +36,10 @@ add_library("${PROJECT_NAME}::util_uuid" ALIAS nabto_webrtc_uuid)
 
 add_library("${PROJECT_NAME}::util_token_generator" ALIAS nabto_webrtc_token_generator)
 
+add_library("${PROJECT_NAME}::util_message_transport" ALIAS nabto_webrtc_message_transport)
+
 install(
-    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid nabto_webrtc_token_generator
+    TARGETS nabto_webrtc_signaling_device nabto_webrtc_logging nabto_webrtc_curl_client nabto_webrtc_std_timer nabto_webrtc_uuid nabto_webrtc_token_generator nabto_webrtc_message_transport
     EXPORT "${TARGETS_EXPORT_NAME}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -77,17 +80,23 @@ if (NABTO_SIGNALING_BUILD_TESTS)
     find_package(GTest CONFIG REQUIRED)
     find_package(OpenSSL REQUIRED)
     find_package(LibDataChannel REQUIRED)
+    find_package(plog REQUIRED)
 
     enable_testing()
     add_executable(
         nabto_signaling_test
+        test/test_setup.cpp
         test/create_destroy_signaling_device.cpp
         src/signaling_device/src/signaling_device_impl_test.cpp
         src/signaling_util/token_generator/src/openssl_key_id_test.cpp
+        test/message_transport_tests.cpp
     )
     target_link_libraries(
         nabto_signaling_test
         nabto_webrtc_signaling_device
+        NabtoWebrtcSignaling::util_message_transport
+        NabtoWebrtcSignaling::util_logging
+        plog::plog
         OpenSSL::Crypto
         GTest::gtest_main
     )

@@ -18,6 +18,7 @@ target_link_libraries(webrtc_example_common
     NabtoWebrtcSignaling::util_curl_client
     NabtoWebrtcSignaling::util_std_timer
     NabtoWebrtcSignaling::util_uuid
+    NabtoWebrtcSignaling::util_message_transport
     NabtoWebrtcSignaling::device
 )
 
@@ -33,7 +34,4 @@ target_sources(webrtc_example_common PUBLIC
     BASE_DIRS .
     FILES
         libdatachannel_websocket/rtc_websocket_wrapper.hpp
-        message_signer/message_signer.hpp
-        message_signer/none_message_signer.hpp
-        message_signer/shared_secret_message_signer.hpp
 )
