@@ -125,6 +125,15 @@ TEST(message_transport, invalid_setup_req) {
   nabto::util::MessageTransportPtr mt =
       nabto::util::MessageTransportFactory::createNoneTransport(mock, mock);
 
+  bool errorHandled = false;
+  mt->setErrorHandler(
+      [&errorHandled](const nabto::signaling::SignalingError& err) {
+        errorHandled = true;
+        ASSERT_EQ(err.errorCode(), "DECODE_ERROR");
+        ASSERT_EQ(err.errorMessage(),
+                  "Could not decode the incoming signaling message");
+      });
+
   ASSERT_TRUE(mock->msgHandler_ != nullptr);
 
   nlohmann::json setupReq = {{"foo", "bar"}};
@@ -134,6 +143,7 @@ TEST(message_transport, invalid_setup_req) {
   ASSERT_EQ(mock->errors_[0].errorCode(), "DECODE_ERROR");
   ASSERT_EQ(mock->errors_[0].errorMessage(),
             "Could not decode the incoming signaling message");
+  ASSERT_TRUE(errorHandled);
 }
 
 TEST(message_transport, invalid_signer_type) {

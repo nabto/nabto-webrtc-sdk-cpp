@@ -195,7 +195,9 @@ void MessageTransportImpl::sendSetupResponse(
 
 void MessageTransportImpl::handleError(const signaling::SignalingError& err) {
   channel_->sendError(err);
-  // TODO(tk): Emit error to application and send error to client
+  if (errHandler_) {
+    errHandler_(err);
+  }
 }
 
 }  // namespace util

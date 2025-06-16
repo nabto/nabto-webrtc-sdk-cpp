@@ -12,12 +12,25 @@ class Environment : public ::testing::Environment {
 
   // Override this to define how to set up the environment.
   void SetUp() override {
+    char* envLvl = std::getenv("NABTO_LOG_LEVEL");
+    auto lvl = plog::Severity::none;
+    if (envLvl) {
+      auto strLvl = std::string(envLvl);
+      if (strLvl == "trace") {
+        lvl = plog::Severity::debug;
+      } else if (strLvl == "info") {
+        lvl = plog::Severity::info;
+      } else if (strLvl == "error") {
+        lvl = plog::Severity::error;
+      }
+    }
+
     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-    plog::init<42>(plog::Severity::debug, &consoleAppender);
+    plog::init<42>(lvl, &consoleAppender);
 
     // init logging for NabtoSignaling::core
     plog::init<nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID>(
-        plog::Severity::debug, &consoleAppender);
+        lvl, &consoleAppender);
   }
 
   // Override this to define how to tear down the environment.
