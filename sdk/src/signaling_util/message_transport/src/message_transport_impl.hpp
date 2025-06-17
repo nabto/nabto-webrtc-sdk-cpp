@@ -2,6 +2,9 @@
 
 #include <nabto/webrtc/util/message_transport.hpp>
 
+#include <map>
+#include <mutex>
+
 namespace nabto {
 namespace util {
 
@@ -28,6 +31,7 @@ class MessageTransportImpl
   SetupDoneListenerId addSetupDoneListener(SetupDoneHandler handler) override;
 
   void removeSetupDoneListener(SetupDoneListenerId id) override {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
     setupHandlers_.erase(id);
   }
 
@@ -41,6 +45,7 @@ class MessageTransportImpl
       signaling::SignalingMessageHandler handler) override;
 
   void removeMessageListener(TransportMessageListenerId id) override {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
     msgHandlers_.erase(id);
   }
   /**
@@ -52,6 +57,7 @@ class MessageTransportImpl
       signaling::SignalingErrorHandler handler) override;
 
   void removeErrorListener(TransportErrorListenerId id) override {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
     errHandlers_.erase(id);
   }
 
@@ -75,6 +81,8 @@ class MessageTransportImpl
   std::function<std::string(const std::string keyId)> secretHandler_ = nullptr;
   std::function<std::string(const std::string keyId)> sharedSecretHandler_ =
       nullptr;
+
+  std::mutex handlerLock_;
 
   enum SigningMode mode_;
 

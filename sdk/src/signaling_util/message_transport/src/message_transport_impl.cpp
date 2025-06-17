@@ -12,7 +12,9 @@
 
 #include <exception>
 #include <functional>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -93,7 +95,13 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
         NPLOGE << "Received signaling message without a registered message "
                   "handler";
       } else {
-        for (const auto& [id, handler] : msgHandlers_) {
+        std::map<TransportMessageListenerId, signaling::SignalingMessageHandler>
+            msgHandlers;
+        {
+          const std::lock_guard<std::mutex> lock(handlerLock_);
+          msgHandlers = msgHandlers_;
+        }
+        for (const auto& [id, handler] : msgHandlers) {
           handler(msg);
         }
       }
@@ -130,8 +138,8 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
 };
 
 SetupDoneListenerId MessageTransportImpl::addSetupDoneListener(
-    std::function<void(const std::vector<signaling::IceServer>& iceServers)>
-        handler) {
+    SetupDoneHandler handler) {
+  const std::lock_guard<std::mutex> lock(handlerLock_);
   const SetupDoneListenerId id = currSetupListId_;
   currSetupListId_++;
   setupHandlers_.insert({id, handler});
@@ -140,6 +148,7 @@ SetupDoneListenerId MessageTransportImpl::addSetupDoneListener(
 
 TransportMessageListenerId MessageTransportImpl::addMessageListener(
     signaling::SignalingMessageHandler handler) {
+  const std::lock_guard<std::mutex> lock(handlerLock_);
   const TransportMessageListenerId id = currMsgListId_;
   currMsgListId_++;
   msgHandlers_.insert({id, handler});
@@ -148,6 +157,7 @@ TransportMessageListenerId MessageTransportImpl::addMessageListener(
 
 TransportErrorListenerId MessageTransportImpl::addErrorListener(
     signaling::SignalingErrorHandler handler) {
+  const std::lock_guard<std::mutex> lock(handlerLock_);
   const TransportErrorListenerId id = currErrListId_;
   currErrListId_++;
   errHandlers_.insert({id, handler});
@@ -183,7 +193,12 @@ void MessageTransportImpl::requestIceServers() {
   device_->requestIceServers(
       [self](const std::vector<struct nabto::signaling::IceServer>& servers) {
         self->sendSetupResponse(servers);
-        for (const auto& [id, handler] : self->setupHandlers_) {
+        std::map<SetupDoneListenerId, SetupDoneHandler> setupHandlers;
+        {
+          const std::lock_guard<std::mutex> lock(self->handlerLock_);
+          setupHandlers = self->setupHandlers_;
+        }
+        for (const auto& [id, handler] : setupHandlers) {
           handler(servers);
         }
       });
@@ -216,7 +231,14 @@ void MessageTransportImpl::sendSetupResponse(
 
 void MessageTransportImpl::handleError(const signaling::SignalingError& err) {
   channel_->sendError(err);
-  for (const auto& [id, handler] : errHandlers_) {
+  std::map<TransportErrorListenerId, signaling::SignalingErrorHandler>
+      errHandlers;
+  {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
+    errHandlers = errHandlers_;
+  }
+
+  for (const auto& [id, handler] : errHandlers) {
     handler(err);
   }
 }
