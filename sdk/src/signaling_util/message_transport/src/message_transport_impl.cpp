@@ -69,8 +69,16 @@ void MessageTransportImpl::init() {
 }
 
 void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
-  if (!signer_) {
-    setupSigner(msgIn);
+  try {
+    if (!signer_) {
+      setupSigner(msgIn);
+    }
+  } catch (std::exception& ex) {
+    NPLOGE << "Failed to setup signer: " << ex.what();
+    auto err = nabto::signaling::SignalingError(
+        nabto::signaling::SignalingErrorCode::INTERNAL_ERROR, "Internal error");
+    handleError(err);
+    return;
   }
   try {
     NPLOGI << "Webrtc got signaling message IN: " << msgIn.dump();
@@ -153,7 +161,10 @@ void MessageTransportImpl::sendMessage(const nlohmann::json& message) {
   } catch (std::exception& e) {
     NPLOGE << "Failed to sign the message: " << message.dump()
            << ", error: " << e.what();
-    // TODO(tk): handle exception
+    auto err = nabto::signaling::SignalingError(
+        nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR,
+        "Could not sign the signaling message");
+    handleError(err);
   }
 }
 
@@ -165,7 +176,6 @@ void MessageTransportImpl::setupSigner(const nlohmann::json& msg) {
     auto secret = sharedSecretHandler_(keyId);
     signer_ = SharedSecretMessageSigner::create(secret, keyId);
   }
-  // TODO(tk): if something fails here handle the error
 }
 
 void MessageTransportImpl::requestIceServers() {
