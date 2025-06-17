@@ -81,7 +81,7 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
     if (type == "SETUP_REQUEST") {
       requestIceServers();
     } else if (type == "DESCRIPTION" || type == "CANDIDATE") {
-      if (msgHandlers_.size() == 0) {
+      if (msgHandlers_.empty()) {
         NPLOGE << "Received signaling message without a registered message "
                   "handler";
       } else {

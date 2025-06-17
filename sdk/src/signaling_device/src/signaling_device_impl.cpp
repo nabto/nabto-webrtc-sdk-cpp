@@ -268,7 +268,7 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
         chan = SignalingChannelImpl::create(self, connId);
         channels_.insert(std::make_pair(connId, chan));
 
-        if (chanHandlers_.size() == 0) {
+        if (chanHandlers_.empty()) {
           websocketSendError(
               connId,
               SignalingError(
