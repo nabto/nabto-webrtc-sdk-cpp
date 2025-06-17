@@ -32,15 +32,15 @@ void WebrtcConnection::init() {
   // createPeerConnection();
   auto self = shared_from_this();
 
-  messageTransport_->setMessageHandler(
+  messageTransport_->addMessageListener(
       [self](const nlohmann::json& msg) { self->handleMessage(msg); });
 
-  messageTransport_->setSetupDoneHandler(
+  messageTransport_->addSetupDoneListener(
       [self](const std::vector<signaling::IceServer>& iceServers) {
         self->parseIceServers(iceServers);
       });
 
-  messageTransport_->setErrorHandler(
+  messageTransport_->addErrorListener(
       [self](const nabto::signaling::SignalingError& error) {
         NPLOGE << "Got errorCode: " << error.errorCode();
         // All errors are fatal, so we clean up no matter what the error was
@@ -51,7 +51,7 @@ void WebrtcConnection::init() {
         }
       });
 
-  channel_->setStateChangeHandler(
+  channel_->addStateChangeListener(
       [self](nabto::signaling::SignalingChannelState event) {
         switch (event) {
           case nabto::signaling::SignalingChannelState::OFFLINE:
@@ -80,7 +80,7 @@ void WebrtcConnection::init() {
         }
       });
 
-  channel_->setErrorHandler(
+  channel_->addErrorListener(
       [self](const nabto::signaling::SignalingError& error) {
         NPLOGE << "Got errorCode: " << error.errorCode();
         // All errors are fatal, so we clean up no matter what the error was

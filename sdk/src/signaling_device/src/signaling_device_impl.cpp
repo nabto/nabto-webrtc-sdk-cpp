@@ -162,8 +162,9 @@ void SignalingDeviceImpl::close() {
   {
     const std::lock_guard<std::mutex> lock(mutex_);
     channels_.clear();
-    channelHandler_ = nullptr;
-    eventHandler_ = nullptr;
+    chanHandlers_.clear();
+    stateHandlers_.clear();
+    reconnHandlers_.clear();
 
     if (ws_) {
       ws_->close();
@@ -179,8 +180,8 @@ void SignalingDeviceImpl::connectWs() {
     NABTO_SIGNALING_LOGI << "WebSocket open";
     if (self->firstConnect_) {
       self->firstConnect_ = false;
-      if (self->reconnectHandler_) {
-        self->reconnectHandler_();
+      for (const auto& [id, handler] : self->reconnHandlers_) {
+        handler();
       }
     }
     self->changeState(SignalingDeviceState::CONNECTED);
@@ -266,15 +267,17 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
         auto self = shared_from_this();
         chan = SignalingChannelImpl::create(self, connId);
         channels_.insert(std::make_pair(connId, chan));
-        if (channelHandler_) {
-          channelHandler_(chan, authorized);
-        } else {
+
+        if (chanHandlers_.size() == 0) {
           websocketSendError(
               connId,
               SignalingError(
                   SignalingErrorCode::INTERNAL_ERROR,
                   "No NewChannelHandler was set, dropping the channel."));
           return;
+        }
+        for (const auto& [id, handler] : chanHandlers_) {
+          handler(chan, authorized);
         }
       }
       chan->handleMessage(msg);
@@ -429,8 +432,8 @@ std::vector<struct IceServer> SignalingDeviceImpl::parseIceServers(
 
 void SignalingDeviceImpl::changeState(SignalingDeviceState state) {
   state_ = state;
-  if (eventHandler_) {
-    eventHandler_(state);
+  for (const auto& [id, handler] : stateHandlers_) {
+    handler(state);
   }
 }
 

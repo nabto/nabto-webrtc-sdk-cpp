@@ -33,15 +33,42 @@ class SignalingDeviceImpl
   void close() override;
   void checkAlive() override;
   void requestIceServers(IceServersResponse callback) override;
-  void setNewChannelHandler(NewSignalingChannelHandler handler) override {
-    channelHandler_ = handler;
+
+  NewChannelListenerId addNewChannelListener(
+      NewSignalingChannelHandler handler) override {
+    const NewChannelListenerId id = currChanListId_;
+    currChanListId_++;
+    chanHandlers_.insert({id, handler});
+    return id;
   }
-  void setStateChangeHandler(SignalingDeviceStateHandler handler) override {
-    eventHandler_ = handler;
+
+  void removeNewChannelListener(NewChannelListenerId id) override {
+    chanHandlers_.erase(id);
+  }
+
+  ConnectionStateListenerId addStateChangeListener(
+      SignalingDeviceStateHandler handler) override {
+    const ChannelStateListenerId id = currStateListId_;
+    currStateListId_++;
+    stateHandlers_.insert({id, handler});
+    return id;
   };
-  void setReconnectHandler(SignalingReconnectHandler handler) override {
-    reconnectHandler_ = handler;
+
+  void removeStateChangeListener(ConnectionStateListenerId id) override {
+    stateHandlers_.erase(id);
+  }
+
+  ReconnectListenerId addReconnectListener(
+      SignalingReconnectHandler handler) override {
+    const ReconnectListenerId id = currReconnListId_;
+    currReconnListId_++;
+    reconnHandlers_.insert({id, handler});
+    return id;
   };
+
+  void removeReconnectListener(ReconnectListenerId id) override {
+    reconnHandlers_.erase(id);
+  }
 
   // #### END OF SDK FUNCTIONS ####
 
@@ -58,9 +85,16 @@ class SignalingDeviceImpl
   SignalingHttpClientPtr httpCli_;
   std::map<std::string, SignalingChannelImplPtr>
       channels_;  // channel ID to channel impl
-  NewSignalingChannelHandler channelHandler_;
-  SignalingDeviceStateHandler eventHandler_;
-  SignalingReconnectHandler reconnectHandler_;
+
+  std::map<NewChannelListenerId, NewSignalingChannelHandler> chanHandlers_;
+  std::map<ConnectionStateListenerId, SignalingDeviceStateHandler>
+      stateHandlers_;
+  std::map<ReconnectListenerId, SignalingReconnectHandler> reconnHandlers_;
+
+  NewChannelListenerId currChanListId_ = 0;
+  ConnectionStateListenerId currStateListId_ = 0;
+  ReconnectListenerId currReconnListId_ = 0;
+
   std::string deviceId_;
   std::string productId_;
   SignalingTokenGeneratorPtr tokenProvider_;

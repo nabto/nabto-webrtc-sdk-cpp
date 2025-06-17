@@ -61,7 +61,7 @@ MessageTransportImpl::MessageTransportImpl(
 
 void MessageTransportImpl::init() {
   auto self = shared_from_this();
-  channel_->setMessageHandler(
+  channel_->addMessageListener(
       // for some reason clang tidy complains that nlohmann is not directly
       // included here. It does not fail 3 lines later but it does fail here.
       // NOLINTNEXTLINE(misc-include-cleaner)
@@ -81,11 +81,13 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
     if (type == "SETUP_REQUEST") {
       requestIceServers();
     } else if (type == "DESCRIPTION" || type == "CANDIDATE") {
-      if (msgHandler_) {
-        msgHandler_(msg);
-      } else {
+      if (msgHandlers_.size() == 0) {
         NPLOGE << "Received signaling message without a registered message "
                   "handler";
+      } else {
+        for (const auto& [id, handler] : msgHandlers_) {
+          handler(msg);
+        }
       }
     }
   } catch (nabto::util::VerificationError& ex) {
@@ -119,20 +121,29 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
   }
 };
 
-void MessageTransportImpl::setSetupDoneHandler(
+SetupDoneListenerId MessageTransportImpl::addSetupDoneListener(
     std::function<void(const std::vector<signaling::IceServer>& iceServers)>
         handler) {
-  setupHandler_ = handler;
+  const SetupDoneListenerId id = currSetupListId_;
+  currSetupListId_++;
+  setupHandlers_.insert({id, handler});
+  return id;
 }
 
-void MessageTransportImpl::setMessageHandler(
+TransportMessageListenerId MessageTransportImpl::addMessageListener(
     signaling::SignalingMessageHandler handler) {
-  msgHandler_ = handler;
+  const TransportMessageListenerId id = currMsgListId_;
+  currMsgListId_++;
+  msgHandlers_.insert({id, handler});
+  return id;
 }
 
-void MessageTransportImpl::setErrorHandler(
+TransportErrorListenerId MessageTransportImpl::addErrorListener(
     signaling::SignalingErrorHandler handler) {
-  errHandler_ = handler;
+  const TransportErrorListenerId id = currErrListId_;
+  currErrListId_++;
+  errHandlers_.insert({id, handler});
+  return id;
 }
 
 void MessageTransportImpl::sendMessage(const nlohmann::json& message) {
@@ -162,8 +173,8 @@ void MessageTransportImpl::requestIceServers() {
   device_->requestIceServers(
       [self](const std::vector<struct nabto::signaling::IceServer>& servers) {
         self->sendSetupResponse(servers);
-        if (self->setupHandler_) {
-          self->setupHandler_(servers);
+        for (const auto& [id, handler] : self->setupHandlers_) {
+          handler(servers);
         }
       });
 }
@@ -195,8 +206,8 @@ void MessageTransportImpl::sendSetupResponse(
 
 void MessageTransportImpl::handleError(const signaling::SignalingError& err) {
   channel_->sendError(err);
-  if (errHandler_) {
-    errHandler_(err);
+  for (const auto& [id, handler] : errHandlers_) {
+    handler(err);
   }
 }
 

@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
       opts.deviceId, opts.productId, jwtPtr, opts.signalingUrl, ws, http, tf};
 
   auto device = nabto::signaling::SignalingDeviceFactory::create(conf);
-  device->setNewChannelHandler(
+  device->addNewChannelListener(
       [device, trackHandler, &opts /*, &conns*/](
           nabto::signaling::SignalingChannelPtr channel, bool authorized) {
         // Handle authorization

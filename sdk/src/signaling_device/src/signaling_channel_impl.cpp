@@ -31,9 +31,9 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
     if (type == "DATA") {
       NABTO_SIGNALING_LOGD << "Handling DATA";
       sendAck(msg);
-      if (signalingMessageHandler_) {
-        const auto& str = msg.at("data");
-        signalingMessageHandler_(str);
+      const auto& str = msg.at("data");
+      for (const auto& [id, handler] : messageHandlers_) {
+        handler(str);
       }
     } else if (type == "ACK") {
       NABTO_SIGNALING_LOGD << "Handling ACK";
@@ -48,12 +48,12 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
 }
 
 void SignalingChannelImpl::wsClosed() {
-  if (signalingEventHandler_) {
-    signalingEventHandler_(SignalingChannelState::CLOSED);
+  for (const auto& [id, handler] : stateHandlers_) {
+    handler(SignalingChannelState::CLOSED);
   }
-  signalingMessageHandler_ = nullptr;
-  signalingEventHandler_ = nullptr;
-  signalingErrorHandler_ = nullptr;
+  messageHandlers_.clear();
+  stateHandlers_.clear();
+  errorHandlers_.clear();
 }
 
 void SignalingChannelImpl::sendMessage(const nlohmann::json& message) {
@@ -99,32 +99,31 @@ void SignalingChannelImpl::peerConnected() {
   for (auto const& message : unackedMessages_) {
     signaler_->websocketSendMessage(channelId_, message);
   }
-  if (signalingEventHandler_) {
-    signalingEventHandler_(SignalingChannelState::ONLINE);
+  for (const auto& [id, handler] : stateHandlers_) {
+    handler(SignalingChannelState::ONLINE);
   }
 }
 
 void SignalingChannelImpl::peerOffline() {
   NABTO_SIGNALING_LOGI << "Peer: " << channelId_ << " went offline";
-  if (signalingEventHandler_) {
-    signalingEventHandler_(SignalingChannelState::OFFLINE);
+  for (const auto& [id, handler] : stateHandlers_) {
+    handler(SignalingChannelState::OFFLINE);
   }
 }
 
 void SignalingChannelImpl::handleError(const SignalingError& error) {
   NABTO_SIGNALING_LOGI << "Got error: (" << error.errorCode() << ") "
                        << error.errorMessage() << " from Peer: " << channelId_;
-  if (signalingErrorHandler_) {
-    signalingErrorHandler_(error);
+  for (const auto& [id, handler] : errorHandlers_) {
+    handler(error);
   }
 }
 
 void SignalingChannelImpl::close() {
   signaler_->channelClosed(channelId_);
-  // signaler_ = nullptr;
-  signalingMessageHandler_ = nullptr;
-  signalingEventHandler_ = nullptr;
-  signalingErrorHandler_ = nullptr;
+  messageHandlers_.clear();
+  stateHandlers_.clear();
+  errorHandlers_.clear();
 }
 
 bool SignalingChannelImpl::isInitialMessage(const nlohmann::json& msg) {

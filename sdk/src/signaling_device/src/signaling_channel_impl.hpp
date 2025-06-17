@@ -33,8 +33,16 @@ class SignalingChannelImpl
    *
    * @param handler the handler to set
    */
-  void setMessageHandler(SignalingMessageHandler handler) override {
-    signalingMessageHandler_ = handler;
+  MessageListenerId addMessageListener(
+      SignalingMessageHandler handler) override {
+    const MessageListenerId id = currMsgListId_;
+    currMsgListId_++;
+    messageHandlers_.insert({id, handler});
+    return id;
+  }
+
+  void removeMessageListener(MessageListenerId id) override {
+    messageHandlers_.erase(id);
   }
 
   /**
@@ -42,18 +50,34 @@ class SignalingChannelImpl
    *
    * @param handler the handler to set
    */
-  void setStateChangeHandler(SignalingChannelStateHandler handler) override {
-    signalingEventHandler_ = handler;
+  ChannelStateListenerId addStateChangeListener(
+      SignalingChannelStateHandler handler) override {
+    const ChannelStateListenerId id = currStateListId_;
+    currStateListId_++;
+    stateHandlers_.insert({id, handler});
+    return id;
   };
+
+  void removeStateChangeListener(ChannelStateListenerId id) override {
+    stateHandlers_.erase(id);
+  }
 
   /**
    * Set a handler to be invoked if an error occurs on the channel
    *
    * @param handler the handler to set
    */
-  void setErrorHandler(SignalingErrorHandler handler) override {
-    signalingErrorHandler_ = handler;
+  ChannelErrorListenerId addErrorListener(
+      SignalingErrorHandler handler) override {
+    const ChannelErrorListenerId id = currErrListId_;
+    currErrListId_++;
+    errorHandlers_.insert({id, handler});
+    return id;
   };
+
+  void removeErrorListener(ChannelErrorListenerId id) override {
+    errorHandlers_.erase(id);
+  }
 
   /**
    * Send a signaling message to the client
@@ -90,9 +114,15 @@ class SignalingChannelImpl
  private:
   SignalingDeviceImplPtr signaler_;
   std::string channelId_;
-  SignalingMessageHandler signalingMessageHandler_;
-  SignalingChannelStateHandler signalingEventHandler_;
-  SignalingErrorHandler signalingErrorHandler_;
+
+  std::map<MessageListenerId, SignalingMessageHandler> messageHandlers_;
+  std::map<ChannelStateListenerId, SignalingChannelStateHandler> stateHandlers_;
+  std::map<ChannelErrorListenerId, SignalingErrorHandler> errorHandlers_;
+
+  MessageListenerId currMsgListId_ = 0;
+  ChannelStateListenerId currStateListId_ = 0;
+  ChannelErrorListenerId currErrListId_ = 0;
+
   uint32_t recvSeq_ = 0;
   uint32_t sendSeq_ = 0;
   std::vector<nlohmann::json> unackedMessages_;
