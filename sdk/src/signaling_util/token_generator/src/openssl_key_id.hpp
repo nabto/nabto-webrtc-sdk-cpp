@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 struct EVP_MD_CTXFree {
   void operator()(EVP_MD_CTX *ctx) { EVP_MD_CTX_free(ctx); }
@@ -105,5 +105,5 @@ static bool getKeyIdFromPrivateKey(const std::string &privateKey,
   keyId = "device:" + hash;
   return true;
 }
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

@@ -1,12 +1,12 @@
 #pragma once
 
+#include <nabto/webrtc/device.hpp>
+
 #include <chrono>
 #include <thread>
 
-#include <nabto/webrtc/device.hpp>
-
 namespace nabto {
-namespace example {
+namespace util {
 
 class StdTimer : public nabto::signaling::SignalingTimer,
                  public std::enable_shared_from_this<StdTimer> {
@@ -41,5 +41,5 @@ class StdTimerFactory : public nabto::signaling::SignalingTimerFactory {
   }
 };
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

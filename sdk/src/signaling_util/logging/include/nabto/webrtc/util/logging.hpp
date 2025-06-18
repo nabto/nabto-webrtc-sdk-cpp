@@ -14,10 +14,10 @@ constexpr int NABTO_LOG_ID = 42;
 #define NPLOGN PLOGN_(NABTO_LOG_ID)
 
 namespace nabto {
-namespace example {
+namespace util {
 static void initLogger(enum plog::Severity severity,
                        plog::IAppender* appender) {
   plog::init<NABTO_LOG_ID>(severity, appender);
 }
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

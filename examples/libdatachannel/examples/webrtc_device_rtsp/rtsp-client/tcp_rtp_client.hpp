@@ -11,7 +11,7 @@ typedef std::shared_ptr<TcpRtpClient> TcpRtpClientPtr;
 
 class TcpRtpClientConf {
  public:
-  nabto::example::CurlAsyncPtr curl;
+  nabto::util::CurlAsyncPtr curl;
   std::string url;
   RtpRepacketizerFactoryPtr videoRepack;
   RtpRepacketizerFactoryPtr audioRepack;
@@ -44,7 +44,7 @@ class TcpRtpClient : public std::enable_shared_from_this<TcpRtpClient> {
  private:
   static size_t rtp_write(void* ptr, size_t size, size_t nmemb, void* userp);
 
-  nabto::example::CurlAsyncPtr curl_;
+  nabto::util::CurlAsyncPtr curl_;
   std::string url_;
   bool stopped_ = true;
   std::mutex mutex_;

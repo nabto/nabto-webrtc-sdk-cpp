@@ -10,7 +10,7 @@
 #include <string>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 class NabtoJwt;
 typedef std::shared_ptr<NabtoJwt> NabtoJwtPtr;
@@ -56,5 +56,5 @@ class NabtoJwt : public nabto::signaling::SignalingTokenGenerator,
   std::string publicKey_;
 };
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto
