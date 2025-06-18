@@ -4,7 +4,7 @@
 #include <sstream>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 static std::string generate_uuid_v4() {
   std::random_device rd;
@@ -44,5 +44,5 @@ static std::string generate_uuid_v4() {
   return ss.str();
 }
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

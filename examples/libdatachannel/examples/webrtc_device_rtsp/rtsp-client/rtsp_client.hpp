@@ -92,7 +92,7 @@ class RtspClient : public std::enable_shared_from_this<RtspClient> {
 
   std::function<void(std::optional<std::string> error)> startCb_;
 
-  nabto::example::CurlAsyncPtr curl_;
+  nabto::util::CurlAsyncPtr curl_;
   std::string curlHeaders_;
   std::string readBuffer_;
   std::string contentBase_;

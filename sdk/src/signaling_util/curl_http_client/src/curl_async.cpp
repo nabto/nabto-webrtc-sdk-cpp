@@ -15,7 +15,7 @@
 #include <utility>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 CurlHttpClient::CurlHttpClient() : curl_(CurlAsync::create()) {}
 
@@ -273,5 +273,5 @@ void CurlAsync::threadRunner(CurlAsync* self) {
   self->me_ = nullptr;
 }
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto

@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
   }
 
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-  nabto::example::initLogger(opts.logLevel, &consoleAppender);
+  nabto::util::initLogger(opts.logLevel, &consoleAppender);
 
   // init logging for NabtoSignaling::core
   plog::init<nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID>(opts.logLevel,
@@ -53,12 +53,12 @@ int main(int argc, char** argv) {
   // std::vector<nabto::WebrtcConnectionPtr> conns;
   NPLOGI << "Connecting to device: " << opts.deviceId;
 
-  nabto::example::NabtoJwtPtr jwtPtr = nabto::example::NabtoJwt::create(
+  nabto::util::NabtoJwtPtr jwtPtr = nabto::util::NabtoJwt::create(
       opts.productId, opts.deviceId, opts.privateKey);
 
-  auto http = nabto::example::CurlHttpClient::create();
+  auto http = nabto::util::CurlHttpClient::create();
   auto ws = nabto::example::RtcWebsocketWrapper::create();
-  auto tf = nabto::example::StdTimerFactory::create();
+  auto tf = nabto::util::StdTimerFactory::create();
   auto trackHandler = nabto::example::H264TrackHandler::create(nullptr);
 
   nabto::signaling::SignalingDeviceConfig conf = {

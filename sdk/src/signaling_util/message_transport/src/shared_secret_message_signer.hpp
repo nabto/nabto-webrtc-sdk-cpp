@@ -24,7 +24,7 @@ class SharedSecretMessageSigner : public MessageSigner {
   // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
   SharedSecretMessageSigner(std::string& secret, std::string& secretId)
       : secret_(secret), secretId_(secretId) {
-    myNonce_ = example::generate_uuid_v4();
+    myNonce_ = generate_uuid_v4();
   }
 
   static std::string getKeyId(const nlohmann::json& message) {

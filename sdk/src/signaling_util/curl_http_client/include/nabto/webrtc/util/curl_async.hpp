@@ -10,7 +10,7 @@
 #include <thread>
 
 namespace nabto {
-namespace example {
+namespace util {
 
 class CurlAsync;
 using CurlAsyncPtr = std::shared_ptr<CurlAsync>;
@@ -85,5 +85,5 @@ class CurlAsync : public std::enable_shared_from_this<CurlAsync> {
   CurlAsyncPtr me_ = nullptr;
 };
 
-}  // namespace example
+}  // namespace util
 }  // namespace nabto
