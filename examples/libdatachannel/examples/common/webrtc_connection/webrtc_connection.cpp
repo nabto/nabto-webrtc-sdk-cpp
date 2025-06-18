@@ -68,10 +68,8 @@ void WebrtcConnection::init() {
             break;
           case nabto::signaling::SignalingChannelState::ONLINE:
             NPLOGD << "Got channel state ONLINE";
-            // TODO: This means client reconnected, we should probably
-            // checkAlive(), but really the client should do ICE restart if
-            // needed and we can just ignore. Also, if we had unacked messages
-            // the reliability layer will have resent them.
+            // This means client reconnected, the client should do ICE restart
+            // if needed so we can just ignore.
             break;
           case nabto::signaling::SignalingChannelState::FAILED:
             NPLOGD << "Got channel state: FAILED";

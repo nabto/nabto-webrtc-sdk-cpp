@@ -1,4 +1,4 @@
-#include "openssl_key_id.hpp"
+#include "../src/signaling_util/token_generator/src/openssl_key_id.hpp"
 
 #include <gtest/gtest.h>
 
