@@ -26,16 +26,9 @@ struct options {
   bool centralAuthorization;
 };
 
-// nabto::NabtoJwtPtr jwtPtr;
-
 bool parse_options(int argc, char** argv, struct options& opts);
 struct options defaultOptions();
 std::string readKeyFile(std::string path);
-
-// std::string tokenProvider() {
-//     auto t = jwtPtr->createAttachToken();
-//     return t;
-// }
 
 int main(int argc, char** argv) {
   auto opts = defaultOptions();
@@ -53,8 +46,9 @@ int main(int argc, char** argv) {
   // std::vector<nabto::WebrtcConnectionPtr> conns;
   NPLOGI << "Connecting to device: " << opts.deviceId;
 
-  nabto::util::NabtoJwtPtr jwtPtr = nabto::util::NabtoJwt::create(
-      opts.productId, opts.deviceId, opts.privateKey);
+  nabto::signaling::SignalingTokenGeneratorPtr jwtPtr =
+      nabto::util::NabtoTokenGenerator::create(opts.productId, opts.deviceId,
+                                               opts.privateKey);
 
   auto http = nabto::util::CurlHttpClient::create();
   auto ws = nabto::example::RtcWebsocketWrapper::create();

@@ -46,8 +46,9 @@ int main(int argc, char** argv) {
 
   NPLOGI << "Connecting to device: " << opts.deviceId;
 
-  nabto::util::NabtoJwtPtr jwtPtr = nabto::util::NabtoJwt::create(
-      opts.productId, opts.deviceId, opts.privateKey);
+  nabto::signaling::SignalingTokenGeneratorPtr jwtPtr =
+      nabto::util::NabtoTokenGenerator::create(opts.productId, opts.deviceId,
+                                               opts.privateKey);
 
   auto http = nabto::util::CurlHttpClient::create();
   auto ws = nabto::example::RtcWebsocketWrapper::create();

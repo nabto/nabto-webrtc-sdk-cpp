@@ -6,6 +6,9 @@
 namespace nabto {
 namespace util {
 
+/**
+ * Generate a UUID v4 string using the std random generator.
+ */
 static std::string generate_uuid_v4() {
   std::random_device rd;
   std::mt19937 gen(rd());

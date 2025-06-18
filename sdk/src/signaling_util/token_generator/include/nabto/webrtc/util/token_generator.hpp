@@ -3,6 +3,7 @@
 #include "../../../../src/openssl_key_id.hpp"
 #include <jwt-cpp/jwt.h>
 
+#include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/uuid.hpp>
 
 #include <chrono>
@@ -12,18 +13,31 @@
 namespace nabto {
 namespace util {
 
-class NabtoJwt;
-typedef std::shared_ptr<NabtoJwt> NabtoJwtPtr;
-
-class NabtoJwt : public nabto::signaling::SignalingTokenGenerator,
-                 public std::enable_shared_from_this<NabtoJwt> {
+/**
+ * Thalhammer/jwt-cpp based SignalingTokenGenerator implementation to use for
+ * generating JWTs for the SDK.
+ */
+class NabtoTokenGenerator
+    : public nabto::signaling::SignalingTokenGenerator,
+      public std::enable_shared_from_this<NabtoTokenGenerator> {
  public:
-  static NabtoJwtPtr create(std::string productId, std::string deviceId,
-                            std::string privateKey) {
-    return std::make_shared<NabtoJwt>(productId, deviceId, privateKey);
+  /**
+   * Create a NabtoTokenGenerator.
+   *
+   * @param productId The Product ID to make tokens for.
+   * @param deviceId The Device ID to make tokens for.
+   * @param privateKey The private key (in PEM format) to use to sign the
+   * tokens.
+   * @return SignalingTokenGeneratorPtr pointing to the created object.
+   */
+  static nabto::signaling::SignalingTokenGeneratorPtr create(
+      std::string productId, std::string deviceId, std::string privateKey) {
+    return std::make_shared<NabtoTokenGenerator>(productId, deviceId,
+                                                 privateKey);
   }
 
-  NabtoJwt(std::string productId, std::string deviceId, std::string privateKey)
+  NabtoTokenGenerator(std::string productId, std::string deviceId,
+                      std::string privateKey)
       : productId_(productId), deviceId_(deviceId), privateKey_(privateKey) {}
 
   bool generateToken(std::string& token) {

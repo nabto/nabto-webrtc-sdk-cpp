@@ -19,14 +19,13 @@ class MessageTransportImpl
   static MessageTransportPtr createSharedSecret(
       signaling::SignalingDevicePtr device,
       signaling::SignalingChannelPtr channel,
-      std::function<std::string(const std::string keyId)> sharedSecretHandler);
+      MessageTransportSharedSecretHandler sharedSecretHandler);
 
   MessageTransportImpl(signaling::SignalingDevicePtr device,
                        signaling::SignalingChannelPtr channel);
-  MessageTransportImpl(
-      signaling::SignalingDevicePtr device,
-      signaling::SignalingChannelPtr channel,
-      std::function<std::string(const std::string keyId)> sharedSecretHandler);
+  MessageTransportImpl(signaling::SignalingDevicePtr device,
+                       signaling::SignalingChannelPtr channel,
+                       MessageTransportSharedSecretHandler sharedSecretHandler);
 
   SetupDoneListenerId addSetupDoneListener(SetupDoneHandler handler) override;
 
@@ -78,9 +77,7 @@ class MessageTransportImpl
   TransportErrorListenerId currErrListId_ = 0;
   SetupDoneListenerId currSetupListId_ = 0;
 
-  std::function<std::string(const std::string keyId)> secretHandler_ = nullptr;
-  std::function<std::string(const std::string keyId)> sharedSecretHandler_ =
-      nullptr;
+  MessageTransportSharedSecretHandler sharedSecretHandler_ = nullptr;
 
   std::mutex handlerLock_;
 

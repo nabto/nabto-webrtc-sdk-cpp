@@ -8,6 +8,10 @@
 namespace nabto {
 namespace util {
 
+/**
+ * Implementation of the SignalingTimer interface used by the SDK. This is based
+ * on std thread and std chrono libs.
+ */
 class StdTimer : public nabto::signaling::SignalingTimer,
                  public std::enable_shared_from_this<StdTimer> {
  public:
@@ -30,8 +34,17 @@ class StdTimer : public nabto::signaling::SignalingTimer,
   std::thread timer_;
 };
 
+/**
+ * Implementation of the SignalingTimerFactory interface used by the SDK. This
+ * is used to create timers using the StdTimer implementation.
+ */
 class StdTimerFactory : public nabto::signaling::SignalingTimerFactory {
  public:
+  /**
+   * Create a SignalingTimerFactory instance.
+   *
+   * @return SignalingTimerFactoryPtr to the resulting timer factory.
+   */
   static nabto::signaling::SignalingTimerFactoryPtr create() {
     return std::make_shared<StdTimerFactory>();
   }

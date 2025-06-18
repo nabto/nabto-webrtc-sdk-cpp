@@ -36,7 +36,7 @@ MessageTransportPtr MessageTransportImpl::createNone(
 MessageTransportPtr MessageTransportImpl::createSharedSecret(
     signaling::SignalingDevicePtr device,
     signaling::SignalingChannelPtr channel,
-    std::function<std::string(const std::string keyId)> sharedSecretHandler) {
+    MessageTransportSharedSecretHandler sharedSecretHandler) {
   auto ptr = std::make_shared<MessageTransportImpl>(
       std::move(device), std::move(channel), std::move(sharedSecretHandler));
   if (ptr) {
@@ -55,7 +55,7 @@ MessageTransportImpl::MessageTransportImpl(
 MessageTransportImpl::MessageTransportImpl(
     signaling::SignalingDevicePtr device,
     signaling::SignalingChannelPtr channel,
-    std::function<std::string(const std::string keyId)> sharedSecretHandler)
+    MessageTransportSharedSecretHandler sharedSecretHandler)
     : device_(std::move(device)),
       channel_(std::move(channel)),
       sharedSecretHandler_(std::move(sharedSecretHandler)),

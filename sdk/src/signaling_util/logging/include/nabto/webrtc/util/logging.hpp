@@ -15,6 +15,13 @@ constexpr int NABTO_LOG_ID = 42;
 
 namespace nabto {
 namespace util {
+
+/**
+ * Initialize logging for the nabto util components.
+ *
+ * @param severity The severity level to log at.
+ * @param appender The plog appender to use for logging
+ */
 static void initLogger(enum plog::Severity severity,
                        plog::IAppender* appender) {
   plog::init<NABTO_LOG_ID>(severity, appender);
