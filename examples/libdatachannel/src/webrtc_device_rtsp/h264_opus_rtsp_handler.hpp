@@ -3,9 +3,9 @@
 #include <memory>
 #include <nabto/webrtc/util/logging.hpp>
 #include <rtc/rtc.hpp>
+#include <rtp_repacketizer/h264_repacketizer.hpp>
 #include <webrtc_connection/track_handler.hpp>
 
-#include "../utils/rtp-repacketizer/h264_repacketizer.hpp"
 #include "rtsp-client/rtsp_client.hpp"
 
 namespace nabto {

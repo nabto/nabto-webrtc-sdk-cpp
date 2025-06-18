@@ -3,9 +3,8 @@
 #include <memory>
 #include <nabto/webrtc/util/logging.hpp>
 #include <rtc/rtc.hpp>
+#include <rtp_client/rtp_client.hpp>
 #include <webrtc_connection/track_handler.hpp>
-
-#include "../utils/rtp-client/rtp_client.hpp"
 
 namespace nabto {
 namespace example {

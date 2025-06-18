@@ -1,7 +1,5 @@
 set(src
     main.cpp
-    ../utils/rtp-client/rtp_client.cpp
-    ../utils/rtp-repacketizer/rtp_repacketizer.cpp
     rtsp-client/rtsp_client.cpp
     rtsp-client/tcp_rtp_client.cpp
 )
