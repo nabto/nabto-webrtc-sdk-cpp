@@ -15,12 +15,20 @@ namespace util {
 class CurlAsync;
 using CurlAsyncPtr = std::shared_ptr<CurlAsync>;
 
+/**
+ * Curl based HTTP client implementing the SignalingHttpClient interface used by
+ * the SDK.
+ */
 class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
                        public std::enable_shared_from_this<CurlHttpClient> {
  public:
-  static nabto::signaling::SignalingHttpClientPtr create() {
-    return std::make_shared<CurlHttpClient>();
-  }
+  /**
+   * Create an instance of the SignalingHttpClient.
+   *
+   * @return Smart pointer to the created SignalingHttpClient.
+   */
+  static nabto::signaling::SignalingHttpClientPtr create();
+
   CurlHttpClient();
   bool sendRequest(const nabto::signaling::SignalingHttpRequest& request,
                    nabto::signaling::HttpResponseCallback cb) override;
@@ -38,9 +46,28 @@ class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
   static size_t writeFunc(void* ptr, size_t size, size_t nmemb, void* s);
 };
 
+/**
+ * Callback invoked when a curl request has been resolved.
+ *
+ * @param res The resulting Curl code.
+ * @param statusCode Iff the request was successful, the status code from the
+ * HTTP response, 0 otherwise.
+ */
+using CurlAsyncInvokeCallback =
+    std::function<void(CURLcode res, uint16_t statusCode)>;
+
+/**
+ * Wrapper class to turn Curl easy into an async HTTP client
+ */
 class CurlAsync : public std::enable_shared_from_this<CurlAsync> {
  public:
+  /**
+   * Create an CurlAsync instance.
+   *
+   * @return Smart pointer to the created object.
+   */
   static CurlAsyncPtr create();
+
   CurlAsync() = default;
   ~CurlAsync();
   CurlAsync(const CurlAsync&) = delete;
@@ -48,29 +75,61 @@ class CurlAsync : public std::enable_shared_from_this<CurlAsync> {
   CurlAsync(CurlAsync&&) = delete;
   CurlAsync& operator=(CurlAsync&&) = delete;
 
+  // Init method called by the create function
   bool init();
+
+  /**
+   * Stop the client and join the worker thread.
+   */
   void stop();
 
-  // Get the curl reference to build your request on using `curl_easy_XX()`
-  // functions
-  CURL* getCurl() { return curl_; }
+  /**
+   * Get the underlying Curl context to build your request.
+   *
+   * @return Pointer to the Curl context.
+   */
+  CURL* getCurl();
 
-  // Invokes the request. This starts a new thread in which the request is
-  // invoked synchroneusly. The callback is invoked from the created thread once
-  // the request is resolved. Returns false if a thread is already running
-  bool asyncInvoke(
-      const std::function<void(CURLcode res, uint16_t statusCode)>& callback);
+  /**
+   * Invokes the request. This starts a new thread in which the request is
+   * invoked synchronously. The callback is invoked from the created thread once
+   * the request is resolved.
+   *
+   * @param callback The callback to be invoked when the request is resolved.
+   * @return false if a thread is already running. True if the thread was
+   * started.
+   */
+  bool asyncInvoke(const CurlAsyncInvokeCallback& callback);
 
-  // Reinvoke the request. This must be called from the callback of a previous
-  // request. This request will reuse the std::thread created for the first
-  // request. getCurl() can be used to build a new request in the first callback
-  // before calling this.
-  void asyncReinvoke(
-      const std::function<void(CURLcode res, uint16_t statusCode)>& callback);
+  /**
+   * Reinvoke the request. This must be called from the callback of a previous
+   * request. This request will reuse the std::thread created for the first
+   * request. getCurl() can be used to build a new request in the first callback
+   * before calling this.
+   *
+   * @param callback The callback to invoke when the request is resolved.
+   */
+  void asyncReinvoke(const CurlAsyncInvokeCallback& callback);
 
-  // Reinvoke the request. This must be called from the callback of a previous
-  // request and is a direct blocking invocation of the curl_easy_perform.
+  /**
+   * Reinvoke the request. This must be called from the callback of a previous
+   * request and is a direct blocking invocation of the curl_easy_perform().
+   *
+   * @return Curl code returned by curl_easy_perform()
+   */
   CURLcode reinvoke();
+
+  /**
+   * Reinvoke the request and if successful return the status code of the HTTP
+   * response.
+   *
+   * This must be called from the callback of a previous
+   * request and is a direct blocking invocation of the curl_easy_perform().
+   *
+   * @param code Where to store the curl code returned by curl_easy_perform()
+   * @param status Where to store the HTTP response status if a response was
+   * received successfully.
+   */
   void reinvokeStatus(CURLcode* code, uint16_t* status);
 
  private:

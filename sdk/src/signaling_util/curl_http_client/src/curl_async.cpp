@@ -17,6 +17,10 @@
 namespace nabto {
 namespace util {
 
+nabto::signaling::SignalingHttpClientPtr CurlHttpClient::create() {
+  return std::make_shared<CurlHttpClient>();
+}
+
 CurlHttpClient::CurlHttpClient() : curl_(CurlAsync::create()) {}
 
 bool CurlHttpClient::sendRequest(
@@ -202,6 +206,8 @@ void CurlAsync::stop() {
   }
   NPLOGD << "CurlAsync stop joined";
 }
+
+CURL* CurlAsync::getCurl() { return curl_; }
 
 bool CurlAsync::asyncInvoke(
     const std::function<void(CURLcode res, uint16_t statusCode)>& callback) {
