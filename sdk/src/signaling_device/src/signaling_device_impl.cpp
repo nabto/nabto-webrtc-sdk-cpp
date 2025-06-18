@@ -63,24 +63,29 @@ SignalingDeviceImpl::SignalingDeviceImpl(const SignalingDeviceConfig& conf)
 }
 
 void SignalingDeviceImpl::start() {
-  const std::lock_guard<std::mutex> lock(mutex_);
-
+  mutex_.lock();
   if (state_ == SignalingDeviceState::NEW) {
+    mutex_.unlock();
     doConnect();
   } else {
     NABTO_SIGNALING_LOGE << "Connect called from invalid state: "
                          << signalingDeviceStateToString(state_);
+    mutex_.unlock();
   }
 }
 
 void SignalingDeviceImpl::doConnect() {
-  if (state_ == SignalingDeviceState::CLOSED ||
-      state_ == SignalingDeviceState::FAILED) {
-    NABTO_SIGNALING_LOGD << "doConnect called from closed state, stopping";
-    return;
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    if (state_ == SignalingDeviceState::CLOSED ||
+        state_ == SignalingDeviceState::FAILED) {
+      NABTO_SIGNALING_LOGD << "doConnect called from closed state, stopping";
+      return;
+    }
   }
-
   changeState(SignalingDeviceState::CONNECTING);
+  mutex_.lock();
+
   const std::string method = "POST";
   const std::string url = httpHost_ + "/v1/device/connect";
 
@@ -91,6 +96,7 @@ void SignalingDeviceImpl::doConnect() {
   if (!tokenProvider_->generateToken(token)) {
     NABTO_SIGNALING_LOGE
         << "Cannot create an access token using the provided token provider.";
+    mutex_.unlock();
     changeState(SignalingDeviceState::FAILED);
     return;
   }
@@ -118,6 +124,7 @@ void SignalingDeviceImpl::doConnect() {
           self->connectWs();
         }
       });
+  mutex_.unlock();
 }
 
 void SignalingDeviceImpl::websocketSendMessage(const std::string& channelId,
@@ -150,9 +157,11 @@ void SignalingDeviceImpl::websocketSendError(const std::string& channelId,
 void SignalingDeviceImpl::close() {
   std::map<std::string, nabto::signaling::SignalingChannelImplPtr> chans;
   {
-    const std::lock_guard<std::mutex> lock(mutex_);
-    chans = channels_;
-    closed_ = true;
+    {
+      const std::lock_guard<std::mutex> lock(mutex_);
+      chans = channels_;
+      closed_ = true;
+    }
     changeState(SignalingDeviceState::CLOSED);
   }
   for (auto const& channel : chans) {
@@ -178,11 +187,18 @@ void SignalingDeviceImpl::connectWs() {
   ws_ = WebsocketConnection::create(wsImpl_, timerFactory_);
   ws_->onOpen([self]() {
     NABTO_SIGNALING_LOGI << "WebSocket open";
-    if (self->firstConnect_) {
-      self->firstConnect_ = false;
-      for (const auto& [id, handler] : self->reconnHandlers_) {
-        handler();
+    std::map<ReconnectListenerId, SignalingReconnectHandler> reconnHandlers;
+    {
+      const std::lock_guard<std::mutex> lock(self->mutex_);
+      if (self->firstConnect_) {
+        self->firstConnect_ = false;
+      } else {
+        reconnHandlers = self->reconnHandlers_;
       }
+    }
+    // if firstConnect the map will be empty
+    for (const auto& [id, handler] : reconnHandlers) {
+      handler();
     }
     self->changeState(SignalingDeviceState::CONNECTED);
   });
@@ -214,8 +230,10 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
                                           const nlohmann::json& message) {
   NABTO_SIGNALING_LOGD << "handleWsMessage of type: " << type
                        << " message: " << message.dump();
+  mutex_.lock();
   if (type == SignalingMessageType::PING) {
     sendPong();
+    mutex_.unlock();
     return;
   }
   SignalingChannelImplPtr chan = nullptr;
@@ -224,14 +242,17 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
     try {
       chan = channels_.at(connId);
       if (type == SignalingMessageType::PEER_OFFLINE) {
+        mutex_.unlock();
         chan->peerOffline();
         return;
       }
       if (type == SignalingMessageType::PEER_CONNECTED) {
+        mutex_.unlock();
         chan->peerConnected();
         return;
       }
       if (type == SignalingMessageType::ERROR) {
+        mutex_.unlock();
         chan->handleError(signalingErrorFromJson(message.at("error")));
         return;
       }
@@ -262,6 +283,7 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
               connId, SignalingError(SignalingErrorCode::CHANNEL_NOT_FOUND,
                                      "Got a message for a signaling channel "
                                      "which does not exist."));
+          mutex_.unlock();
           return;
         }
         auto self = shared_from_this();
@@ -274,14 +296,22 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
               SignalingError(
                   SignalingErrorCode::INTERNAL_ERROR,
                   "No NewChannelHandler was set, dropping the channel."));
+          mutex_.unlock();
           return;
         }
-        for (const auto& [id, handler] : chanHandlers_) {
+        auto chanHandlers = chanHandlers_;
+        mutex_.unlock();
+
+        for (const auto& [id, handler] : chanHandlers) {
           handler(chan, authorized);
         }
       }
+      mutex_.unlock();
       chan->handleMessage(msg);
-    } else if (chan == nullptr) {
+      return;
+    }
+
+    if (chan == nullptr) {
       NABTO_SIGNALING_LOGD << "Got unhandled message from unknown channel ID. "
                               "SignalingMessageType: "
                            << type << " " << message.dump();
@@ -293,6 +323,7 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
     NABTO_SIGNALING_LOGE << "Invalid channel ID in websocket message: "
                          << message.dump() << " error: " << exception.what();
   }
+  mutex_.unlock();
 }
 
 void SignalingDeviceImpl::sendPong() {
@@ -314,6 +345,7 @@ void SignalingDeviceImpl::parseAttachResponse(const std::string& response) {
 }
 
 void SignalingDeviceImpl::checkAlive() {
+  const std::lock_guard<std::mutex> lock(mutex_);
   if (state_ != SignalingDeviceState::CLOSED &&
       state_ != SignalingDeviceState::FAILED) {
     ws_->checkAlive();
@@ -324,33 +356,37 @@ void SignalingDeviceImpl::checkAlive() {
 }
 
 void SignalingDeviceImpl::waitReconnect() {
-  const std::lock_guard<std::mutex> lock(mutex_);
-  if (state_ == SignalingDeviceState::CLOSED ||
-      state_ == SignalingDeviceState::FAILED) {
-    NABTO_SIGNALING_LOGD << "Ignoring waitReconnect call from closed state";
-    return;
-  }
-  if (state_ == SignalingDeviceState::WAIT_RETRY) {
-    NABTO_SIGNALING_LOGD << "Ignoring waitReconnect call from wait_retry state";
-    return;
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    if (state_ == SignalingDeviceState::CLOSED ||
+        state_ == SignalingDeviceState::FAILED) {
+      NABTO_SIGNALING_LOGD << "Ignoring waitReconnect call from closed state";
+      return;
+    }
+    if (state_ == SignalingDeviceState::WAIT_RETRY) {
+      NABTO_SIGNALING_LOGD
+          << "Ignoring waitReconnect call from wait_retry state";
+      return;
+    }
   }
   changeState(SignalingDeviceState::WAIT_RETRY);
-  ws_ = nullptr;
-  const uint32_t oneMinuteInMs = 60000;
-  const uint32_t msPrSecond = 1000;
-  const size_t exponentialBackoffCap = 6;
-  uint32_t reconnectWait = oneMinuteInMs;
-  if (reconnectCounter_ < exponentialBackoffCap) {
-    reconnectWait =
-        msPrSecond * (static_cast<uint32_t>(1) << reconnectCounter_);
+
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    ws_ = nullptr;
+    const uint32_t oneMinuteInMs = 60000;
+    const uint32_t msPrSecond = 1000;
+    const size_t exponentialBackoffCap = 6;
+    uint32_t reconnectWait = oneMinuteInMs;
+    if (reconnectCounter_ < exponentialBackoffCap) {
+      reconnectWait =
+          msPrSecond * (static_cast<uint32_t>(1) << reconnectCounter_);
+    }
+    reconnectCounter_++;
+    timer_ = timerFactory_->createTimer();
+    auto self = shared_from_this();
+    timer_->setTimeout(reconnectWait, [self]() { self->doConnect(); });
   }
-  reconnectCounter_++;
-  timer_ = timerFactory_->createTimer();
-  auto self = shared_from_this();
-  timer_->setTimeout(reconnectWait, [self]() {
-    const std::lock_guard<std::mutex> lock(self->mutex_);
-    self->doConnect();
-  });
 }
 
 void SignalingDeviceImpl::requestIceServers(IceServersResponse callback) {
@@ -395,6 +431,7 @@ void SignalingDeviceImpl::channelClosed(const std::string& channelId) {
       channelId,
       SignalingError(SignalingErrorCode::CHANNEL_CLOSED,
                      "The signaling channel has been closed in the device."));
+  const std::lock_guard<std::mutex> lock(mutex_);
   channels_.erase(channelId);
 }
 

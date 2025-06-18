@@ -36,6 +36,7 @@ class SignalingDeviceImpl
 
   NewChannelListenerId addNewChannelListener(
       NewSignalingChannelHandler handler) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     const NewChannelListenerId id = currChanListId_;
     currChanListId_++;
     chanHandlers_.insert({id, handler});
@@ -43,11 +44,13 @@ class SignalingDeviceImpl
   }
 
   void removeNewChannelListener(NewChannelListenerId id) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     chanHandlers_.erase(id);
   }
 
   ConnectionStateListenerId addStateChangeListener(
       SignalingDeviceStateHandler handler) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     const ChannelStateListenerId id = currStateListId_;
     currStateListId_++;
     stateHandlers_.insert({id, handler});
@@ -55,11 +58,13 @@ class SignalingDeviceImpl
   };
 
   void removeStateChangeListener(ConnectionStateListenerId id) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     stateHandlers_.erase(id);
   }
 
   ReconnectListenerId addReconnectListener(
       SignalingReconnectHandler handler) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     const ReconnectListenerId id = currReconnListId_;
     currReconnListId_++;
     reconnHandlers_.insert({id, handler});
@@ -67,6 +72,7 @@ class SignalingDeviceImpl
   };
 
   void removeReconnectListener(ReconnectListenerId id) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     reconnHandlers_.erase(id);
   }
 
