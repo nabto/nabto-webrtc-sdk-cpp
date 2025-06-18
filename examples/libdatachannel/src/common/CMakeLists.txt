@@ -1,5 +1,7 @@
 set(src
     webrtc_connection/webrtc_connection.cpp
+    rtp_client/rtp_client.cpp
+    rtp_repacketizer/rtp_repacketizer.cpp
 )
 
 add_library( webrtc_example_common "${src}")
@@ -34,4 +36,7 @@ target_sources(webrtc_example_common PUBLIC
     BASE_DIRS .
     FILES
         libdatachannel_websocket/rtc_websocket_wrapper.hpp
+        rtp_client/rtp_client.hpp
+        rtp_repacketizer/h264_repacketizer.hpp
+        rtp_repacketizer/rtp_repacketizer.hpp
 )

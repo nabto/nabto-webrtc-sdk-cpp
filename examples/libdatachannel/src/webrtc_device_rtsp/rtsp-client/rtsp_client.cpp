@@ -1,8 +1,7 @@
 #include "rtsp_client.hpp"
 
 #include <nabto/webrtc/util/logging.hpp>
-
-#include "../../utils/rtp-client/rtp_client.hpp"
+#include <rtp_client/rtp_client.hpp>
 
 #ifdef NABTO_RTSP_HAS_BASIC_AUTH
 // jwt-cpp uses std::round it fails on some toolchains.

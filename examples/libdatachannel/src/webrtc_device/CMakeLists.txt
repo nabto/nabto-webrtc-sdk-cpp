@@ -1,6 +1,5 @@
 set(src
     main.cpp
-    ../utils/rtp-client/rtp_client.cpp
 )
 
 add_executable(webrtc_device "${src}")

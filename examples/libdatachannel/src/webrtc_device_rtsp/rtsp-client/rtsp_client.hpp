@@ -5,9 +5,9 @@
 
 #include <nabto/webrtc/util/curl_async.hpp>
 #include <rtc/rtc.hpp>
+#include <rtp_client/rtp_client.hpp>
+#include <rtp_repacketizer/rtp_repacketizer.hpp>
 
-#include "../../utils/rtp-client/rtp_client.hpp"
-#include "../../utils/rtp-repacketizer/rtp_repacketizer.hpp"
 #include "rtcp_client.hpp"
 #include "tcp_rtp_client.hpp"
 typedef int SOCKET;

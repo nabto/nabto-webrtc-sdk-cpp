@@ -1,8 +1,7 @@
 #pragma once
 
 #include <nabto/webrtc/util/curl_async.hpp>
-
-#include "../../utils/rtp-repacketizer/rtp_repacketizer.hpp"
+#include <rtp_repacketizer/rtp_repacketizer.hpp>
 
 namespace nabto {
 
