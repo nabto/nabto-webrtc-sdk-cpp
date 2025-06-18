@@ -63,13 +63,12 @@ class SignalingHttpRequest {
 /**
  * HTTP Response abstraction used by the SDK.
  */
-class
-    SignalingHttpResponse {  // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+class SignalingHttpResponse {
  public:
   /**
    * The HTTP status code of the response.
    */
-  int statusCode;
+  int statusCode = 0;
 
   /**
    * List of HTTP headers as key-value pairs.
