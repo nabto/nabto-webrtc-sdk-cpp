@@ -12,7 +12,9 @@
 
 #include <exception>
 #include <functional>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -61,7 +63,7 @@ MessageTransportImpl::MessageTransportImpl(
 
 void MessageTransportImpl::init() {
   auto self = shared_from_this();
-  channel_->setMessageHandler(
+  channel_->addMessageListener(
       // for some reason clang tidy complains that nlohmann is not directly
       // included here. It does not fail 3 lines later but it does fail here.
       // NOLINTNEXTLINE(misc-include-cleaner)
@@ -69,8 +71,16 @@ void MessageTransportImpl::init() {
 }
 
 void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
-  if (!signer_) {
-    setupSigner(msgIn);
+  try {
+    if (!signer_) {
+      setupSigner(msgIn);
+    }
+  } catch (std::exception& ex) {
+    NPLOGE << "Failed to setup signer: " << ex.what();
+    auto err = nabto::signaling::SignalingError(
+        nabto::signaling::SignalingErrorCode::INTERNAL_ERROR, "Internal error");
+    handleError(err);
+    return;
   }
   try {
     NPLOGI << "Webrtc got signaling message IN: " << msgIn.dump();
@@ -81,11 +91,19 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
     if (type == "SETUP_REQUEST") {
       requestIceServers();
     } else if (type == "DESCRIPTION" || type == "CANDIDATE") {
-      if (msgHandler_) {
-        msgHandler_(msg);
-      } else {
+      if (msgHandlers_.empty()) {
         NPLOGE << "Received signaling message without a registered message "
                   "handler";
+      } else {
+        std::map<TransportMessageListenerId, signaling::SignalingMessageHandler>
+            msgHandlers;
+        {
+          const std::lock_guard<std::mutex> lock(handlerLock_);
+          msgHandlers = msgHandlers_;
+        }
+        for (const auto& [id, handler] : msgHandlers) {
+          handler(msg);
+        }
       }
     }
   } catch (nabto::util::VerificationError& ex) {
@@ -119,20 +137,31 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
   }
 };
 
-void MessageTransportImpl::setSetupDoneHandler(
-    std::function<void(const std::vector<signaling::IceServer>& iceServers)>
-        handler) {
-  setupHandler_ = handler;
+SetupDoneListenerId MessageTransportImpl::addSetupDoneListener(
+    SetupDoneHandler handler) {
+  const std::lock_guard<std::mutex> lock(handlerLock_);
+  const SetupDoneListenerId id = currSetupListId_;
+  currSetupListId_++;
+  setupHandlers_.insert({id, handler});
+  return id;
 }
 
-void MessageTransportImpl::setMessageHandler(
+TransportMessageListenerId MessageTransportImpl::addMessageListener(
     signaling::SignalingMessageHandler handler) {
-  msgHandler_ = handler;
+  const std::lock_guard<std::mutex> lock(handlerLock_);
+  const TransportMessageListenerId id = currMsgListId_;
+  currMsgListId_++;
+  msgHandlers_.insert({id, handler});
+  return id;
 }
 
-void MessageTransportImpl::setErrorHandler(
+TransportErrorListenerId MessageTransportImpl::addErrorListener(
     signaling::SignalingErrorHandler handler) {
-  errHandler_ = handler;
+  const std::lock_guard<std::mutex> lock(handlerLock_);
+  const TransportErrorListenerId id = currErrListId_;
+  currErrListId_++;
+  errHandlers_.insert({id, handler});
+  return id;
 }
 
 void MessageTransportImpl::sendMessage(const nlohmann::json& message) {
@@ -142,7 +171,10 @@ void MessageTransportImpl::sendMessage(const nlohmann::json& message) {
   } catch (std::exception& e) {
     NPLOGE << "Failed to sign the message: " << message.dump()
            << ", error: " << e.what();
-    // TODO(tk): handle exception
+    auto err = nabto::signaling::SignalingError(
+        nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR,
+        "Could not sign the signaling message");
+    handleError(err);
   }
 }
 
@@ -154,7 +186,6 @@ void MessageTransportImpl::setupSigner(const nlohmann::json& msg) {
     auto secret = sharedSecretHandler_(keyId);
     signer_ = SharedSecretMessageSigner::create(secret, keyId);
   }
-  // TODO(tk): if something fails here handle the error
 }
 
 void MessageTransportImpl::requestIceServers() {
@@ -162,8 +193,13 @@ void MessageTransportImpl::requestIceServers() {
   device_->requestIceServers(
       [self](const std::vector<struct nabto::signaling::IceServer>& servers) {
         self->sendSetupResponse(servers);
-        if (self->setupHandler_) {
-          self->setupHandler_(servers);
+        std::map<SetupDoneListenerId, SetupDoneHandler> setupHandlers;
+        {
+          const std::lock_guard<std::mutex> lock(self->handlerLock_);
+          setupHandlers = self->setupHandlers_;
+        }
+        for (const auto& [id, handler] : setupHandlers) {
+          handler(servers);
         }
       });
 }
@@ -195,8 +231,15 @@ void MessageTransportImpl::sendSetupResponse(
 
 void MessageTransportImpl::handleError(const signaling::SignalingError& err) {
   channel_->sendError(err);
-  if (errHandler_) {
-    errHandler_(err);
+  std::map<TransportErrorListenerId, signaling::SignalingErrorHandler>
+      errHandlers;
+  {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
+    errHandlers = errHandlers_;
+  }
+
+  for (const auto& [id, handler] : errHandlers) {
+    handler(err);
   }
 }
 

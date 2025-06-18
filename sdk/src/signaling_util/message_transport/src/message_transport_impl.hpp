@@ -2,6 +2,9 @@
 
 #include <nabto/webrtc/util/message_transport.hpp>
 
+#include <map>
+#include <mutex>
+
 namespace nabto {
 namespace util {
 
@@ -25,9 +28,12 @@ class MessageTransportImpl
       signaling::SignalingChannelPtr channel,
       std::function<std::string(const std::string keyId)> sharedSecretHandler);
 
-  void setSetupDoneHandler(
-      std::function<void(const std::vector<signaling::IceServer>& iceServers)>
-          handler) override;
+  SetupDoneListenerId addSetupDoneListener(SetupDoneHandler handler) override;
+
+  void removeSetupDoneListener(SetupDoneListenerId id) override {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
+    setupHandlers_.erase(id);
+  }
 
   /**
    * Set a handler to be invoked whenever a message is available on the
@@ -35,14 +41,25 @@ class MessageTransportImpl
    *
    * @param handler the handler to set
    */
-  void setMessageHandler(signaling::SignalingMessageHandler handler) override;
+  TransportMessageListenerId addMessageListener(
+      signaling::SignalingMessageHandler handler) override;
 
+  void removeMessageListener(TransportMessageListenerId id) override {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
+    msgHandlers_.erase(id);
+  }
   /**
    * Set a handler to be invoked if an error occurs on the connection
    *
    * @param handler the handler to set
    */
-  void setErrorHandler(signaling::SignalingErrorHandler handler) override;
+  TransportErrorListenerId addErrorListener(
+      signaling::SignalingErrorHandler handler) override;
+
+  void removeErrorListener(TransportErrorListenerId id) override {
+    const std::lock_guard<std::mutex> lock(handlerLock_);
+    errHandlers_.erase(id);
+  }
 
   void sendMessage(const nlohmann::json& message) override;
 
@@ -51,13 +68,21 @@ class MessageTransportImpl
   signaling::SignalingChannelPtr channel_;
   MessageSignerPtr signer_;
 
-  signaling::SignalingMessageHandler msgHandler_ = nullptr;
-  signaling::SignalingErrorHandler errHandler_ = nullptr;
+  std::map<TransportMessageListenerId, signaling::SignalingMessageHandler>
+      msgHandlers_;
+  std::map<TransportErrorListenerId, signaling::SignalingErrorHandler>
+      errHandlers_;
+  std::map<SetupDoneListenerId, SetupDoneHandler> setupHandlers_;
+
+  TransportMessageListenerId currMsgListId_ = 0;
+  TransportErrorListenerId currErrListId_ = 0;
+  SetupDoneListenerId currSetupListId_ = 0;
+
   std::function<std::string(const std::string keyId)> secretHandler_ = nullptr;
-  std::function<void(const std::vector<signaling::IceServer>& iceServers)>
-      setupHandler_ = nullptr;
   std::function<std::string(const std::string keyId)> sharedSecretHandler_ =
       nullptr;
+
+  std::mutex handlerLock_;
 
   enum SigningMode mode_;
 

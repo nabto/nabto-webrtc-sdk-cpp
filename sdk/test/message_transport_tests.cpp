@@ -10,13 +10,26 @@ class MockSignaling : public signaling::SignalingChannel,
  public:
   MockSignaling() {}
 
-  void setMessageHandler(signaling::SignalingMessageHandler handler) override {
+  uint32_t addMessageListener(
+      signaling::SignalingMessageHandler handler) override {
     msgHandler_ = handler;
+    return 0;
   }
 
-  void setStateChangeHandler(
-      signaling::SignalingChannelStateHandler handler) override {}
-  void setErrorHandler(signaling::SignalingErrorHandler handler) override {}
+  uint32_t addStateChangeListener(
+      signaling::SignalingChannelStateHandler handler) override {
+    return 0;
+  }
+  uint32_t addErrorListener(signaling::SignalingErrorHandler handler) override {
+    return 0;
+  }
+
+  void removeMessageListener(signaling::MessageListenerId id) override {}
+
+  // void removeStateChangeListener(
+  //     signaling::ChannelStateListenerId id) override {}
+
+  void removeErrorListener(signaling::ChannelErrorListenerId id) override {}
 
   void sendMessage(const nlohmann::json& message) override {
     messages_.push_back(message);
@@ -34,15 +47,27 @@ class MockSignaling : public signaling::SignalingChannel,
   void requestIceServers(signaling::IceServersResponse callback) override {
     iceCb_ = callback;
   }
-  void setNewChannelHandler(
+  uint32_t addNewChannelListener(
       signaling::NewSignalingChannelHandler handler) override {
     chanHandler_ = handler;
+    return 0;
   }
 
-  void setStateChangeHandler(
-      signaling::SignalingDeviceStateHandler handler) override {}
-  void setReconnectHandler(
-      signaling::SignalingReconnectHandler handler) override {}
+  uint32_t addStateChangeListener(
+      signaling::SignalingDeviceStateHandler handler) override {
+    return 0;
+  }
+  uint32_t addReconnectListener(
+      signaling::SignalingReconnectHandler handler) override {
+    return 0;
+  }
+
+  void removeNewChannelListener(signaling::NewChannelListenerId id) override {}
+
+  void removeStateChangeListener(
+      signaling::ConnectionStateListenerId id) override {}
+
+  void removeReconnectListener(signaling::ReconnectListenerId id) override {}
 
   signaling::SignalingMessageHandler msgHandler_ = nullptr;
   signaling::NewSignalingChannelHandler chanHandler_ = nullptr;
@@ -62,7 +87,7 @@ TEST(message_transport, handle_setup_req) {
   ASSERT_TRUE(mock->msgHandler_ != nullptr);
 
   bool setupDone = false;
-  mt->setSetupDoneHandler(
+  mt->addSetupDoneListener(
       [&setupDone](
           const std::vector<struct nabto::signaling::IceServer>& servers) {
         ASSERT_EQ(servers.size(), 1);
@@ -95,7 +120,7 @@ TEST(message_transport, setup_done_with_stun) {
   ASSERT_TRUE(mock->msgHandler_ != nullptr);
 
   bool setupDone = false;
-  mt->setSetupDoneHandler(
+  mt->addSetupDoneListener(
       [&setupDone](
           const std::vector<struct nabto::signaling::IceServer>& servers) {
         ASSERT_EQ(servers.size(), 1);
@@ -126,7 +151,7 @@ TEST(message_transport, invalid_setup_req) {
       nabto::util::MessageTransportFactory::createNoneTransport(mock, mock);
 
   bool errorHandled = false;
-  mt->setErrorHandler(
+  mt->addErrorListener(
       [&errorHandled](const nabto::signaling::SignalingError& err) {
         errorHandled = true;
         ASSERT_EQ(err.errorCode(), "DECODE_ERROR");

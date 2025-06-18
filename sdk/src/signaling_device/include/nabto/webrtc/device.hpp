@@ -466,6 +466,13 @@ class SignalingDeviceFactory {
   static SignalingDevicePtr create(const SignalingDeviceConfig& conf);
 };
 
+using NewChannelListenerId = uint32_t;
+using ConnectionStateListenerId = uint32_t;
+using ReconnectListenerId = uint32_t;
+using MessageListenerId = uint32_t;
+using ChannelStateListenerId = uint32_t;
+using ChannelErrorListenerId = uint32_t;
+
 /**
  * Signaling Device Class
  */
@@ -502,29 +509,35 @@ class SignalingDevice {
    */
   virtual void requestIceServers(IceServersResponse callback) = 0;
 
-  // TODO(tk): switch from set...Handler to add...Handler and add
-  // remove...Handler
-
   /**
    * Set handler to be called when a new Client connects
    *
    * @param handler Handler to be called when a client connects
    */
-  virtual void setNewChannelHandler(NewSignalingChannelHandler handler) = 0;
+  virtual NewChannelListenerId addNewChannelListener(
+      NewSignalingChannelHandler handler) = 0;
+
+  virtual void removeNewChannelListener(NewChannelListenerId id) = 0;
 
   /**
    * Set a handler to be invoked when the device state changes.
    *
    * @param handler the handler to set
    */
-  virtual void setStateChangeHandler(SignalingDeviceStateHandler handler) = 0;
+  virtual ConnectionStateListenerId addStateChangeListener(
+      SignalingDeviceStateHandler handler) = 0;
+
+  virtual void removeStateChangeListener(ConnectionStateListenerId id) = 0;
 
   /**
    * Set a handler to be invoked when the connection is reconnected.
    *
    * @param handler the handler to set
    */
-  virtual void setReconnectHandler(SignalingReconnectHandler handler) = 0;
+  virtual ReconnectListenerId addReconnectListener(
+      SignalingReconnectHandler handler) = 0;
+
+  virtual void removeReconnectListener(ReconnectListenerId id) = 0;
 };
 
 /**
@@ -545,22 +558,29 @@ class SignalingChannel {
    *
    * @param handler the handler to set
    */
-  virtual void setMessageHandler(SignalingMessageHandler handler) = 0;
+  virtual MessageListenerId addMessageListener(
+      SignalingMessageHandler handler) = 0;
+
+  virtual void removeMessageListener(MessageListenerId id) = 0;
 
   /**
    * Set a handler to be invoked when the channel state changes.
    *
    * @param handler the handler to set
    */
-  virtual void setStateChangeHandler(SignalingChannelStateHandler handler) = 0;
+  virtual ChannelStateListenerId addStateChangeListener(
+      SignalingChannelStateHandler handler) = 0;
 
+  virtual void removeStateChangeListener(ChannelStateListenerId id) = 0;
   /**
    * Set a handler to be invoked if an error occurs on the connection
    *
    * @param handler the handler to set
    */
-  virtual void setErrorHandler(SignalingErrorHandler handler) = 0;
+  virtual ChannelErrorListenerId addErrorListener(
+      SignalingErrorHandler handler) = 0;
 
+  virtual void removeErrorListener(ChannelErrorListenerId id) = 0;
   /**
    * Send a signaling message to the client
    *

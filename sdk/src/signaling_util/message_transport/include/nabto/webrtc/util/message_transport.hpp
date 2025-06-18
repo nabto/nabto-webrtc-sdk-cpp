@@ -24,6 +24,13 @@ class MessageTransportFactory {
       signaling::SignalingDevicePtr device, signaling::SignalingChannelPtr sig);
 };
 
+using SetupDoneHandler =
+    std::function<void(const std::vector<signaling::IceServer>& iceServers)>;
+
+using SetupDoneListenerId = uint32_t;
+using TransportMessageListenerId = uint32_t;
+using TransportErrorListenerId = uint32_t;
+
 class MessageTransport {
  public:
   virtual ~MessageTransport() = default;
@@ -33,27 +40,30 @@ class MessageTransport {
   MessageTransport(MessageTransport&&) = delete;
   MessageTransport& operator=(MessageTransport&&) = delete;
 
-  // TODO(tk): switch from set...Handler to add...Handler and add
-  // remove...Handler
-  virtual void setSetupDoneHandler(
-      std::function<void(const std::vector<signaling::IceServer>& iceServers)>
-          handler) = 0;
+  virtual SetupDoneListenerId addSetupDoneListener(
+      SetupDoneHandler handler) = 0;
 
+  virtual void removeSetupDoneListener(SetupDoneListenerId id) = 0;
   /**
    * Set a handler to be invoked whenever a message is available on the
    * connection
    *
    * @param handler the handler to set
    */
-  virtual void setMessageHandler(
+  virtual TransportMessageListenerId addMessageListener(
       signaling::SignalingMessageHandler handler) = 0;
+
+  virtual void removeMessageListener(TransportMessageListenerId id) = 0;
 
   /**
    * Set a handler to be invoked if an error occurs on the connection
    *
    * @param handler the handler to set
    */
-  virtual void setErrorHandler(signaling::SignalingErrorHandler handler) = 0;
+  virtual TransportErrorListenerId addErrorListener(
+      signaling::SignalingErrorHandler handler) = 0;
+
+  virtual void removeErrorListener(TransportErrorListenerId id) = 0;
 
   virtual void sendMessage(const nlohmann::json& message) = 0;
 };

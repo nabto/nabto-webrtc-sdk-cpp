@@ -3,15 +3,15 @@
 // Required. See: https://github.com/microsoft/cpprestsdk/issues/230
 #define _TURN_OFF_PLATFORM_STRING
 
-#include <CppRestOpenAPIClient/api/DefaultApi.h>
-#include <nabto/webrtc/util/curl_async.hpp>
 #include "util/libdatachannel_websocket/rtc_websocket_wrapper.hpp"
+#include <CppRestOpenAPIClient/api/DefaultApi.h>
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Init.h>
-#include <nabto/webrtc/util/std_timer.hpp>
 
 #include <nabto/webrtc/device.hpp>
+#include <nabto/webrtc/util/curl_async.hpp>
+#include <nabto/webrtc/util/std_timer.hpp>
 
 #include <iostream>
 #include <memory>
@@ -115,7 +115,7 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
   nabto::signaling::SignalingDevicePtr createConnectedDevice() {
     auto dev = createDevice();
     std::promise<void> connProm;
-    dev->setStateChangeHandler(
+    dev->addStateChangeListener(
         [&connProm](nabto::signaling::SignalingDeviceState state) {
           if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
             connProm.set_value();
@@ -156,7 +156,7 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
     res.id = createClient();
     std::promise<void> prom;
 
-    res.device->setNewChannelHandler(
+    res.device->addNewChannelListener(
         [&res, &prom](nabto::signaling::SignalingChannelPtr conn,
                       bool authorized) {
           res.channel = conn;
