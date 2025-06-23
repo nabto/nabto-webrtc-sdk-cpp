@@ -3,8 +3,6 @@
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/message_transport.hpp>
 
-#include <functional>
-#include <string>
 #include <utility>
 
 namespace nabto {

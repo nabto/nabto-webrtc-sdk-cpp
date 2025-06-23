@@ -36,6 +36,12 @@ class WebsocketConnection
     }
   }
 
+  WebsocketConnection() = default;
+  WebsocketConnection(const WebsocketConnection&) = delete;
+  WebsocketConnection& operator=(const WebsocketConnection&) = delete;
+  WebsocketConnection(WebsocketConnection&&) = delete;
+  WebsocketConnection& operator=(WebsocketConnection&&) = delete;
+
   bool send(const std::string& data);
   void close();
   void onOpen(std::function<void()> callback);
