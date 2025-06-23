@@ -15,11 +15,7 @@ namespace util {
 class StdTimer : public nabto::signaling::SignalingTimer,
                  public std::enable_shared_from_this<StdTimer> {
  public:
-  ~StdTimer() {
-    if (timer_.joinable()) {
-      timer_.join();
-    }
-  }
+  ~StdTimer() {}
 
   void setTimeout(uint32_t timeoutMs, std::function<void()> cb) override {
     auto self = shared_from_this();
@@ -28,6 +24,13 @@ class StdTimer : public nabto::signaling::SignalingTimer,
       // TODO: thread safety
       cb();
     });
+  }
+
+  void cancel() override {
+    if (timer_.joinable()) {
+      timer_.join();
+      timer_ = std::thread();
+    }
   }
 
  private:

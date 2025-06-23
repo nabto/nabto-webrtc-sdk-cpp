@@ -110,6 +110,8 @@ class SignalingDeviceImpl
   SignalingDeviceState state_ = SignalingDeviceState::NEW;
   std::mutex mutex_;
 
+  void deinit();
+
   // WS STUFF
   WebsocketConnectionPtr ws_;
   size_t reconnectCounter_ = 0;

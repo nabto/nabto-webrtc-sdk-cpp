@@ -157,10 +157,8 @@ CurlAsyncPtr CurlAsync::create() {
 }
 
 CurlAsync::~CurlAsync() {
-  try {
-    thread_ = std::thread();
-  } catch (std::exception& ex) {
-    NPLOGE << "~CurlAsync exception " << ex.what();
+  if (!stopped_) {
+    stop();
   }
   curl_easy_cleanup(curl_);
   curl_global_cleanup();

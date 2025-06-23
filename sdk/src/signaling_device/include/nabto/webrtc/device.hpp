@@ -300,6 +300,8 @@ class SignalingTimer {
    */
   virtual void setTimeout(uint32_t timeoutMs,
                           std::function<void()> callback) = 0;
+
+  virtual void cancel() = 0;
 };
 
 /**

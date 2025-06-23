@@ -171,14 +171,29 @@ void SignalingDeviceImpl::close() {
   {
     const std::lock_guard<std::mutex> lock(mutex_);
     channels_.clear();
-    chanHandlers_.clear();
-    stateHandlers_.clear();
-    reconnHandlers_.clear();
 
     if (ws_) {
       ws_->close();
     }
   }
+  if (!ws_) {
+    deinit();
+  }
+}
+
+void SignalingDeviceImpl::deinit() {
+  SignalingTimerPtr timer = nullptr;
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    timer = timer_;
+  }
+  if (timer) {
+    timer->cancel();
+  }
+  const std::lock_guard<std::mutex> lock(mutex_);
+  chanHandlers_.clear();
+  stateHandlers_.clear();
+  reconnHandlers_.clear();
 }
 
 void SignalingDeviceImpl::connectWs() {
@@ -212,6 +227,8 @@ void SignalingDeviceImpl::connectWs() {
     if (self->state_ != SignalingDeviceState::CLOSED &&
         self->state_ != SignalingDeviceState::FAILED) {
       self->waitReconnect();
+    } else {
+      self->deinit();
     }
   });
 
@@ -220,6 +237,8 @@ void SignalingDeviceImpl::connectWs() {
     if (self->state_ != SignalingDeviceState::CLOSED &&
         self->state_ != SignalingDeviceState::FAILED) {
       self->waitReconnect();
+    } else {
+      self->deinit();
     }
   });
 
