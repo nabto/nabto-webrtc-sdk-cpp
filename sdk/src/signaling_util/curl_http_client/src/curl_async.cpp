@@ -23,6 +23,13 @@ nabto::signaling::SignalingHttpClientPtr CurlHttpClient::create() {
 
 CurlHttpClient::CurlHttpClient() : curl_(CurlAsync::create()) {}
 
+CurlHttpClient::~CurlHttpClient() {
+  if (curlReqHeaders_ != nullptr) {
+    curl_slist_free_all(curlReqHeaders_);
+    curlReqHeaders_ = nullptr;
+  }
+}
+
 bool CurlHttpClient::sendRequest(
     const nabto::signaling::SignalingHttpRequest& request,
     nabto::signaling::HttpResponseCallback cb) {

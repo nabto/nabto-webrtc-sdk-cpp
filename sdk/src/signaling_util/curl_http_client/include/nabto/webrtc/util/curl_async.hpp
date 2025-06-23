@@ -30,6 +30,7 @@ class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
   static nabto::signaling::SignalingHttpClientPtr create();
 
   CurlHttpClient();
+  ~CurlHttpClient();
   bool sendRequest(const nabto::signaling::SignalingHttpRequest& request,
                    nabto::signaling::HttpResponseCallback cb) override;
 
