@@ -293,7 +293,7 @@ class SignalingTimer {
   SignalingTimer& operator=(SignalingTimer&&) = delete;
 
   /**
-   * Set a timeout in ms at which the callback sould be invoked.
+   * Set a timeout in ms at which the callback should be invoked.
    *
    * @param timeoutMs The timeout in milliseconds.
    * @param callback The callback to be invoked once the timeout has passed.
@@ -301,6 +301,9 @@ class SignalingTimer {
   virtual void setTimeout(uint32_t timeoutMs,
                           std::function<void()> callback) = 0;
 
+  /**
+   * Cancel a started timer.
+   */
   virtual void cancel() = 0;
 };
 
