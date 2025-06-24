@@ -60,3 +60,7 @@ Run the RTSP device:
    -k key.pem --secret <secret> \
    -r rtsp://127.0.0.1:8554/video`
 ```
+
+## Limitations
+
+The libdatachannel WebRTC library used by the examples does not currently support offers generated with `restartIce()` due to this [issue](https://github.com/paullouisageneau/libdatachannel/issues/545). This means if one of the peers experiences a network failure or switches to a different network, any open WebRTC connections cannot be renegotiated. Instead the connection has to be recreated from scratch.
