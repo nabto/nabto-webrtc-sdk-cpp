@@ -109,8 +109,13 @@ void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
                   "discarding the received offer";
         return;
       }
-
-      pc_->setRemoteDescription(remDesc);
+      try {
+        pc_->setRemoteDescription(remDesc);
+      } catch (std::exception& ex) {
+        NPLOGE << "Failed to set remote description: " << remDesc.generateSdp()
+               << " Failed with exception: " << ex.what();
+        pc_->close();
+      }
     } else if (type == "CANDIDATE") {
       try {
         rtc::Candidate cand(
@@ -195,7 +200,7 @@ void WebrtcConnection::handleStateChange(
       // \o/ we should use the connection
       break;
     case rtc::PeerConnection::State::Failed:
-      // connection fail and we should fix it
+      // connection failed
     case rtc::PeerConnection::State::Closed:
       // connection closed we should clean up
       NPLOGI << "Webrtc Connection " << state;

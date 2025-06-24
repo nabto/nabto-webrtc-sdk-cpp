@@ -30,6 +30,18 @@ class WebsocketConnection
                       SignalingTimerFactoryPtr timerFactory)
       : ws_(std::move(websocket)), timerFactory_(std::move(timerFactory)) {}
 
+  ~WebsocketConnection() {
+    if (timer_) {
+      timer_->cancel();
+    }
+  }
+
+  WebsocketConnection() = default;
+  WebsocketConnection(const WebsocketConnection&) = delete;
+  WebsocketConnection& operator=(const WebsocketConnection&) = delete;
+  WebsocketConnection(WebsocketConnection&&) = delete;
+  WebsocketConnection& operator=(WebsocketConnection&&) = delete;
+
   bool send(const std::string& data);
   void close();
   void onOpen(std::function<void()> callback);
@@ -46,7 +58,7 @@ class WebsocketConnection
   SignalingWebsocketPtr ws_;
   SignalingTimerFactoryPtr timerFactory_;
   size_t pongCounter_ = 0;
-  SignalingTimerPtr timer_;
+  SignalingTimerPtr timer_ = nullptr;
 
   void handlePong();
   static SignalingMessageType parseWsMsgType(const std::string& str);
