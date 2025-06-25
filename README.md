@@ -11,7 +11,7 @@ The Libdatachannel demo runs on macOS and Linux.
 
 ```
 git submodule update --init --recursive
-cd sdkexamples/libdatachannel
+cd examples/libdatachannel
 cmake --workflow --preset debug
 ```
 
