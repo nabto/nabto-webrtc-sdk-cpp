@@ -132,7 +132,7 @@ void SignalingChannelImpl::peerOffline() {
 
     NABTO_SIGNALING_LOGI << "Peer: " << channelId_ << " went offline";
   }
-  changeState(SignalingChannelState::ONLINE);
+  changeState(SignalingChannelState::OFFLINE);
 }
 
 void SignalingChannelImpl::handleError(const SignalingError& error) {
