@@ -16,19 +16,18 @@ TEST(connect, ok) {
   auto dev = ti->createDevice();
   std::promise<void> promise;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
-  dev->addStateChangeListener(
-      [&promise, &closeProm,
-       &states](nabto::signaling::SignalingDeviceState state) {
-        states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
-          promise.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
-          closeProm.set_value();
-        }
-      });
+  dev->addStateChangeListener([&promise, &closeProm, &states](
+                                  nabto::webrtc::SignalingDeviceState state) {
+    states.push_back(state);
+    if (state == nabto::webrtc::SignalingDeviceState::CONNECTED) {
+      promise.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
+      closeProm.set_value();
+    }
+  });
   dev->start();
   std::future<void> f = promise.get_future();
   f.get();
@@ -38,9 +37,9 @@ TEST(connect, ok) {
   f2.get();
 
   ASSERT_EQ(states.size(), 3);
-  ASSERT_EQ(states[0], nabto::signaling::SignalingDeviceState::CONNECTING);
-  ASSERT_EQ(states[1], nabto::signaling::SignalingDeviceState::CONNECTED);
-  ASSERT_EQ(states[2], nabto::signaling::SignalingDeviceState::CLOSED);
+  ASSERT_EQ(states[0], nabto::webrtc::SignalingDeviceState::CONNECTING);
+  ASSERT_EQ(states[1], nabto::webrtc::SignalingDeviceState::CONNECTED);
+  ASSERT_EQ(states[2], nabto::webrtc::SignalingDeviceState::CLOSED);
 }
 
 TEST(connect, http_fail) {
@@ -49,19 +48,18 @@ TEST(connect, http_fail) {
   auto dev = ti->createDevice();
   std::promise<void> promise;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
-  dev->addStateChangeListener(
-      [&promise, &closeProm,
-       &states](nabto::signaling::SignalingDeviceState state) {
-        states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::WAIT_RETRY) {
-          promise.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
-          closeProm.set_value();
-        }
-      });
+  dev->addStateChangeListener([&promise, &closeProm, &states](
+                                  nabto::webrtc::SignalingDeviceState state) {
+    states.push_back(state);
+    if (state == nabto::webrtc::SignalingDeviceState::WAIT_RETRY) {
+      promise.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
+      closeProm.set_value();
+    }
+  });
   dev->start();
   std::future<void> f = promise.get_future();
   f.get();
@@ -71,9 +69,9 @@ TEST(connect, http_fail) {
   f2.get();
 
   ASSERT_EQ(states.size(), 3);
-  ASSERT_EQ(states[0], nabto::signaling::SignalingDeviceState::CONNECTING);
-  ASSERT_EQ(states[1], nabto::signaling::SignalingDeviceState::WAIT_RETRY);
-  ASSERT_EQ(states[2], nabto::signaling::SignalingDeviceState::CLOSED);
+  ASSERT_EQ(states[0], nabto::webrtc::SignalingDeviceState::CONNECTING);
+  ASSERT_EQ(states[1], nabto::webrtc::SignalingDeviceState::WAIT_RETRY);
+  ASSERT_EQ(states[2], nabto::webrtc::SignalingDeviceState::CLOSED);
 }
 
 TEST(connect, ws_fail) {
@@ -82,19 +80,18 @@ TEST(connect, ws_fail) {
   auto dev = ti->createDevice();
   std::promise<void> promise;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
-  dev->addStateChangeListener(
-      [&promise, &closeProm,
-       &states](nabto::signaling::SignalingDeviceState state) {
-        states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::WAIT_RETRY) {
-          promise.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
-          closeProm.set_value();
-        }
-      });
+  dev->addStateChangeListener([&promise, &closeProm, &states](
+                                  nabto::webrtc::SignalingDeviceState state) {
+    states.push_back(state);
+    if (state == nabto::webrtc::SignalingDeviceState::WAIT_RETRY) {
+      promise.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
+      closeProm.set_value();
+    }
+  });
   dev->start();
   std::future<void> f = promise.get_future();
   f.get();
@@ -104,9 +101,9 @@ TEST(connect, ws_fail) {
   f2.get();
 
   ASSERT_EQ(states.size(), 3);
-  ASSERT_EQ(states[0], nabto::signaling::SignalingDeviceState::CONNECTING);
-  ASSERT_EQ(states[1], nabto::signaling::SignalingDeviceState::WAIT_RETRY);
-  ASSERT_EQ(states[2], nabto::signaling::SignalingDeviceState::CLOSED);
+  ASSERT_EQ(states[0], nabto::webrtc::SignalingDeviceState::CONNECTING);
+  ASSERT_EQ(states[1], nabto::webrtc::SignalingDeviceState::WAIT_RETRY);
+  ASSERT_EQ(states[2], nabto::webrtc::SignalingDeviceState::CLOSED);
 }
 
 TEST(connect, reconnect_on_server_close) {
@@ -116,22 +113,21 @@ TEST(connect, reconnect_on_server_close) {
   std::promise<void> promise;
   std::promise<void> waitPromise;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
-  dev->addStateChangeListener(
-      [&promise, &closeProm, &waitPromise,
-       &states](nabto::signaling::SignalingDeviceState state) {
-        states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
-          promise.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::WAIT_RETRY) {
-          waitPromise.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
-          closeProm.set_value();
-        }
-      });
+  dev->addStateChangeListener([&promise, &closeProm, &waitPromise, &states](
+                                  nabto::webrtc::SignalingDeviceState state) {
+    states.push_back(state);
+    if (state == nabto::webrtc::SignalingDeviceState::CONNECTED) {
+      promise.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::WAIT_RETRY) {
+      waitPromise.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
+      closeProm.set_value();
+    }
+  });
   dev->start();
   std::future<void> f = promise.get_future();
   f.get();
@@ -146,10 +142,10 @@ TEST(connect, reconnect_on_server_close) {
   f2.get();
 
   ASSERT_EQ(states.size(), 4);
-  ASSERT_EQ(states[0], nabto::signaling::SignalingDeviceState::CONNECTING);
-  ASSERT_EQ(states[1], nabto::signaling::SignalingDeviceState::CONNECTED);
-  ASSERT_EQ(states[2], nabto::signaling::SignalingDeviceState::WAIT_RETRY);
-  ASSERT_EQ(states[3], nabto::signaling::SignalingDeviceState::CLOSED);
+  ASSERT_EQ(states[0], nabto::webrtc::SignalingDeviceState::CONNECTING);
+  ASSERT_EQ(states[1], nabto::webrtc::SignalingDeviceState::CONNECTED);
+  ASSERT_EQ(states[2], nabto::webrtc::SignalingDeviceState::WAIT_RETRY);
+  ASSERT_EQ(states[3], nabto::webrtc::SignalingDeviceState::CLOSED);
 }
 TEST(connect, connect_a_client) {
   auto ti = nabto::test::TestInstance::create();
@@ -159,24 +155,23 @@ TEST(connect, connect_a_client) {
   std::promise<void> connProm;
   std::promise<void> cliProm;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
   dev->addNewChannelListener(
-      [&cliProm](nabto::signaling::SignalingChannelPtr conn, bool authorized) {
+      [&cliProm](nabto::webrtc::SignalingChannelPtr conn, bool authorized) {
         cliProm.set_value();
       });
 
-  dev->addStateChangeListener(
-      [&connProm, &closeProm,
-       &states](nabto::signaling::SignalingDeviceState state) {
-        states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
-          connProm.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
-          closeProm.set_value();
-        }
-      });
+  dev->addStateChangeListener([&connProm, &closeProm, &states](
+                                  nabto::webrtc::SignalingDeviceState state) {
+    states.push_back(state);
+    if (state == nabto::webrtc::SignalingDeviceState::CONNECTED) {
+      connProm.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
+      closeProm.set_value();
+    }
+  });
 
   dev->start();
 
@@ -204,19 +199,18 @@ TEST(connect, connect_without_channel_handler) {
 
   std::promise<void> connProm;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
-  dev->addStateChangeListener(
-      [&connProm, &closeProm,
-       &states](nabto::signaling::SignalingDeviceState state) {
-        states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
-          connProm.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
-          closeProm.set_value();
-        }
-      });
+  dev->addStateChangeListener([&connProm, &closeProm, &states](
+                                  nabto::webrtc::SignalingDeviceState state) {
+    states.push_back(state);
+    if (state == nabto::webrtc::SignalingDeviceState::CONNECTED) {
+      connProm.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
+      closeProm.set_value();
+    }
+  });
 
   dev->start();
 
@@ -246,14 +240,14 @@ TEST(connect, connect_multiple_clients) {
 
   std::promise<void> cliProm;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
   size_t numberOfClients = 10;
   size_t n = 0;
 
   dev->addNewChannelListener(
-      [&cliProm, &n, numberOfClients](
-          nabto::signaling::SignalingChannelPtr conn, bool authorized) {
+      [&cliProm, &n, numberOfClients](nabto::webrtc::SignalingChannelPtr conn,
+                                      bool authorized) {
         n++;
         if (n == numberOfClients) {
           cliProm.set_value();
@@ -261,9 +255,9 @@ TEST(connect, connect_multiple_clients) {
       });
 
   dev->addStateChangeListener(
-      [&closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+      [&closeProm, &states](nabto::webrtc::SignalingDeviceState state) {
         states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
@@ -290,21 +284,21 @@ TEST(connect, client_disconnect_after_connect) {
 
   std::promise<void> cliProm;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
-  nabto::signaling::SignalingChannelPtr cliConn = nullptr;
+  nabto::webrtc::SignalingChannelPtr cliConn = nullptr;
 
   dev->addNewChannelListener(
-      [&cliProm, &cliConn](nabto::signaling::SignalingChannelPtr conn,
+      [&cliProm, &cliConn](nabto::webrtc::SignalingChannelPtr conn,
                            bool authorized) {
         cliConn = conn;
         cliProm.set_value();
       });
 
   dev->addStateChangeListener(
-      [&closeProm, &states](nabto::signaling::SignalingDeviceState state) {
+      [&closeProm, &states](nabto::webrtc::SignalingDeviceState state) {
         states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
@@ -320,8 +314,8 @@ TEST(connect, client_disconnect_after_connect) {
 
   ASSERT_TRUE(cliConn != nullptr);
   cliConn->addStateChangeListener(
-      [&connEventProm](nabto::signaling::SignalingChannelState event) {
-        if (event == nabto::signaling::SignalingChannelState::OFFLINE) {
+      [&connEventProm](nabto::webrtc::SignalingChannelState event) {
+        if (event == nabto::webrtc::SignalingChannelState::OFFLINE) {
           connEventProm.set_value();
         }
       });
@@ -346,14 +340,14 @@ TEST(connect, device_send_error) {
   std::promise<void> closeProm;
 
   dev.device->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
 
   dev.channel->sendError(
-      nabto::signaling::SignalingError("ERROR_1", "test error"));
+      nabto::webrtc::SignalingError("ERROR_1", "test error"));
 
   nabto::test::ProtocolError err = ti->clientWaitForErrorReceived(dev.id);
 
@@ -372,13 +366,13 @@ TEST(connect, device_send_error_no_msg) {
   std::promise<void> closeProm;
 
   dev.device->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
 
-  dev.channel->sendError(nabto::signaling::SignalingError("ERROR_1", ""));
+  dev.channel->sendError(nabto::webrtc::SignalingError("ERROR_1", ""));
 
   nabto::test::ProtocolError err = ti->clientWaitForErrorReceived(dev.id);
 
@@ -398,14 +392,14 @@ TEST(connect, device_receive_error) {
   std::promise<void> closeProm;
 
   dev.device->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
 
   dev.channel->addErrorListener(
-      [&errorProm](const nabto::signaling::SignalingError& error) {
+      [&errorProm](const nabto::webrtc::SignalingError& error) {
         ASSERT_TRUE(error.errorCode().compare("ERROR_1") == 0);
         ASSERT_TRUE(error.errorMessage().compare("test error") == 0);
         errorProm.set_value();
@@ -429,14 +423,14 @@ TEST(connect, device_receive_error_no_msg) {
   std::promise<void> closeProm;
 
   dev.device->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
 
   dev.channel->addErrorListener(
-      [&errorProm](const nabto::signaling::SignalingError& error) {
+      [&errorProm](const nabto::webrtc::SignalingError& error) {
         ASSERT_TRUE(error.errorCode().compare("ERROR_1") == 0);
         ASSERT_TRUE(error.errorMessage().compare("") == 0);
         errorProm.set_value();
@@ -458,19 +452,18 @@ TEST(data_formats, extra_device_connect_response_data) {
   auto dev = ti->createDevice();
   std::promise<void> promise;
   std::promise<void> closeProm;
-  std::vector<nabto::signaling::SignalingDeviceState> states;
+  std::vector<nabto::webrtc::SignalingDeviceState> states;
 
-  dev->addStateChangeListener(
-      [&promise, &closeProm,
-       &states](nabto::signaling::SignalingDeviceState state) {
-        states.push_back(state);
-        if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
-          promise.set_value();
-        }
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
-          closeProm.set_value();
-        }
-      });
+  dev->addStateChangeListener([&promise, &closeProm, &states](
+                                  nabto::webrtc::SignalingDeviceState state) {
+    states.push_back(state);
+    if (state == nabto::webrtc::SignalingDeviceState::CONNECTED) {
+      promise.set_value();
+    }
+    if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
+      closeProm.set_value();
+    }
+  });
   dev->start();
   std::future<void> f = promise.get_future();
   f.get();
@@ -480,9 +473,9 @@ TEST(data_formats, extra_device_connect_response_data) {
   f2.get();
 
   ASSERT_EQ(states.size(), 3);
-  ASSERT_EQ(states[0], nabto::signaling::SignalingDeviceState::CONNECTING);
-  ASSERT_EQ(states[1], nabto::signaling::SignalingDeviceState::CONNECTED);
-  ASSERT_EQ(states[2], nabto::signaling::SignalingDeviceState::CLOSED);
+  ASSERT_EQ(states[0], nabto::webrtc::SignalingDeviceState::CONNECTING);
+  ASSERT_EQ(states[1], nabto::webrtc::SignalingDeviceState::CONNECTED);
+  ASSERT_EQ(states[2], nabto::webrtc::SignalingDeviceState::CLOSED);
 }
 
 TEST(data_formats, ws_can_handle_unknown_message_types) {
@@ -492,8 +485,8 @@ TEST(data_formats, ws_can_handle_unknown_message_types) {
   std::promise<void> closeProm;
 
   dev->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
@@ -513,8 +506,8 @@ TEST(reliablity, client_receives_all_messages) {
   std::promise<void> closeProm;
 
   dev.device->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
@@ -544,8 +537,8 @@ TEST(reliablity, device_receives_all_messages) {
   std::promise<void> closeProm;
 
   dev.device->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
@@ -587,8 +580,8 @@ TEST(reliablity, client_receives_all_messages_after_reconnect) {
   std::promise<void> closeProm;
 
   dev.device->addStateChangeListener(
-      [&closeProm](nabto::signaling::SignalingDeviceState state) {
-        if (state == nabto::signaling::SignalingDeviceState::CLOSED) {
+      [&closeProm](nabto::webrtc::SignalingDeviceState state) {
+        if (state == nabto::webrtc::SignalingDeviceState::CLOSED) {
           closeProm.set_value();
         }
       });
@@ -650,9 +643,9 @@ int main(int argc, char** argv) {
     strLvl = std::string(envLvl);
   }
 
-  // init logging for NabtoSignaling::core
-  plog::init<nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID>(
-      plogSeverity(strLvl), &consoleAppender);
+  // init logging for Nabtonabto::webrtc::core
+  plog::init<nabto::webrtc::SIGNALING_LOGGER_INSTANCE_ID>(plogSeverity(strLvl),
+                                                          &consoleAppender);
 
   return RUN_ALL_TESTS();
 }

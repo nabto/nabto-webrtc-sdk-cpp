@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 class SignalingDeviceImpl;
 using SignalingDeviceImplPtr = std::shared_ptr<SignalingDeviceImpl>;
@@ -28,5 +28,5 @@ enum SignalingMessageType : std::uint8_t {
   PONG,
 };
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

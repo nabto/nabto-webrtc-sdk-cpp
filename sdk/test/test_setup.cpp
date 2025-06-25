@@ -29,8 +29,8 @@ class Environment : public ::testing::Environment {
     plog::init<42>(lvl, &consoleAppender);
 
     // init logging for NabtoSignaling::core
-    plog::init<nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID>(
-        lvl, &consoleAppender);
+    plog::init<nabto::webrtc::SIGNALING_LOGGER_INSTANCE_ID>(lvl,
+                                                            &consoleAppender);
   }
 
   // Override this to define how to tear down the environment.

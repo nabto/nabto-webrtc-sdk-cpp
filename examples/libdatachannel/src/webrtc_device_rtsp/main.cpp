@@ -38,71 +38,70 @@ int main(int argc, char** argv) {
   }
 
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-  nabto::util::initLogger(opts.logLevel, &consoleAppender);
+  nabto::webrtc::util::initLogger(opts.logLevel, &consoleAppender);
 
-  // init logging for NabtoSignaling::core
-  plog::init<nabto::signaling::SIGNALING_LOGGER_INSTANCE_ID>(opts.logLevel,
-                                                             &consoleAppender);
+  // init logging for Nabtonabto::webrtc::core
+  plog::init<nabto::webrtc::SIGNALING_LOGGER_INSTANCE_ID>(opts.logLevel,
+                                                          &consoleAppender);
 
   NPLOGI << "Connecting to device: " << opts.deviceId;
 
-  nabto::signaling::SignalingTokenGeneratorPtr jwtPtr =
-      nabto::util::NabtoTokenGenerator::create(opts.productId, opts.deviceId,
-                                               opts.privateKey);
+  nabto::webrtc::SignalingTokenGeneratorPtr jwtPtr =
+      nabto::webrtc::util::NabtoTokenGenerator::create(
+          opts.productId, opts.deviceId, opts.privateKey);
 
-  auto http = nabto::util::CurlHttpClient::create();
+  auto http = nabto::webrtc::util::CurlHttpClient::create();
   auto ws = nabto::example::RtcWebsocketWrapper::create();
-  auto tf = nabto::util::StdTimerFactory::create();
+  auto tf = nabto::webrtc::util::StdTimerFactory::create();
   auto trackHandler = nabto::example::H264TrackHandler::create(opts.rtspUrl);
 
-  nabto::signaling::SignalingDeviceConfig conf = {
+  nabto::webrtc::SignalingDeviceConfig conf = {
       opts.deviceId, opts.productId, jwtPtr, opts.signalingUrl, ws, http, tf};
 
-  auto device = nabto::signaling::SignalingDeviceFactory::create(conf);
-  device->addNewChannelListener(
-      [device, trackHandler, &opts /*, &conns*/](
-          nabto::signaling::SignalingChannelPtr channel, bool authorized) {
-        // Handle authorization
-        if (opts.centralAuthorization) {
-          if (!authorized) {
-            NPLOGE
-                << "Rejecting connection as central authorization is required";
-            auto authorizationErrorMessage =
-                "Rejecting connection as central authorization is required";
-            NPLOGE << authorizationErrorMessage;
-            channel->sendError(nabto::signaling::SignalingError(
-                nabto::signaling::SignalingErrorCode::ACCESS_DENIED,
-                authorizationErrorMessage));
-            channel->close();
-            return;
-          }
-        } else if (opts.sharedSecret.empty()) {
-          auto authorizationErrorMessage =
-              "Not accepting connection as it is neither central authorization "
-              "or shared secret message signing is used";
-          NPLOGE << authorizationErrorMessage;
-          channel->sendError(nabto::signaling::SignalingError(
-              nabto::signaling::SignalingErrorCode::ACCESS_DENIED,
-              authorizationErrorMessage));
-          channel->close();
-          return;
-        }
-        nabto::util::MessageTransportPtr transport;
-        if (opts.sharedSecret.empty()) {
-          transport = nabto::util::MessageTransportFactory::createNoneTransport(
+  auto device = nabto::webrtc::SignalingDeviceFactory::create(conf);
+  device->addNewChannelListener([device, trackHandler, &opts /*, &conns*/](
+                                    nabto::webrtc::SignalingChannelPtr channel,
+                                    bool authorized) {
+    // Handle authorization
+    if (opts.centralAuthorization) {
+      if (!authorized) {
+        NPLOGE << "Rejecting connection as central authorization is required";
+        auto authorizationErrorMessage =
+            "Rejecting connection as central authorization is required";
+        NPLOGE << authorizationErrorMessage;
+        channel->sendError(nabto::webrtc::SignalingError(
+            nabto::webrtc::SignalingErrorCode::ACCESS_DENIED,
+            authorizationErrorMessage));
+        channel->close();
+        return;
+      }
+    } else if (opts.sharedSecret.empty()) {
+      auto authorizationErrorMessage =
+          "Not accepting connection as it is neither central authorization "
+          "or shared secret message signing is used";
+      NPLOGE << authorizationErrorMessage;
+      channel->sendError(nabto::webrtc::SignalingError(
+          nabto::webrtc::SignalingErrorCode::ACCESS_DENIED,
+          authorizationErrorMessage));
+      channel->close();
+      return;
+    }
+    nabto::webrtc::util::MessageTransportPtr transport;
+    if (opts.sharedSecret.empty()) {
+      transport =
+          nabto::webrtc::util::MessageTransportFactory::createNoneTransport(
               device, channel);
-        } else {
-          transport =
-              nabto::util::MessageTransportFactory::createSharedSecretTransport(
-                  device, channel,
-                  [&opts](const std::string keyId) -> std::string {
-                    return opts.sharedSecret;
-                  });
-        }
-        auto webConn = nabto::example::WebrtcConnection::create(
-            device, channel, transport, trackHandler);
-        // conns.push_back(webConn);
-      });
+    } else {
+      transport = nabto::webrtc::util::MessageTransportFactory::
+          createSharedSecretTransport(
+              device, channel, [&opts](const std::string keyId) -> std::string {
+                return opts.sharedSecret;
+              });
+    }
+    auto webConn = nabto::example::WebrtcConnection::create(
+        device, channel, transport, trackHandler);
+    // conns.push_back(webConn);
+  });
   device->start();
 
   int n;

@@ -6,6 +6,7 @@
 #include <string>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 class MessageSigner;
@@ -51,4 +52,5 @@ class MessageSigner {
   virtual nlohmann::json signMessage(const nlohmann::json& message) = 0;
 };
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

@@ -7,9 +7,9 @@ namespace nabto {
 namespace example {
 
 WebrtcConnectionPtr WebrtcConnection::create(
-    nabto::signaling::SignalingDevicePtr device,
-    nabto::signaling::SignalingChannelPtr channel,
-    nabto::util::MessageTransportPtr messageTransport,
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel,
+    nabto::webrtc::util::MessageTransportPtr messageTransport,
     WebrtcTrackHandlerPtr trackHandler) {
   auto p = std::make_shared<WebrtcConnection>(device, channel, messageTransport,
                                               trackHandler);
@@ -18,9 +18,9 @@ WebrtcConnectionPtr WebrtcConnection::create(
 }
 
 WebrtcConnection::WebrtcConnection(
-    nabto::signaling::SignalingDevicePtr device,
-    nabto::signaling::SignalingChannelPtr channel,
-    nabto::util::MessageTransportPtr messageTransport,
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel,
+    nabto::webrtc::util::MessageTransportPtr messageTransport,
     WebrtcTrackHandlerPtr trackHandler)
     : device_(device),
       channel_(channel),
@@ -36,12 +36,12 @@ void WebrtcConnection::init() {
       [self](const nlohmann::json& msg) { self->handleMessage(msg); });
 
   messageTransport_->addSetupDoneListener(
-      [self](const std::vector<signaling::IceServer>& iceServers) {
+      [self](const std::vector<nabto::webrtc::IceServer>& iceServers) {
         self->parseIceServers(iceServers);
       });
 
   messageTransport_->addErrorListener(
-      [self](const nabto::signaling::SignalingError& error) {
+      [self](const nabto::webrtc::SignalingError& error) {
         NPLOGE << "Got errorCode: " << error.errorCode();
         // All errors are fatal, so we clean up no matter what the error was
         if (self->pc_) {
@@ -52,9 +52,9 @@ void WebrtcConnection::init() {
       });
 
   channel_->addStateChangeListener(
-      [self](nabto::signaling::SignalingChannelState event) {
+      [self](nabto::webrtc::SignalingChannelState event) {
         switch (event) {
-          case nabto::signaling::SignalingChannelState::OFFLINE:
+          case nabto::webrtc::SignalingChannelState::OFFLINE:
             NPLOGD << "Got channel state: OFFLINE";
             // This means we tried to send a signaling message but the client is
             // not connected to the backend. If we expect the client to connect
@@ -62,16 +62,16 @@ void WebrtcConnection::init() {
             // reliability layer will fix it and we can ignore this event.
             // Otherwise we should handle the error.
             break;
-          case nabto::signaling::SignalingChannelState::CLOSED:
+          case nabto::webrtc::SignalingChannelState::CLOSED:
             NPLOGD << "Got channel state: CLOSED";
             self->pc_->close();
             break;
-          case nabto::signaling::SignalingChannelState::ONLINE:
+          case nabto::webrtc::SignalingChannelState::ONLINE:
             NPLOGD << "Got channel state ONLINE";
             // This means client reconnected, the client should do ICE restart
             // if needed so we can just ignore.
             break;
-          case nabto::signaling::SignalingChannelState::FAILED:
+          case nabto::webrtc::SignalingChannelState::FAILED:
             NPLOGD << "Got channel state: FAILED";
             // TODO: handle failed;
             break;
@@ -79,7 +79,7 @@ void WebrtcConnection::init() {
       });
 
   channel_->addErrorListener(
-      [self](const nabto::signaling::SignalingError& error) {
+      [self](const nabto::webrtc::SignalingError& error) {
         NPLOGE << "Got errorCode: " << error.errorCode();
         // All errors are fatal, so we clean up no matter what the error was
         if (self->pc_) {
@@ -334,7 +334,7 @@ void WebrtcConnection::sendSignalingMessage(const nlohmann::json& message) {
 }
 
 void WebrtcConnection::parseIceServers(
-    const std::vector<struct nabto::signaling::IceServer>& servers) {
+    const std::vector<struct nabto::webrtc::IceServer>& servers) {
   for (auto s : servers) {
     std::string proto = "";
     if (s.username.empty()) {

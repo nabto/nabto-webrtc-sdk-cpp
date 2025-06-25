@@ -4,6 +4,7 @@
 #include <sstream>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 /**
@@ -48,4 +49,5 @@ static std::string generate_uuid_v4() {
 }
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

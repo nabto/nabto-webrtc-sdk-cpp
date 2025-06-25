@@ -14,6 +14,7 @@ constexpr int NABTO_LOG_ID = 42;
 #define NPLOGN PLOGN_(NABTO_LOG_ID)
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 /**
@@ -27,4 +28,5 @@ static void initLogger(enum plog::Severity severity,
   plog::init<NABTO_LOG_ID>(severity, appender);
 }
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

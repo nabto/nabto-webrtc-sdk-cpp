@@ -15,9 +15,10 @@
 #include <utility>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
-nabto::signaling::SignalingHttpClientPtr CurlHttpClient::create() {
+nabto::webrtc::SignalingHttpClientPtr CurlHttpClient::create() {
   return std::make_shared<CurlHttpClient>();
 }
 
@@ -31,8 +32,8 @@ CurlHttpClient::~CurlHttpClient() {
 }
 
 bool CurlHttpClient::sendRequest(
-    const nabto::signaling::SignalingHttpRequest& request,
-    nabto::signaling::HttpResponseCallback cb) {
+    const nabto::webrtc::SignalingHttpRequest& request,
+    nabto::webrtc::HttpResponseCallback cb) {
   readBuffer_ = request.body;
   writeBuffer_.clear();
 
@@ -109,7 +110,7 @@ bool CurlHttpClient::sendRequest(
       return;
     }
     NPLOGI << "Response data: " << self->writeBuffer_;
-    auto response = std::make_unique<nabto::signaling::SignalingHttpResponse>();
+    auto response = std::make_unique<nabto::webrtc::SignalingHttpResponse>();
     response->body = self->writeBuffer_;
     response->statusCode = statusCode;
 
@@ -285,4 +286,5 @@ void CurlAsync::threadRunner(CurlAsync* self) {
 }
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

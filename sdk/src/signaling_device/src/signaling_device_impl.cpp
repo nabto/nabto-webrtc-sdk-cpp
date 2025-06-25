@@ -21,14 +21,13 @@
 #include <vector>
 
 namespace {
-nlohmann::json signalingErrorToJson(
-    const nabto::signaling::SignalingError& err) {
+nlohmann::json signalingErrorToJson(const nabto::webrtc::SignalingError& err) {
   nlohmann::json error = {{"code", err.errorCode()},
                           {"message", err.errorMessage()}};
   return error;
 }
 
-nabto::signaling::SignalingError signalingErrorFromJson(
+nabto::webrtc::SignalingError signalingErrorFromJson(
     const nlohmann::json& err) {
   std::string msg;
   if (err.contains("message")) {
@@ -41,7 +40,7 @@ nabto::signaling::SignalingError signalingErrorFromJson(
 }  // namespace
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 SignalingDeviceImplPtr SignalingDeviceImpl::create(
     const SignalingDeviceConfig& conf) {
@@ -155,7 +154,7 @@ void SignalingDeviceImpl::websocketSendError(const std::string& channelId,
 }
 
 void SignalingDeviceImpl::close() {
-  std::map<std::string, nabto::signaling::SignalingChannelImplPtr> chans;
+  std::map<std::string, nabto::webrtc::SignalingChannelImplPtr> chans;
   {
     {
       const std::lock_guard<std::mutex> lock(mutex_);
@@ -186,6 +185,7 @@ void SignalingDeviceImpl::deinit() {
   {
     const std::lock_guard<std::mutex> lock(mutex_);
     timer = timer_;
+    timer_ = nullptr;
   }
   if (timer) {
     timer->cancel();
@@ -493,5 +493,5 @@ void SignalingDeviceImpl::changeState(SignalingDeviceState state) {
   }
 }
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

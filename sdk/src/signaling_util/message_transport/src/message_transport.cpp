@@ -6,22 +6,24 @@
 #include <utility>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 MessageTransportPtr MessageTransportFactory::createSharedSecretTransport(
-    signaling::SignalingDevicePtr device,
-    signaling::SignalingChannelPtr channel,
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel,
     MessageTransportSharedSecretHandler handler) {
   return MessageTransportImpl::createSharedSecret(
       std::move(device), std::move(channel), std::move(handler));
 }
 
 MessageTransportPtr MessageTransportFactory::createNoneTransport(
-    signaling::SignalingDevicePtr device,
-    signaling::SignalingChannelPtr channel) {
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel) {
   return MessageTransportImpl::createNone(std::move(device),
                                           std::move(channel));
 }
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

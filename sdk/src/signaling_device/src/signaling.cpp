@@ -3,7 +3,7 @@
 #include <string>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 std::string signalingDeviceStateToString(SignalingDeviceState state) {
   switch (state) {
@@ -41,5 +41,5 @@ std::string signalingChannelStateToString(SignalingChannelState state) {
   }
 }
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

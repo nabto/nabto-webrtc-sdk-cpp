@@ -10,7 +10,7 @@
 #include <string>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 class SignalingChannelImpl;
 using SignalingChannelImplPtr = std::shared_ptr<SignalingChannelImpl>;
@@ -138,5 +138,5 @@ class SignalingDeviceImpl
   static std::vector<struct IceServer> parseIceServers(const std::string& data);
 };
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

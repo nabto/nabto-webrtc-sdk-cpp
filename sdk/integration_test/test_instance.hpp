@@ -24,8 +24,8 @@ using namespace org::openapitools::client;
 class DeviceWithClient {
  public:
   std::string id;
-  nabto::signaling::SignalingDevicePtr device;
-  nabto::signaling::SignalingChannelPtr channel;
+  nabto::webrtc::SignalingDevicePtr device;
+  nabto::webrtc::SignalingChannelPtr channel;
   bool authorized;
 };
 
@@ -35,12 +35,11 @@ class ProtocolError {
   std::string message;
 };
 
-class TestTokenGen : public nabto::signaling::SignalingTokenGenerator,
+class TestTokenGen : public nabto::webrtc::SignalingTokenGenerator,
                      public std::enable_shared_from_this<TestTokenGen> {
  public:
   std::string token_;
-  static nabto::signaling::SignalingTokenGeneratorPtr create(
-      std::string token) {
+  static nabto::webrtc::SignalingTokenGeneratorPtr create(std::string token) {
     return std::make_shared<TestTokenGen>(token);
   }
   TestTokenGen(std::string& token) : token_(token) {}
@@ -99,25 +98,25 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
     }
   }
 
-  nabto::signaling::SignalingDevicePtr createDevice() {
-    http_ = nabto::util::CurlHttpClient::create();
+  nabto::webrtc::SignalingDevicePtr createDevice() {
+    http_ = nabto::webrtc::util::CurlHttpClient::create();
     ws_ = nabto::example::RtcWebsocketWrapper::create();
-    tf_ = nabto::util::StdTimerFactory::create();
+    tf_ = nabto::webrtc::util::StdTimerFactory::create();
     tokGen_ = TestTokenGen::create(accessToken_);
     auto self = shared_from_this();
 
     conf_ = {deviceId_, productId_, tokGen_, epUrl_, ws_, http_, tf_};
 
-    sig_ = nabto::signaling::SignalingDeviceFactory::create(conf_);
+    sig_ = nabto::webrtc::SignalingDeviceFactory::create(conf_);
     return sig_;
   }
 
-  nabto::signaling::SignalingDevicePtr createConnectedDevice() {
+  nabto::webrtc::SignalingDevicePtr createConnectedDevice() {
     auto dev = createDevice();
     std::promise<void> connProm;
     dev->addStateChangeListener(
-        [&connProm](nabto::signaling::SignalingDeviceState state) {
-          if (state == nabto::signaling::SignalingDeviceState::CONNECTED) {
+        [&connProm](nabto::webrtc::SignalingDeviceState state) {
+          if (state == nabto::webrtc::SignalingDeviceState::CONNECTED) {
             connProm.set_value();
           }
         });
@@ -157,7 +156,7 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
     std::promise<void> prom;
 
     res.device->addNewChannelListener(
-        [&res, &prom](nabto::signaling::SignalingChannelPtr conn,
+        [&res, &prom](nabto::webrtc::SignalingChannelPtr conn,
                       bool authorized) {
           res.channel = conn;
           res.authorized = authorized;
@@ -280,16 +279,16 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
     }
   }
 
-  nabto::signaling::SignalingDevicePtr getDevice() { return sig_; }
+  nabto::webrtc::SignalingDevicePtr getDevice() { return sig_; }
 
  private:
   std::shared_ptr<api::DefaultApi> api_ = nullptr;
-  nabto::signaling::SignalingHttpClientPtr http_;
-  nabto::signaling::SignalingWebsocketPtr ws_;
-  nabto::signaling::SignalingTimerFactoryPtr tf_;
-  nabto::signaling::SignalingDeviceConfig conf_;
-  nabto::signaling::SignalingDevicePtr sig_;
-  nabto::signaling::SignalingTokenGeneratorPtr tokGen_;
+  nabto::webrtc::SignalingHttpClientPtr http_;
+  nabto::webrtc::SignalingWebsocketPtr ws_;
+  nabto::webrtc::SignalingTimerFactoryPtr tf_;
+  nabto::webrtc::SignalingDeviceConfig conf_;
+  nabto::webrtc::SignalingDevicePtr sig_;
+  nabto::webrtc::SignalingTokenGeneratorPtr tokGen_;
 };
 
 }  // namespace test

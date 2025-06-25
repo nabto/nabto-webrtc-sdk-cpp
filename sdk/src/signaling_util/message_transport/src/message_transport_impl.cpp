@@ -20,11 +20,12 @@
 #include <vector>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 MessageTransportPtr MessageTransportImpl::createNone(
-    signaling::SignalingDevicePtr device,
-    signaling::SignalingChannelPtr channel) {
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel) {
   auto ptr = std::make_shared<MessageTransportImpl>(std::move(device),
                                                     std::move(channel));
   if (ptr) {
@@ -34,8 +35,8 @@ MessageTransportPtr MessageTransportImpl::createNone(
 }
 
 MessageTransportPtr MessageTransportImpl::createSharedSecret(
-    signaling::SignalingDevicePtr device,
-    signaling::SignalingChannelPtr channel,
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel,
     MessageTransportSharedSecretHandler sharedSecretHandler) {
   auto ptr = std::make_shared<MessageTransportImpl>(
       std::move(device), std::move(channel), std::move(sharedSecretHandler));
@@ -46,15 +47,15 @@ MessageTransportPtr MessageTransportImpl::createSharedSecret(
 }
 
 MessageTransportImpl::MessageTransportImpl(
-    signaling::SignalingDevicePtr device,
-    signaling::SignalingChannelPtr channel)
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel)
     : device_(std::move(device)),
       channel_(std::move(channel)),
       mode_(SigningMode::NONE) {}
 
 MessageTransportImpl::MessageTransportImpl(
-    signaling::SignalingDevicePtr device,
-    signaling::SignalingChannelPtr channel,
+    nabto::webrtc::SignalingDevicePtr device,
+    nabto::webrtc::SignalingChannelPtr channel,
     MessageTransportSharedSecretHandler sharedSecretHandler)
     : device_(std::move(device)),
       channel_(std::move(channel)),
@@ -77,8 +78,8 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
     }
   } catch (std::exception& ex) {
     NPLOGE << "Failed to setup signer: " << ex.what();
-    auto err = nabto::signaling::SignalingError(
-        nabto::signaling::SignalingErrorCode::INTERNAL_ERROR, "Internal error");
+    auto err = nabto::webrtc::SignalingError(
+        nabto::webrtc::SignalingErrorCode::INTERNAL_ERROR, "Internal error");
     handleError(err);
     return;
   }
@@ -95,7 +96,8 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
         NPLOGE << "Received signaling message without a registered message "
                   "handler";
       } else {
-        std::map<TransportMessageListenerId, signaling::SignalingMessageHandler>
+        std::map<TransportMessageListenerId,
+                 nabto::webrtc::SignalingMessageHandler>
             msgHandlers;
         {
           const std::lock_guard<std::mutex> lock(handlerLock_);
@@ -106,33 +108,33 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
         }
       }
     }
-  } catch (nabto::util::VerificationError& ex) {
+  } catch (nabto::webrtc::util::VerificationError& ex) {
     NPLOGE << "Could not verify the incoming signaling message: "
            << msgIn.dump() << " with: " << ex.what();
-    auto err = nabto::signaling::SignalingError(
-        nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR,
+    auto err = nabto::webrtc::SignalingError(
+        nabto::webrtc::SignalingErrorCode::VERIFICATION_ERROR,
         "Could not verify the incoming signaling message");
     handleError(err);
-  } catch (nabto::util::DecodeError& ex) {
+  } catch (nabto::webrtc::util::DecodeError& ex) {
     NPLOGE << "Could not decode the incoming signaling message: "
            << msgIn.dump() << " with: " << ex.what();
-    auto err = nabto::signaling::SignalingError(
-        nabto::signaling::SignalingErrorCode::DECODE_ERROR,
+    auto err = nabto::webrtc::SignalingError(
+        nabto::webrtc::SignalingErrorCode::DECODE_ERROR,
         "Could not decode the incoming signaling message");
     handleError(err);
   } catch (nlohmann::json::exception& ex) {
     NPLOGE << "Failed to parse json: " << ex.what()
            << " for msg: " << msgIn.dump();
-    auto err = nabto::signaling::SignalingError(
-        nabto::signaling::SignalingErrorCode::DECODE_ERROR,
+    auto err = nabto::webrtc::SignalingError(
+        nabto::webrtc::SignalingErrorCode::DECODE_ERROR,
         "Could not decode the incoming signaling message");
     handleError(err);
 
   } catch (std::exception& ex) {
     NPLOGE << "Failed to handle message: " << msgIn.dump()
            << " with: " << ex.what();
-    auto err = nabto::signaling::SignalingError(
-        nabto::signaling::SignalingErrorCode::INTERNAL_ERROR, "Internal error");
+    auto err = nabto::webrtc::SignalingError(
+        nabto::webrtc::SignalingErrorCode::INTERNAL_ERROR, "Internal error");
     handleError(err);
   }
 };
@@ -147,7 +149,7 @@ SetupDoneListenerId MessageTransportImpl::addSetupDoneListener(
 }
 
 TransportMessageListenerId MessageTransportImpl::addMessageListener(
-    signaling::SignalingMessageHandler handler) {
+    nabto::webrtc::SignalingMessageHandler handler) {
   const std::lock_guard<std::mutex> lock(handlerLock_);
   const TransportMessageListenerId id = currMsgListId_;
   currMsgListId_++;
@@ -156,7 +158,7 @@ TransportMessageListenerId MessageTransportImpl::addMessageListener(
 }
 
 TransportErrorListenerId MessageTransportImpl::addErrorListener(
-    signaling::SignalingErrorHandler handler) {
+    nabto::webrtc::SignalingErrorHandler handler) {
   const std::lock_guard<std::mutex> lock(handlerLock_);
   const TransportErrorListenerId id = currErrListId_;
   currErrListId_++;
@@ -171,8 +173,8 @@ void MessageTransportImpl::sendMessage(const nlohmann::json& message) {
   } catch (std::exception& e) {
     NPLOGE << "Failed to sign the message: " << message.dump()
            << ", error: " << e.what();
-    auto err = nabto::signaling::SignalingError(
-        nabto::signaling::SignalingErrorCode::VERIFICATION_ERROR,
+    auto err = nabto::webrtc::SignalingError(
+        nabto::webrtc::SignalingErrorCode::VERIFICATION_ERROR,
         "Could not sign the signaling message");
     handleError(err);
   }
@@ -191,7 +193,7 @@ void MessageTransportImpl::setupSigner(const nlohmann::json& msg) {
 void MessageTransportImpl::requestIceServers() {
   auto self = shared_from_this();
   device_->requestIceServers(
-      [self](const std::vector<struct nabto::signaling::IceServer>& servers) {
+      [self](const std::vector<struct nabto::webrtc::IceServer>& servers) {
         self->sendSetupResponse(servers);
         std::map<SetupDoneListenerId, SetupDoneHandler> setupHandlers;
         {
@@ -205,7 +207,7 @@ void MessageTransportImpl::requestIceServers() {
 }
 
 void MessageTransportImpl::sendSetupResponse(
-    const std::vector<struct nabto::signaling::IceServer>& iceServers) {
+    const std::vector<struct nabto::webrtc::IceServer>& iceServers) {
   nlohmann::json root;
   root["type"] = "SETUP_RESPONSE";
   root["iceServers"] = nlohmann::json::array();
@@ -229,9 +231,10 @@ void MessageTransportImpl::sendSetupResponse(
   sendMessage(root);
 }
 
-void MessageTransportImpl::handleError(const signaling::SignalingError& err) {
+void MessageTransportImpl::handleError(
+    const nabto::webrtc::SignalingError& err) {
   channel_->sendError(err);
-  std::map<TransportErrorListenerId, signaling::SignalingErrorHandler>
+  std::map<TransportErrorListenerId, nabto::webrtc::SignalingErrorHandler>
       errHandlers;
   {
     const std::lock_guard<std::mutex> lock(handlerLock_);
@@ -244,4 +247,5 @@ void MessageTransportImpl::handleError(const signaling::SignalingError& err) {
 }
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

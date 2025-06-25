@@ -273,7 +273,7 @@ void RtspClient::removeConnection(size_t ref) {
 
 bool RtspClient::start(
     std::function<void(std::optional<std::string> error)> cb) {
-  curl_ = nabto::util::CurlAsync::create();
+  curl_ = nabto::webrtc::util::CurlAsync::create();
   if (curl_ == nullptr) {
     NPLOGE << "Failed to create CurlAsync object";
     return false;

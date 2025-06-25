@@ -10,7 +10,8 @@ kroaroSWQLA/A+6sCQRb8g+Ip4yhRANCAATc3dMAfNPk6dmWOLoYdOLwsuC6OQ4x
 
 TEST(token_generator, create_key_id) {
   std::string keyId;
-  bool status = nabto::util::getKeyIdFromPrivateKey(privateKeyPem, keyId);
+  bool status =
+      nabto::webrtc::util::getKeyIdFromPrivateKey(privateKeyPem, keyId);
   ASSERT_EQ(status, true);
   ASSERT_EQ(keyId,
             "device:"
@@ -20,5 +21,5 @@ TEST(token_generator, create_key_id) {
 TEST(token_generator, sha256hash) {
   std::string hash;
   std::vector<uint8_t> toHash = std::vector<uint8_t>();
-  ASSERT_TRUE(nabto::util::sha256hex(toHash, hash));
+  ASSERT_TRUE(nabto::webrtc::util::sha256hex(toHash, hash));
 }

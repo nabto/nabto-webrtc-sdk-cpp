@@ -11,7 +11,7 @@
 #include <string>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 class SignalingChannelImpl;
 using SignalingChannelImplPtr = std::shared_ptr<SignalingChannelImpl>;
@@ -146,5 +146,5 @@ class SignalingChannelImpl
   }
 };
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

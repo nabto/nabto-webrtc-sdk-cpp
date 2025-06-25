@@ -10,7 +10,7 @@
 #include <string>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 constexpr int SIGNALING_LOGGER_INSTANCE_ID = 822;
 
@@ -710,5 +710,5 @@ class SignalingChannel {
   virtual std::string getChannelId() = 0;
 };
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto
