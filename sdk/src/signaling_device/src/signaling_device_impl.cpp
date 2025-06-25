@@ -185,6 +185,7 @@ void SignalingDeviceImpl::deinit() {
   {
     const std::lock_guard<std::mutex> lock(mutex_);
     timer = timer_;
+    timer_ = nullptr;
   }
   if (timer) {
     timer->cancel();
