@@ -19,7 +19,7 @@ using CurlAsyncPtr = std::shared_ptr<CurlAsync>;
  * Curl based HTTP client implementing the SignalingHttpClient interface used by
  * the SDK.
  */
-class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
+class CurlHttpClient : public nabto::webrtc::SignalingHttpClient,
                        public std::enable_shared_from_this<CurlHttpClient> {
  public:
   /**
@@ -27,7 +27,7 @@ class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
    *
    * @return Smart pointer to the created SignalingHttpClient.
    */
-  static nabto::signaling::SignalingHttpClientPtr create();
+  static nabto::webrtc::SignalingHttpClientPtr create();
 
   CurlHttpClient();
   ~CurlHttpClient() override;
@@ -36,8 +36,8 @@ class CurlHttpClient : public nabto::signaling::SignalingHttpClient,
   CurlHttpClient(CurlHttpClient&&) = delete;
   CurlHttpClient& operator=(CurlHttpClient&&) = delete;
 
-  bool sendRequest(const nabto::signaling::SignalingHttpRequest& request,
-                   nabto::signaling::HttpResponseCallback cb) override;
+  bool sendRequest(const nabto::webrtc::SignalingHttpRequest& request,
+                   nabto::webrtc::HttpResponseCallback cb) override;
 
  private:
   CurlAsyncPtr curl_ = nullptr;

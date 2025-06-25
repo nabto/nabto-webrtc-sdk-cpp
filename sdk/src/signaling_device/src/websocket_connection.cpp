@@ -13,7 +13,7 @@
 #include <utility>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 bool WebsocketConnection::send(const std::string& data) {
   return ws_->send(data);
@@ -100,5 +100,5 @@ SignalingMessageType WebsocketConnection::parseWsMsgType(
   }
   throw std::invalid_argument("Invalid message type: " + str);
 }
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

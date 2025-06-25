@@ -42,8 +42,8 @@ class MessageTransportFactory {
    * @param handler Handler function to retrieve the Shared Secret to use.
    */
   static MessageTransportPtr createSharedSecretTransport(
-      signaling::SignalingDevicePtr device,
-      signaling::SignalingChannelPtr channel,
+      nabto::webrtc::SignalingDevicePtr device,
+      nabto::webrtc::SignalingChannelPtr channel,
       MessageTransportSharedSecretHandler handler);
 
   /**
@@ -53,8 +53,8 @@ class MessageTransportFactory {
    * @param channel The SignalingChannel context.
    */
   static MessageTransportPtr createNoneTransport(
-      signaling::SignalingDevicePtr device,
-      signaling::SignalingChannelPtr channel);
+      nabto::webrtc::SignalingDevicePtr device,
+      nabto::webrtc::SignalingChannelPtr channel);
 };
 
 /**
@@ -64,8 +64,8 @@ class MessageTransportFactory {
  * @param iceServers The list of ICE server configurations returned by the Nabto
  * Backend.
  */
-using SetupDoneHandler =
-    std::function<void(const std::vector<signaling::IceServer>& iceServers)>;
+using SetupDoneHandler = std::function<void(
+    const std::vector<nabto::webrtc::IceServer>& iceServers)>;
 
 using SetupDoneListenerId = uint32_t;
 using TransportMessageListenerId = uint32_t;
@@ -107,7 +107,7 @@ class MessageTransport {
    * @return ID of the added handler to be used when removing it.
    */
   virtual TransportMessageListenerId addMessageListener(
-      signaling::SignalingMessageHandler handler) = 0;
+      nabto::webrtc::SignalingMessageHandler handler) = 0;
 
   /**
    * Remove message listener.
@@ -126,7 +126,7 @@ class MessageTransport {
    * @return ID of the added handler to be used when removing it.
    */
   virtual TransportErrorListenerId addErrorListener(
-      signaling::SignalingErrorHandler handler) = 0;
+      nabto::webrtc::SignalingErrorHandler handler) = 0;
 
   /**
    * Remove an error listener.

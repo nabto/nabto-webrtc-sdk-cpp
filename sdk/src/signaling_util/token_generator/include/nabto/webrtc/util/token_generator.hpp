@@ -18,7 +18,7 @@ namespace util {
  * generating JWTs for the SDK.
  */
 class NabtoTokenGenerator
-    : public nabto::signaling::SignalingTokenGenerator,
+    : public nabto::webrtc::SignalingTokenGenerator,
       public std::enable_shared_from_this<NabtoTokenGenerator> {
  public:
   /**
@@ -30,7 +30,7 @@ class NabtoTokenGenerator
    * tokens.
    * @return SignalingTokenGeneratorPtr pointing to the created object.
    */
-  static nabto::signaling::SignalingTokenGeneratorPtr create(
+  static nabto::webrtc::SignalingTokenGeneratorPtr create(
       std::string productId, std::string deviceId, std::string privateKey) {
     return std::make_shared<NabtoTokenGenerator>(productId, deviceId,
                                                  privateKey);

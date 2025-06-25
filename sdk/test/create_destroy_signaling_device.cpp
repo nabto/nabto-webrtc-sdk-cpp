@@ -3,6 +3,6 @@
 #include <gtest/gtest.h>
 
 TEST(create_destroy, create_destroy) {
-  nabto::signaling::SignalingDeviceConfig conf;
-  auto ptr = nabto::signaling::SignalingDeviceFactory::create(conf);
+  nabto::webrtc::SignalingDeviceConfig conf;
+  auto ptr = nabto::webrtc::SignalingDeviceFactory::create(conf);
 }

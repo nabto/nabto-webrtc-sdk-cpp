@@ -16,7 +16,7 @@
 #include <utility>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 SignalingChannelImplPtr SignalingChannelImpl::create(
     SignalingDeviceImplPtr signaler, const std::string& channelId) {
@@ -201,5 +201,5 @@ void SignalingChannelImpl::changeState(SignalingChannelState state) {
   }
 }
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

@@ -12,7 +12,7 @@ namespace util {
  * Implementation of the SignalingTimer interface used by the SDK. This is based
  * on std thread and std chrono libs.
  */
-class StdTimer : public nabto::signaling::SignalingTimer,
+class StdTimer : public nabto::webrtc::SignalingTimer,
                  public std::enable_shared_from_this<StdTimer> {
  public:
   ~StdTimer() {}
@@ -41,18 +41,18 @@ class StdTimer : public nabto::signaling::SignalingTimer,
  * Implementation of the SignalingTimerFactory interface used by the SDK. This
  * is used to create timers using the StdTimer implementation.
  */
-class StdTimerFactory : public nabto::signaling::SignalingTimerFactory {
+class StdTimerFactory : public nabto::webrtc::SignalingTimerFactory {
  public:
   /**
    * Create a SignalingTimerFactory instance.
    *
    * @return SignalingTimerFactoryPtr to the resulting timer factory.
    */
-  static nabto::signaling::SignalingTimerFactoryPtr create() {
+  static nabto::webrtc::SignalingTimerFactoryPtr create() {
     return std::make_shared<StdTimerFactory>();
   }
 
-  nabto::signaling::SignalingTimerPtr createTimer() override {
+  nabto::webrtc::SignalingTimerPtr createTimer() override {
     return std::make_shared<StdTimer>();
   }
 };

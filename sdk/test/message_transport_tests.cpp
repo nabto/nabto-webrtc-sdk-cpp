@@ -5,37 +5,37 @@
 namespace nabto {
 namespace test {
 
-class MockSignaling : public signaling::SignalingChannel,
-                      public signaling::SignalingDevice {
+class MockSignaling : public nabto::webrtc::SignalingChannel,
+                      public nabto::webrtc::SignalingDevice {
  public:
   MockSignaling() {}
 
   uint32_t addMessageListener(
-      signaling::SignalingMessageHandler handler) override {
+      nabto::webrtc::SignalingMessageHandler handler) override {
     msgHandler_ = handler;
     return 0;
   }
 
   uint32_t addStateChangeListener(
-      signaling::SignalingChannelStateHandler handler) override {
+      nabto::webrtc::SignalingChannelStateHandler handler) override {
     return 0;
   }
-  uint32_t addErrorListener(signaling::SignalingErrorHandler handler) override {
+  uint32_t addErrorListener(nabto::webrtc::SignalingErrorHandler handler) override {
     return 0;
   }
 
-  void removeMessageListener(signaling::MessageListenerId id) override {}
+  void removeMessageListener(nabto::webrtc::MessageListenerId id) override {}
 
   // void removeStateChangeListener(
-  //     signaling::ChannelStateListenerId id) override {}
+  //     nabto::webrtc::ChannelStateListenerId id) override {}
 
-  void removeErrorListener(signaling::ChannelErrorListenerId id) override {}
+  void removeErrorListener(nabto::webrtc::ChannelErrorListenerId id) override {}
 
   void sendMessage(const nlohmann::json& message) override {
     messages_.push_back(message);
   }
 
-  void sendError(const signaling::SignalingError& error) override {
+  void sendError(const nabto::webrtc::SignalingError& error) override {
     errors_.push_back(error);
   }
 
@@ -44,36 +44,36 @@ class MockSignaling : public signaling::SignalingChannel,
 
   void start() override {}
   void checkAlive() override {}
-  void requestIceServers(signaling::IceServersResponse callback) override {
+  void requestIceServers(nabto::webrtc::IceServersResponse callback) override {
     iceCb_ = callback;
   }
   uint32_t addNewChannelListener(
-      signaling::NewSignalingChannelHandler handler) override {
+      nabto::webrtc::NewSignalingChannelHandler handler) override {
     chanHandler_ = handler;
     return 0;
   }
 
   uint32_t addStateChangeListener(
-      signaling::SignalingDeviceStateHandler handler) override {
+      nabto::webrtc::SignalingDeviceStateHandler handler) override {
     return 0;
   }
   uint32_t addReconnectListener(
-      signaling::SignalingReconnectHandler handler) override {
+      nabto::webrtc::SignalingReconnectHandler handler) override {
     return 0;
   }
 
-  void removeNewChannelListener(signaling::NewChannelListenerId id) override {}
+  void removeNewChannelListener(nabto::webrtc::NewChannelListenerId id) override {}
 
   void removeStateChangeListener(
-      signaling::ConnectionStateListenerId id) override {}
+      nabto::webrtc::ConnectionStateListenerId id) override {}
 
-  void removeReconnectListener(signaling::ReconnectListenerId id) override {}
+  void removeReconnectListener(nabto::webrtc::ReconnectListenerId id) override {}
 
-  signaling::SignalingMessageHandler msgHandler_ = nullptr;
-  signaling::NewSignalingChannelHandler chanHandler_ = nullptr;
+  nabto::webrtc::SignalingMessageHandler msgHandler_ = nullptr;
+  nabto::webrtc::NewSignalingChannelHandler chanHandler_ = nullptr;
   std::vector<nlohmann::json> messages_;
-  std::vector<signaling::SignalingError> errors_;
-  signaling::IceServersResponse iceCb_ = nullptr;
+  std::vector<nabto::webrtc::SignalingError> errors_;
+  nabto::webrtc::IceServersResponse iceCb_ = nullptr;
 };
 
 }  // namespace test
@@ -89,7 +89,7 @@ TEST(message_transport, handle_setup_req) {
   bool setupDone = false;
   mt->addSetupDoneListener(
       [&setupDone](
-          const std::vector<struct nabto::signaling::IceServer>& servers) {
+          const std::vector<struct nabto::webrtc::IceServer>& servers) {
         ASSERT_EQ(servers.size(), 1);
         auto ice = servers[0];
         ASSERT_EQ(ice.username, "foo");
@@ -105,8 +105,8 @@ TEST(message_transport, handle_setup_req) {
   ASSERT_TRUE(mock->errors_.size() == 0);
   ASSERT_TRUE(mock->iceCb_ != nullptr);
 
-  struct nabto::signaling::IceServer ice = {"foo", "bar", {"foobar"}};
-  std::vector<struct nabto::signaling::IceServer> servs;
+  struct nabto::webrtc::IceServer ice = {"foo", "bar", {"foobar"}};
+  std::vector<struct nabto::webrtc::IceServer> servs;
   servs.push_back(ice);
   mock->iceCb_(servs);
   ASSERT_TRUE(setupDone);
@@ -122,7 +122,7 @@ TEST(message_transport, setup_done_with_stun) {
   bool setupDone = false;
   mt->addSetupDoneListener(
       [&setupDone](
-          const std::vector<struct nabto::signaling::IceServer>& servers) {
+          const std::vector<struct nabto::webrtc::IceServer>& servers) {
         ASSERT_EQ(servers.size(), 1);
         auto ice = servers[0];
         ASSERT_TRUE(ice.username.empty());
@@ -138,8 +138,8 @@ TEST(message_transport, setup_done_with_stun) {
   ASSERT_TRUE(mock->errors_.size() == 0);
   ASSERT_TRUE(mock->iceCb_ != nullptr);
 
-  struct nabto::signaling::IceServer ice = {"", "", {"foobar"}};
-  std::vector<struct nabto::signaling::IceServer> servs;
+  struct nabto::webrtc::IceServer ice = {"", "", {"foobar"}};
+  std::vector<struct nabto::webrtc::IceServer> servs;
   servs.push_back(ice);
   mock->iceCb_(servs);
   ASSERT_TRUE(setupDone);
@@ -152,7 +152,7 @@ TEST(message_transport, invalid_setup_req) {
 
   bool errorHandled = false;
   mt->addErrorListener(
-      [&errorHandled](const nabto::signaling::SignalingError& err) {
+      [&errorHandled](const nabto::webrtc::SignalingError& err) {
         errorHandled = true;
         ASSERT_EQ(err.errorCode(), "DECODE_ERROR");
         ASSERT_EQ(err.errorMessage(),

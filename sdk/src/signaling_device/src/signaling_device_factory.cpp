@@ -3,11 +3,11 @@
 #include <nabto/webrtc/device.hpp>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 SignalingDevicePtr SignalingDeviceFactory::create(
     const SignalingDeviceConfig& conf) {
   return SignalingDeviceImpl::create(conf);
 }
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

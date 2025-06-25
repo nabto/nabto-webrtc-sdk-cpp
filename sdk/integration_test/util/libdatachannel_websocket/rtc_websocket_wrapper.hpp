@@ -10,10 +10,10 @@ namespace nabto {
 namespace example {
 
 class RtcWebsocketWrapper
-    : public nabto::signaling::SignalingWebsocket,
+    : public nabto::webrtc::SignalingWebsocket,
       public std::enable_shared_from_this<RtcWebsocketWrapper> {
  public:
-  static nabto::signaling::SignalingWebsocketPtr create() {
+  static nabto::webrtc::SignalingWebsocketPtr create() {
     return std::make_shared<RtcWebsocketWrapper>();
   }
 

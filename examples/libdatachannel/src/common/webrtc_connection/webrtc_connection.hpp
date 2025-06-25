@@ -14,12 +14,12 @@ typedef std::shared_ptr<WebrtcConnection> WebrtcConnectionPtr;
 class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
  public:
   static WebrtcConnectionPtr create(
-      nabto::signaling::SignalingDevicePtr device,
-      nabto::signaling::SignalingChannelPtr sig,
+      nabto::webrtc::SignalingDevicePtr device,
+      nabto::webrtc::SignalingChannelPtr sig,
       nabto::util::MessageTransportPtr messageTransport,
       WebrtcTrackHandlerPtr trackHandler);
-  WebrtcConnection(nabto::signaling::SignalingDevicePtr device,
-                   nabto::signaling::SignalingChannelPtr channel,
+  WebrtcConnection(nabto::webrtc::SignalingDevicePtr device,
+                   nabto::webrtc::SignalingChannelPtr channel,
                    nabto::util::MessageTransportPtr messageTransport,
                    WebrtcTrackHandlerPtr trackHandler);
 
@@ -29,8 +29,8 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   // void handleReconnect();
 
  private:
-  nabto::signaling::SignalingChannelPtr channel_;
-  nabto::signaling::SignalingDevicePtr device_;
+  nabto::webrtc::SignalingChannelPtr channel_;
+  nabto::webrtc::SignalingDevicePtr device_;
   nabto::util::MessageTransportPtr messageTransport_;
   std::shared_ptr<rtc::PeerConnection> pc_ = nullptr;
   bool canTrickle_ = true;
@@ -55,10 +55,10 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
 
   void sendDescription(rtc::optional<rtc::Description> description);
   void sendCreateResponse(
-      const std::vector<struct nabto::signaling::IceServer>& iceServers);
+      const std::vector<struct nabto::webrtc::IceServer>& iceServers);
   void requestIceServers();
   void parseIceServers(
-      const std::vector<struct nabto::signaling::IceServer>& servers);
+      const std::vector<struct nabto::webrtc::IceServer>& servers);
 
   void sendSignalingMessage(const nlohmann::json& message);
 

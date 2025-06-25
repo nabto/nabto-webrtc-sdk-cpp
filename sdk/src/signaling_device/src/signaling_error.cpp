@@ -4,7 +4,7 @@
 #include <utility>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 SignalingError::SignalingError(SignalingErrorCode code, std::string message)
     : errorCode_(errorCodeToString(code)), errorMessage_(std::move(message)) {}
@@ -33,5 +33,5 @@ std::string SignalingError::errorCodeToString(SignalingErrorCode code) {
   }
 }
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

@@ -12,7 +12,7 @@
 #include <string>
 
 namespace nabto {
-namespace signaling {
+namespace webrtc {
 
 class WebsocketConnection;
 using WebsocketConnectionPtr = std::shared_ptr<WebsocketConnection>;
@@ -64,5 +64,5 @@ class WebsocketConnection
   static SignalingMessageType parseWsMsgType(const std::string& str);
 };
 
-}  // namespace signaling
+}  // namespace webrtc
 }  // namespace nabto

@@ -14,8 +14,8 @@ TEST(signaling_device_impl, parseIceServersTest) {
         }]
     }
     )";
-  std::vector<nabto::signaling::IceServer> result =
-      nabto::signaling::SignalingDeviceImpl::parseIceServers(iceServers);
+  std::vector<nabto::webrtc::IceServer> result =
+      nabto::webrtc::SignalingDeviceImpl::parseIceServers(iceServers);
   ASSERT_EQ(result.size(), 1);
   auto s = result[0];
   ASSERT_EQ(s.credential, "c");
@@ -40,8 +40,8 @@ TEST(signaling_device_impl, parseIceServersExtraData) {
     ]
     }
     )";
-  std::vector<nabto::signaling::IceServer> result =
-      nabto::signaling::SignalingDeviceImpl::parseIceServers(iceServers);
+  std::vector<nabto::webrtc::IceServer> result =
+      nabto::webrtc::SignalingDeviceImpl::parseIceServers(iceServers);
   ASSERT_EQ(result.size(), 2);
   auto s1 = result[0];
   ASSERT_EQ(s1.urls.size(), 1);
