@@ -22,7 +22,6 @@ class StdTimer : public nabto::webrtc::SignalingTimer,
     auto self = shared_from_this();
     timer_ = std::thread([timeoutMs, self, cb]() {
       std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
-      // TODO: thread safety
       cb();
     });
   }

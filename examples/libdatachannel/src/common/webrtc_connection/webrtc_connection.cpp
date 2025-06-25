@@ -44,52 +44,24 @@ void WebrtcConnection::init() {
       [self](const nabto::webrtc::SignalingError& error) {
         NPLOGE << "Got errorCode: " << error.errorCode();
         // All errors are fatal, so we clean up no matter what the error was
-        if (self->pc_) {
-          self->pc_->close();
-        } else {
-          self->deinit();
-        }
+        self->handleTransportError(error);
       });
 
   channel_->addStateChangeListener(
       [self](nabto::webrtc::SignalingChannelState event) {
-        switch (event) {
-          case nabto::webrtc::SignalingChannelState::OFFLINE:
-            NPLOGD << "Got channel state: OFFLINE";
-            // This means we tried to send a signaling message but the client is
-            // not connected to the backend. If we expect the client to connect
-            // momentarily, we will then get a CLIENT_CONNECTED event and the
-            // reliability layer will fix it and we can ignore this event.
-            // Otherwise we should handle the error.
-            break;
-          case nabto::webrtc::SignalingChannelState::CLOSED:
-            NPLOGD << "Got channel state: CLOSED";
-            self->pc_->close();
-            break;
-          case nabto::webrtc::SignalingChannelState::ONLINE:
-            NPLOGD << "Got channel state ONLINE";
-            // This means client reconnected, the client should do ICE restart
-            // if needed so we can just ignore.
-            break;
-          case nabto::webrtc::SignalingChannelState::FAILED:
-            NPLOGD << "Got channel state: FAILED";
-            // TODO: handle failed;
-            break;
-        }
+        self->handleChannelStateChange(event);
       });
 
   channel_->addErrorListener(
       [self](const nabto::webrtc::SignalingError& error) {
         NPLOGE << "Got errorCode: " << error.errorCode();
         // All errors are fatal, so we clean up no matter what the error was
-        if (self->pc_) {
-          self->pc_->close();
-        } else {
-          self->deinit();
-        }
+        self->handleChannelError(error);
       });
 }
+
 void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
+  mutex_.lock();
   try {
     NPLOGI << "Webrtc got signaling message: " << msg.dump();
     auto type = msg.at("type").get<std::string>();
@@ -107,36 +79,47 @@ void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
       if (ignoreOffer_) {
         NPLOGD << "The device is impolite and there is a collision so we are "
                   "discarding the received offer";
+        mutex_.unlock();
         return;
       }
+      std::shared_ptr<rtc::PeerConnection> pc = pc_;
+      mutex_.unlock();
       try {
-        pc_->setRemoteDescription(remDesc);
+        pc->setRemoteDescription(remDesc);
       } catch (std::exception& ex) {
         NPLOGE << "Failed to set remote description: " << remDesc.generateSdp()
                << " Failed with exception: " << ex.what();
-        pc_->close();
+        pc->close();
       }
-    } else if (type == "CANDIDATE") {
+      return;
+    }
+    if (type == "CANDIDATE") {
+      std::shared_ptr<rtc::PeerConnection> pc = pc_;
+      mutex_.unlock();
       try {
         rtc::Candidate cand(
             msg.at("candidate").at("candidate").get<std::string>(),
             msg.at("candidate").at("sdpMid").get<std::string>());
-        pc_->addRemoteCandidate(cand);
+        pc->addRemoteCandidate(cand);
       } catch (nlohmann::json::exception& ex) {
         NPLOGE << "handleIce json exception: " << ex.what();
       } catch (std::logic_error& ex) {
+        mutex_.lock();
         if (!this->ignoreOffer_) {
           NPLOGE << "Failed to add remote ICE candidate with logic error: "
                  << ex.what();
         }
+        mutex_.unlock();
       }
-    } else {
-      NPLOGE << "Got unknown message type: " << type;
+      return;
     }
+
+    NPLOGE << "Got unknown message type: " << type;
   } catch (std::exception& ex) {
     NPLOGE << "Failed to handle message: " << msg.dump()
            << " with: " << ex.what();
   }
+  mutex_.unlock();
 }
 
 void WebrtcConnection::createPeerConnection() {
@@ -190,6 +173,9 @@ void WebrtcConnection::createPeerConnection() {
 
 void WebrtcConnection::handleStateChange(
     const rtc::PeerConnection::State& state) {
+  std::shared_ptr<rtc::PeerConnection> pc = nullptr;
+  nabto::webrtc::SignalingChannelPtr channel = nullptr;
+
   switch (state) {
     case rtc::PeerConnection::State::New:
     case rtc::PeerConnection::State::Connecting:
@@ -204,9 +190,16 @@ void WebrtcConnection::handleStateChange(
     case rtc::PeerConnection::State::Closed:
       // connection closed we should clean up
       NPLOGI << "Webrtc Connection " << state;
-      // sig_->close();
-      deinit();
+      const std::lock_guard<std::mutex> lock(mutex_);
+      pc = pc_;
+      pc_ = nullptr;
+      channel = channel_;
+      channel_ = nullptr;
       break;
+  }
+
+  if (channel) {
+    channel->close();
   }
 };
 
@@ -215,13 +208,19 @@ void WebrtcConnection::handleSignalingStateChange(
   NPLOGI << "Signaling state changed: " << state;
   if (state == rtc::PeerConnection::SignalingState::HaveLocalOffer) {
   } else if (state == rtc::PeerConnection::SignalingState::HaveRemoteOffer) {
-    pc_->setLocalDescription();
+    std::shared_ptr<rtc::PeerConnection> pc;
+    {
+      const std::lock_guard<std::mutex> lock(mutex_);
+      pc = pc_;
+    }
+    pc->setLocalDescription();
   } else {
     std::ostringstream oss;
     oss << state;
     NPLOGD << "Got unhandled signaling state: " << oss.str();
     return;
   }
+  const std::lock_guard<std::mutex> lock(mutex_);
   if (canTrickle_ ||
       pc_->gatheringState() == rtc::PeerConnection::GatheringState::Complete) {
     auto description = pc_->localDescription();
@@ -230,6 +229,7 @@ void WebrtcConnection::handleSignalingStateChange(
 }
 
 void WebrtcConnection::handleLocalCandidate(rtc::Candidate cand) {
+  const std::lock_guard<std::mutex> lock(mutex_);
   if (canTrickle_) {
     nlohmann::json candidate = {{"sdpMid", cand.mid()},
                                 {"candidate", cand.candidate()}};
@@ -259,6 +259,7 @@ void WebrtcConnection::handleDatachannelEvent(
       });
 
   channel->onOpen([self, channel]() {
+    const std::lock_guard<std::mutex> lock(self->mutex_);
     NPLOGE << "Datachannel opened";
     std::stringstream ss;
     ss << "datachannel msg " << self->datachannelSendSeq_;
@@ -342,6 +343,7 @@ void WebrtcConnection::parseIceServers(
     } else {
       proto = "turn:";
     }
+    const std::lock_guard<std::mutex> lock(mutex_);
     for (auto u : s.urls) {
       std::stringstream ss;
       std::string host = u;
@@ -382,15 +384,94 @@ void WebrtcConnection::parseIceServers(
 }
 
 void WebrtcConnection::deinit() {
-  if (trackRef_ != 0 && videoTrack_ != nullptr) {
-    videoTrack_->removeConnection(trackRef_);
+  std::shared_ptr<rtc::PeerConnection> pc;
+  nabto::webrtc::SignalingChannelPtr chan;
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    pc = pc_;
+    chan = channel_;
+
+    if (trackRef_ != 0 && videoTrack_ != nullptr) {
+      NPLOGE << "Remove conn from videotrack";
+      videoTrack_->removeConnection(trackRef_);
+    } else {
+      NPLOGE << "deinit without video track: " << trackRef_;
+    }
+    videoTrack_ = nullptr;
+    if (channel_) {
+      channel_ = nullptr;
+    }
+    messageTransport_ = nullptr;
+    // sig_ = nullptr;
   }
-  videoTrack_ = nullptr;
-  channel_->close();
-  messageTransport_ = nullptr;
-  // sig_ = nullptr;
-  //  pc_->close();
+  if (chan) {
+    chan->close();
+  }
   pc_ = nullptr;
+}
+
+void WebrtcConnection::handleTransportError(
+    const nabto::webrtc::SignalingError& error) {
+  std::shared_ptr<rtc::PeerConnection> pc = nullptr;
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    pc = pc_;
+  }
+  if (pc) {
+    pc->close();
+  } else {
+    deinit();
+  }
+}
+
+void WebrtcConnection::handleChannelError(
+    const nabto::webrtc::SignalingError& error) {
+  handleTransportError(error);
+}
+
+void WebrtcConnection::handleChannelStateChange(
+    const nabto::webrtc::SignalingChannelState& state) {
+  std::shared_ptr<rtc::PeerConnection> pc = nullptr;
+
+  switch (state) {
+    case nabto::webrtc::SignalingChannelState::OFFLINE:
+      NPLOGD << "Got channel state: OFFLINE";
+      // This means we tried to send a signaling message but the client is
+      // not connected to the backend. If we expect the client to connect
+      // momentarily, we will then get a CLIENT_CONNECTED event and the
+      // reliability layer will fix it and we can ignore this event.
+      // Otherwise we should handle the error.
+      break;
+    case nabto::webrtc::SignalingChannelState::CLOSED:
+      NPLOGD << "Got channel state: CLOSED";
+      {
+        const std::lock_guard<std::mutex> lock(mutex_);
+        pc = pc_;
+      }
+      if (pc) {
+        pc->close();
+      } else {
+        deinit();
+      }
+      break;
+    case nabto::webrtc::SignalingChannelState::ONLINE:
+      NPLOGD << "Got channel state ONLINE";
+      // This means client reconnected, the client should do ICE restart
+      // if needed so we can just ignore.
+      break;
+    case nabto::webrtc::SignalingChannelState::FAILED:
+      NPLOGD << "Got channel state: FAILED";
+      {
+        const std::lock_guard<std::mutex> lock(mutex_);
+        pc = pc_;
+      }
+      if (pc) {
+        pc->close();
+      } else {
+        deinit();
+      }
+      break;
+  }
 }
 
 }  // namespace example
