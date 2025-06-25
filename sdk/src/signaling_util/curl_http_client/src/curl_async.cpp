@@ -15,6 +15,7 @@
 #include <utility>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 nabto::webrtc::SignalingHttpClientPtr CurlHttpClient::create() {
@@ -285,4 +286,5 @@ void CurlAsync::threadRunner(CurlAsync* self) {
 }
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

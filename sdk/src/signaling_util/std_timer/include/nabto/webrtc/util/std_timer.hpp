@@ -6,6 +6,7 @@
 #include <thread>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 /**
@@ -58,4 +59,5 @@ class StdTimerFactory : public nabto::webrtc::SignalingTimerFactory {
 };
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

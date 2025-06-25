@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 MessageTransportPtr MessageTransportImpl::createNone(
@@ -107,14 +108,14 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
         }
       }
     }
-  } catch (nabto::util::VerificationError& ex) {
+  } catch (nabto::webrtc::util::VerificationError& ex) {
     NPLOGE << "Could not verify the incoming signaling message: "
            << msgIn.dump() << " with: " << ex.what();
     auto err = nabto::webrtc::SignalingError(
         nabto::webrtc::SignalingErrorCode::VERIFICATION_ERROR,
         "Could not verify the incoming signaling message");
     handleError(err);
-  } catch (nabto::util::DecodeError& ex) {
+  } catch (nabto::webrtc::util::DecodeError& ex) {
     NPLOGE << "Could not decode the incoming signaling message: "
            << msgIn.dump() << " with: " << ex.what();
     auto err = nabto::webrtc::SignalingError(
@@ -246,4 +247,5 @@ void MessageTransportImpl::handleError(
 }
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

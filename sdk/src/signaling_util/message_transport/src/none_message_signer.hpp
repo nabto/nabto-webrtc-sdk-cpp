@@ -11,6 +11,7 @@
 #include <memory>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 class NoneMessageSigner : public MessageSigner {
@@ -44,4 +45,5 @@ class NoneMessageSigner : public MessageSigner {
 };
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

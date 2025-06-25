@@ -16,11 +16,11 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   static WebrtcConnectionPtr create(
       nabto::webrtc::SignalingDevicePtr device,
       nabto::webrtc::SignalingChannelPtr sig,
-      nabto::util::MessageTransportPtr messageTransport,
+      nabto::webrtc::util::MessageTransportPtr messageTransport,
       WebrtcTrackHandlerPtr trackHandler);
   WebrtcConnection(nabto::webrtc::SignalingDevicePtr device,
                    nabto::webrtc::SignalingChannelPtr channel,
-                   nabto::util::MessageTransportPtr messageTransport,
+                   nabto::webrtc::util::MessageTransportPtr messageTransport,
                    WebrtcTrackHandlerPtr trackHandler);
 
   void handleMessage(const nlohmann::json& msg);
@@ -31,7 +31,7 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
  private:
   nabto::webrtc::SignalingChannelPtr channel_;
   nabto::webrtc::SignalingDevicePtr device_;
-  nabto::util::MessageTransportPtr messageTransport_;
+  nabto::webrtc::util::MessageTransportPtr messageTransport_;
   std::shared_ptr<rtc::PeerConnection> pc_ = nullptr;
   bool canTrickle_ = true;
   bool ignoreOffer_ = false;

@@ -9,7 +9,7 @@ namespace example {
 WebrtcConnectionPtr WebrtcConnection::create(
     nabto::webrtc::SignalingDevicePtr device,
     nabto::webrtc::SignalingChannelPtr channel,
-    nabto::util::MessageTransportPtr messageTransport,
+    nabto::webrtc::util::MessageTransportPtr messageTransport,
     WebrtcTrackHandlerPtr trackHandler) {
   auto p = std::make_shared<WebrtcConnection>(device, channel, messageTransport,
                                               trackHandler);
@@ -20,7 +20,7 @@ WebrtcConnectionPtr WebrtcConnection::create(
 WebrtcConnection::WebrtcConnection(
     nabto::webrtc::SignalingDevicePtr device,
     nabto::webrtc::SignalingChannelPtr channel,
-    nabto::util::MessageTransportPtr messageTransport,
+    nabto::webrtc::util::MessageTransportPtr messageTransport,
     WebrtcTrackHandlerPtr trackHandler)
     : device_(device),
       channel_(channel),

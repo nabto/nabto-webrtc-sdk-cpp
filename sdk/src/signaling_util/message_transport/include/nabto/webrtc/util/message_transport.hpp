@@ -9,6 +9,7 @@
 #include <memory>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 class MessageTransport;
@@ -147,4 +148,5 @@ class MessageTransport {
 };
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

@@ -10,6 +10,7 @@
 #include <thread>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 class CurlAsync;
@@ -151,4 +152,5 @@ class CurlAsync : public std::enable_shared_from_this<CurlAsync> {
 };
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

@@ -20,7 +20,8 @@ class MockSignaling : public nabto::webrtc::SignalingChannel,
       nabto::webrtc::SignalingChannelStateHandler handler) override {
     return 0;
   }
-  uint32_t addErrorListener(nabto::webrtc::SignalingErrorHandler handler) override {
+  uint32_t addErrorListener(
+      nabto::webrtc::SignalingErrorHandler handler) override {
     return 0;
   }
 
@@ -62,12 +63,14 @@ class MockSignaling : public nabto::webrtc::SignalingChannel,
     return 0;
   }
 
-  void removeNewChannelListener(nabto::webrtc::NewChannelListenerId id) override {}
+  void removeNewChannelListener(
+      nabto::webrtc::NewChannelListenerId id) override {}
 
   void removeStateChangeListener(
       nabto::webrtc::ConnectionStateListenerId id) override {}
 
-  void removeReconnectListener(nabto::webrtc::ReconnectListenerId id) override {}
+  void removeReconnectListener(nabto::webrtc::ReconnectListenerId id) override {
+  }
 
   nabto::webrtc::SignalingMessageHandler msgHandler_ = nullptr;
   nabto::webrtc::NewSignalingChannelHandler chanHandler_ = nullptr;
@@ -81,8 +84,9 @@ class MockSignaling : public nabto::webrtc::SignalingChannel,
 
 TEST(message_transport, handle_setup_req) {
   auto mock = std::make_shared<nabto::test::MockSignaling>();
-  nabto::util::MessageTransportPtr mt =
-      nabto::util::MessageTransportFactory::createNoneTransport(mock, mock);
+  nabto::webrtc::util::MessageTransportPtr mt =
+      nabto::webrtc::util::MessageTransportFactory::createNoneTransport(mock,
+                                                                        mock);
 
   ASSERT_TRUE(mock->msgHandler_ != nullptr);
 
@@ -114,8 +118,9 @@ TEST(message_transport, handle_setup_req) {
 
 TEST(message_transport, setup_done_with_stun) {
   auto mock = std::make_shared<nabto::test::MockSignaling>();
-  nabto::util::MessageTransportPtr mt =
-      nabto::util::MessageTransportFactory::createNoneTransport(mock, mock);
+  nabto::webrtc::util::MessageTransportPtr mt =
+      nabto::webrtc::util::MessageTransportFactory::createNoneTransport(mock,
+                                                                        mock);
 
   ASSERT_TRUE(mock->msgHandler_ != nullptr);
 
@@ -147,8 +152,9 @@ TEST(message_transport, setup_done_with_stun) {
 
 TEST(message_transport, invalid_setup_req) {
   auto mock = std::make_shared<nabto::test::MockSignaling>();
-  nabto::util::MessageTransportPtr mt =
-      nabto::util::MessageTransportFactory::createNoneTransport(mock, mock);
+  nabto::webrtc::util::MessageTransportPtr mt =
+      nabto::webrtc::util::MessageTransportFactory::createNoneTransport(mock,
+                                                                        mock);
 
   bool errorHandled = false;
   mt->addErrorListener(
@@ -173,8 +179,9 @@ TEST(message_transport, invalid_setup_req) {
 
 TEST(message_transport, invalid_signer_type) {
   auto mock = std::make_shared<nabto::test::MockSignaling>();
-  nabto::util::MessageTransportPtr mt =
-      nabto::util::MessageTransportFactory::createNoneTransport(mock, mock);
+  nabto::webrtc::util::MessageTransportPtr mt =
+      nabto::webrtc::util::MessageTransportFactory::createNoneTransport(mock,
+                                                                        mock);
 
   ASSERT_TRUE(mock->msgHandler_ != nullptr);
 
@@ -189,8 +196,9 @@ TEST(message_transport, invalid_signer_type) {
 
 TEST(message_transport, missing_signer_type) {
   auto mock = std::make_shared<nabto::test::MockSignaling>();
-  nabto::util::MessageTransportPtr mt =
-      nabto::util::MessageTransportFactory::createNoneTransport(mock, mock);
+  nabto::webrtc::util::MessageTransportPtr mt =
+      nabto::webrtc::util::MessageTransportFactory::createNoneTransport(mock,
+                                                                        mock);
 
   ASSERT_TRUE(mock->msgHandler_ != nullptr);
 

@@ -11,6 +11,7 @@
 #include <string>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 /**
@@ -71,4 +72,5 @@ class NabtoTokenGenerator
 };
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

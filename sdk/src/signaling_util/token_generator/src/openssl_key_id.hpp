@@ -11,6 +11,7 @@
 #include <vector>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 struct EVP_MD_CTXFree {
@@ -106,4 +107,5 @@ static bool getKeyIdFromPrivateKey(const std::string &privateKey,
   return true;
 }
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

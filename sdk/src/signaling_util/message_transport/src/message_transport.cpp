@@ -6,6 +6,7 @@
 #include <utility>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 MessageTransportPtr MessageTransportFactory::createSharedSecretTransport(
@@ -24,4 +25,5 @@ MessageTransportPtr MessageTransportFactory::createNoneTransport(
 }
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

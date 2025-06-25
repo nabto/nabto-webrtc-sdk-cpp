@@ -6,6 +6,7 @@
 #include <mutex>
 
 namespace nabto {
+namespace webrtc {
 namespace util {
 
 class MessageTransportImpl
@@ -94,4 +95,5 @@ class MessageTransportImpl
 };
 
 }  // namespace util
+}  // namespace webrtc
 }  // namespace nabto

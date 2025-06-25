@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   }
 
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-  nabto::util::initLogger(opts.logLevel, &consoleAppender);
+  nabto::webrtc::util::initLogger(opts.logLevel, &consoleAppender);
 
   // init logging for Nabtonabto::webrtc::core
   plog::init<nabto::webrtc::SIGNALING_LOGGER_INSTANCE_ID>(opts.logLevel,
@@ -47,12 +47,12 @@ int main(int argc, char** argv) {
   NPLOGI << "Connecting to device: " << opts.deviceId;
 
   nabto::webrtc::SignalingTokenGeneratorPtr jwtPtr =
-      nabto::util::NabtoTokenGenerator::create(opts.productId, opts.deviceId,
-                                               opts.privateKey);
+      nabto::webrtc::util::NabtoTokenGenerator::create(
+          opts.productId, opts.deviceId, opts.privateKey);
 
-  auto http = nabto::util::CurlHttpClient::create();
+  auto http = nabto::webrtc::util::CurlHttpClient::create();
   auto ws = nabto::example::RtcWebsocketWrapper::create();
-  auto tf = nabto::util::StdTimerFactory::create();
+  auto tf = nabto::webrtc::util::StdTimerFactory::create();
   auto trackHandler = nabto::example::H264TrackHandler::create(nullptr);
 
   nabto::webrtc::SignalingDeviceConfig conf = {
@@ -84,13 +84,14 @@ int main(int argc, char** argv) {
       channel->close();
       return;
     }
-    nabto::util::MessageTransportPtr transport;
+    nabto::webrtc::util::MessageTransportPtr transport;
     if (opts.sharedSecret.empty()) {
-      transport = nabto::util::MessageTransportFactory::createNoneTransport(
-          device, channel);
-    } else {
       transport =
-          nabto::util::MessageTransportFactory::createSharedSecretTransport(
+          nabto::webrtc::util::MessageTransportFactory::createNoneTransport(
+              device, channel);
+    } else {
+      transport = nabto::webrtc::util::MessageTransportFactory::
+          createSharedSecretTransport(
               device, channel, [&opts](const std::string keyId) -> std::string {
                 return opts.sharedSecret;
               });
