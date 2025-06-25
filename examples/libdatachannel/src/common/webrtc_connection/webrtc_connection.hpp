@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <mutex>
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/message_transport.hpp>
 #include <rtc/rtc.hpp>
@@ -23,8 +24,6 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
                    nabto::webrtc::util::MessageTransportPtr messageTransport,
                    WebrtcTrackHandlerPtr trackHandler);
 
-  void handleMessage(const nlohmann::json& msg);
-
   // TODO: add this
   // void handleReconnect();
 
@@ -40,8 +39,17 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   WebrtcTrackHandlerPtr videoTrack_;
   std::vector<rtc::IceServer> iceServers_;
   size_t trackRef_ = 0;
+  std::mutex mutex_;
 
   std::vector<nlohmann::json> messageQueue_;
+
+  void handleMessage(const nlohmann::json& msg);
+  void parseIceServers(
+      const std::vector<struct nabto::webrtc::IceServer>& servers);
+  void handleTransportError(const nabto::webrtc::SignalingError& error);
+  void handleChannelStateChange(
+      const nabto::webrtc::SignalingChannelState& state);
+  void handleChannelError(const nabto::webrtc::SignalingError& error);
 
   void init();
   void deinit();
@@ -57,8 +65,6 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   void sendCreateResponse(
       const std::vector<struct nabto::webrtc::IceServer>& iceServers);
   void requestIceServers();
-  void parseIceServers(
-      const std::vector<struct nabto::webrtc::IceServer>& servers);
 
   void sendSignalingMessage(const nlohmann::json& message);
 
