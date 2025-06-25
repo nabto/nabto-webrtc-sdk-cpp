@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace nabto {
@@ -35,6 +36,7 @@ class SignalingChannelImpl
    */
   MessageListenerId addMessageListener(
       SignalingMessageHandler handler) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     const MessageListenerId id = currMsgListId_;
     currMsgListId_++;
     messageHandlers_.insert({id, handler});
@@ -42,6 +44,7 @@ class SignalingChannelImpl
   }
 
   void removeMessageListener(MessageListenerId id) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     messageHandlers_.erase(id);
   }
 
@@ -52,6 +55,7 @@ class SignalingChannelImpl
    */
   ChannelStateListenerId addStateChangeListener(
       SignalingChannelStateHandler handler) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     const ChannelStateListenerId id = currStateListId_;
     currStateListId_++;
     stateHandlers_.insert({id, handler});
@@ -59,6 +63,7 @@ class SignalingChannelImpl
   };
 
   void removeStateChangeListener(ChannelStateListenerId id) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     stateHandlers_.erase(id);
   }
 
@@ -69,6 +74,7 @@ class SignalingChannelImpl
    */
   ChannelErrorListenerId addErrorListener(
       SignalingErrorHandler handler) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     const ChannelErrorListenerId id = currErrListId_;
     currErrListId_++;
     errorHandlers_.insert({id, handler});
@@ -76,6 +82,7 @@ class SignalingChannelImpl
   };
 
   void removeErrorListener(ChannelErrorListenerId id) override {
+    const std::lock_guard<std::mutex> lock(mutex_);
     errorHandlers_.erase(id);
   }
 
@@ -126,9 +133,17 @@ class SignalingChannelImpl
   uint32_t recvSeq_ = 0;
   uint32_t sendSeq_ = 0;
   std::vector<nlohmann::json> unackedMessages_;
+  std::mutex mutex_;
+  SignalingChannelState state_ = SignalingChannelState::NEW;
 
   void sendAck(const nlohmann::json& msg);
   void handleAck(const nlohmann::json& msg);
+  void changeState(SignalingChannelState state);
+
+  bool stateIsEnded() {
+    return (state_ == SignalingChannelState::CLOSED ||
+            state_ == SignalingChannelState::FAILED);
+  }
 };
 
 }  // namespace signaling

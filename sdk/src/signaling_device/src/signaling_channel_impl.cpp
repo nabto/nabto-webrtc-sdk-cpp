@@ -9,7 +9,9 @@
 
 #include <cstdint>
 #include <exception>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 
@@ -32,7 +34,12 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
       NABTO_SIGNALING_LOGD << "Handling DATA";
       sendAck(msg);
       const auto& str = msg.at("data");
-      for (const auto& [id, handler] : messageHandlers_) {
+      std::map<MessageListenerId, SignalingMessageHandler> messageHandlers;
+      {
+        const std::lock_guard<std::mutex> lock(mutex_);
+        messageHandlers = messageHandlers_;
+      }
+      for (const auto& [id, handler] : messageHandlers) {
         handler(str);
       }
     } else if (type == "ACK") {
@@ -48,15 +55,19 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
 }
 
 void SignalingChannelImpl::wsClosed() {
-  for (const auto& [id, handler] : stateHandlers_) {
-    handler(SignalingChannelState::CLOSED);
-  }
+  changeState(SignalingChannelState::CLOSED);
+  const std::lock_guard<std::mutex> lock(mutex_);
   messageHandlers_.clear();
   stateHandlers_.clear();
   errorHandlers_.clear();
 }
 
 void SignalingChannelImpl::sendMessage(const nlohmann::json& message) {
+  const std::lock_guard<std::mutex> lock(mutex_);
+  if (stateIsEnded()) {
+    NABTO_SIGNALING_LOGE << "sendMessage called from invalid state";
+    return;
+  }
   const nlohmann::json root = {
       {"type", "DATA"}, {"seq", sendSeq_}, {"data", message}};
   sendSeq_++;
@@ -65,16 +76,26 @@ void SignalingChannelImpl::sendMessage(const nlohmann::json& message) {
 }
 
 void SignalingChannelImpl::sendError(const SignalingError& error) {
-  signaler_->websocketSendError(channelId_, error);
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    if (stateIsEnded()) {
+      NABTO_SIGNALING_LOGE << "sendError called from invalid state";
+      return;
+    }
+    signaler_->websocketSendError(channelId_, error);
+  }
+  changeState(SignalingChannelState::FAILED);
 }
 
 void SignalingChannelImpl::sendAck(const nlohmann::json& msg) {
   const nlohmann::json ack = {{"type", "ACK"},
                               {"seq", msg.at("seq").get<uint32_t>()}};
+  const std::lock_guard<std::mutex> lock(mutex_);
   signaler_->websocketSendMessage(channelId_, ack);
 }
 
 void SignalingChannelImpl::handleAck(const nlohmann::json& msg) {
+  const std::lock_guard<std::mutex> lock(mutex_);
   if (unackedMessages_.empty()) {
     NABTO_SIGNALING_LOGE << "Got an ack but we have no unacked messages";
     return;
@@ -96,34 +117,59 @@ void SignalingChannelImpl::handleAck(const nlohmann::json& msg) {
 }
 
 void SignalingChannelImpl::peerConnected() {
-  for (auto const& message : unackedMessages_) {
-    signaler_->websocketSendMessage(channelId_, message);
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+
+    for (auto const& message : unackedMessages_) {
+      signaler_->websocketSendMessage(channelId_, message);
+    }
   }
-  for (const auto& [id, handler] : stateHandlers_) {
-    handler(SignalingChannelState::ONLINE);
-  }
+  changeState(SignalingChannelState::ONLINE);
 }
 
 void SignalingChannelImpl::peerOffline() {
-  NABTO_SIGNALING_LOGI << "Peer: " << channelId_ << " went offline";
-  for (const auto& [id, handler] : stateHandlers_) {
-    handler(SignalingChannelState::OFFLINE);
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+
+    NABTO_SIGNALING_LOGI << "Peer: " << channelId_ << " went offline";
   }
+  changeState(SignalingChannelState::OFFLINE);
 }
 
 void SignalingChannelImpl::handleError(const SignalingError& error) {
-  NABTO_SIGNALING_LOGI << "Got error: (" << error.errorCode() << ") "
-                       << error.errorMessage() << " from Peer: " << channelId_;
-  for (const auto& [id, handler] : errorHandlers_) {
+  std::map<ChannelErrorListenerId, SignalingErrorHandler> errorHandlers;
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    NABTO_SIGNALING_LOGI << "Got error: (" << error.errorCode() << ") "
+                         << error.errorMessage()
+                         << " from Peer: " << channelId_;
+    if (stateIsEnded()) {
+      NABTO_SIGNALING_LOGI
+          << "Got error while in error state. Not reinvoking handlers";
+    } else {
+      errorHandlers = errorHandlers_;
+    }
+  }
+  for (const auto& [id, handler] : errorHandlers) {
     handler(error);
   }
 }
 
 void SignalingChannelImpl::close() {
-  signaler_->channelClosed(channelId_);
-  messageHandlers_.clear();
-  stateHandlers_.clear();
-  errorHandlers_.clear();
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    if (stateIsEnded()) {
+      return;
+    }
+  }
+  changeState(SignalingChannelState::CLOSED);
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    signaler_->channelClosed(channelId_);
+    messageHandlers_.clear();
+    stateHandlers_.clear();
+    errorHandlers_.clear();
+  }
 }
 
 bool SignalingChannelImpl::isInitialMessage(const nlohmann::json& msg) {
@@ -136,7 +182,24 @@ bool SignalingChannelImpl::isInitialMessage(const nlohmann::json& msg) {
   }
 }
 
-std::string SignalingChannelImpl::getChannelId() { return channelId_; }
+std::string SignalingChannelImpl::getChannelId() {
+  const std::lock_guard<std::mutex> lock(mutex_);
+  return channelId_;
+}
+
+void SignalingChannelImpl::changeState(SignalingChannelState state) {
+  std::map<ChannelStateListenerId, SignalingChannelStateHandler> stateHandlers;
+  {
+    const std::lock_guard<std::mutex> lock(mutex_);
+    if (state != state_) {
+      stateHandlers = stateHandlers_;
+      state_ = state;
+    }
+  }
+  for (const auto& [id, handler] : stateHandlers) {
+    handler(state);
+  }
+}
 
 }  // namespace signaling
 }  // namespace nabto

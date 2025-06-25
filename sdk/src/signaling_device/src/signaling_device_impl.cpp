@@ -298,11 +298,11 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
           NABTO_SIGNALING_LOGE
               << "Got an message for an unknown channel, but the message is "
                  "not an initial message. Discarding the message";
+          mutex_.unlock();
           websocketSendError(
               connId, SignalingError(SignalingErrorCode::CHANNEL_NOT_FOUND,
                                      "Got a message for a signaling channel "
                                      "which does not exist."));
-          mutex_.unlock();
           return;
         }
         auto self = shared_from_this();
@@ -310,12 +310,12 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
         channels_.insert(std::make_pair(connId, chan));
 
         if (chanHandlers_.empty()) {
+          mutex_.unlock();
           websocketSendError(
               connId,
               SignalingError(
                   SignalingErrorCode::INTERNAL_ERROR,
                   "No NewChannelHandler was set, dropping the channel."));
-          mutex_.unlock();
           return;
         }
         auto chanHandlers = chanHandlers_;
