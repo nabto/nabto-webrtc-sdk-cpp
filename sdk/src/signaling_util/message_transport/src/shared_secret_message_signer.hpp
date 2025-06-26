@@ -48,7 +48,8 @@ class SharedSecretMessageSigner : public MessageSigner {
              << " and an empty remote nonce";
       throw std::runtime_error("Invalid State");
     }
-    NPLOGD << "Signing message with seq: " << nextMessageSignSeq_
+    NPLOGD << "Signing message: " << msg.dump()
+           << " with seq: " << nextMessageSignSeq_
            << " and remoteNonce: " << remoteNonce_;
 
     const uint32_t seq = nextMessageSignSeq_;

@@ -58,6 +58,53 @@ class MessageTransportFactory {
       nabto::webrtc::SignalingChannelPtr channel);
 };
 
+enum class SignalingMessageType { SIGNALING_DESCRIPTION, SIGNALING_CANDIDATE };
+
+class SignalingDescription {
+ public:
+  SignalingDescription(const std::string& descType, const std::string& descSdp);
+  const enum SignalingMessageType type =
+      SignalingMessageType::SIGNALING_DESCRIPTION;
+  nlohmann::json toJson();
+
+  std::string sdpType;
+  std::string sdp;
+};
+
+class SignalingCandidate {
+ public:
+  SignalingCandidate(const std::string& cand);
+  enum SignalingMessageType type = SignalingMessageType::SIGNALING_CANDIDATE;
+
+  void setSdpMid(const std::string& mid);
+  void setSdpMLineIndex(int index);
+  void setUsernameFragment(const std::string& ufrag);
+
+  nlohmann::json toJson();
+
+  std::string candidate;
+  std::string sdpMid;
+  int sdpMLineIndex;
+  std::string usernameFragment;
+};
+
+class WebrtcSignalingMessage {
+ public:
+  static WebrtcSignalingMessage fromJson(nlohmann::json& jsonMessage);
+  WebrtcSignalingMessage(SignalingDescription description);
+  WebrtcSignalingMessage(SignalingCandidate candidate);
+
+  bool isDescription() const;
+  bool isCandidate() const;
+
+  SignalingDescription getDescription() const;
+  SignalingCandidate getCandidate() const;
+
+ private:
+  std::unique_ptr<SignalingDescription> description_ = nullptr;
+  std::unique_ptr<SignalingCandidate> candidate_ = nullptr;
+};
+
 /**
  * Handler invoked when the MessageTransport has completed the setup phase of a
  * channel.
@@ -67,6 +114,9 @@ class MessageTransportFactory {
  */
 using SetupDoneHandler = std::function<void(
     const std::vector<nabto::webrtc::IceServer>& iceServers)>;
+
+using MessageTransportMessageHandler =
+    std::function<void(WebrtcSignalingMessage& message)>;
 
 using SetupDoneListenerId = uint32_t;
 using TransportMessageListenerId = uint32_t;
@@ -108,7 +158,7 @@ class MessageTransport {
    * @return ID of the added handler to be used when removing it.
    */
   virtual TransportMessageListenerId addMessageListener(
-      nabto::webrtc::SignalingMessageHandler handler) = 0;
+      MessageTransportMessageHandler handler) = 0;
 
   /**
    * Remove message listener.
@@ -144,7 +194,7 @@ class MessageTransport {
    *
    * @param message The message to send.
    */
-  virtual void sendMessage(const nlohmann::json& message) = 0;
+  virtual void sendMessage(const WebrtcSignalingMessage& message) = 0;
 };
 
 }  // namespace util

@@ -96,15 +96,15 @@ void MessageTransportImpl::handleMessage(const nlohmann::json& msgIn) {
         NPLOGE << "Received signaling message without a registered message "
                   "handler";
       } else {
-        std::map<TransportMessageListenerId,
-                 nabto::webrtc::SignalingMessageHandler>
+        std::map<TransportMessageListenerId, MessageTransportMessageHandler>
             msgHandlers;
         {
           const std::lock_guard<std::mutex> lock(handlerLock_);
           msgHandlers = msgHandlers_;
         }
+        auto sigMsg = WebrtcSignalingMessage::fromJson(msg);
         for (const auto& [id, handler] : msgHandlers) {
-          handler(msg);
+          handler(sigMsg);
         }
       }
     }
@@ -149,7 +149,7 @@ SetupDoneListenerId MessageTransportImpl::addSetupDoneListener(
 }
 
 TransportMessageListenerId MessageTransportImpl::addMessageListener(
-    nabto::webrtc::SignalingMessageHandler handler) {
+    MessageTransportMessageHandler handler) {
   const std::lock_guard<std::mutex> lock(handlerLock_);
   const TransportMessageListenerId id = currMsgListId_;
   currMsgListId_++;
@@ -166,13 +166,20 @@ TransportErrorListenerId MessageTransportImpl::addErrorListener(
   return id;
 }
 
-void MessageTransportImpl::sendMessage(const nlohmann::json& message) {
+void MessageTransportImpl::sendMessage(const WebrtcSignalingMessage& message) {
   try {
-    auto signedMessage = signer_->signMessage(message);
+    nlohmann::json jsonMsg;
+    if (message.isDescription()) {
+      auto desc = message.getDescription();
+      jsonMsg = desc.toJson();
+    } else if (message.isCandidate()) {
+      auto cand = message.getCandidate();
+      jsonMsg = cand.toJson();
+    }
+    auto signedMessage = signer_->signMessage(jsonMsg);
     channel_->sendMessage(signedMessage);
   } catch (std::exception& e) {
-    NPLOGE << "Failed to sign the message: " << message.dump()
-           << ", error: " << e.what();
+    NPLOGE << "Failed to sign the message with error: " << e.what();
     auto err = nabto::webrtc::SignalingError(
         nabto::webrtc::SignalingErrorCode::VERIFICATION_ERROR,
         "Could not sign the signaling message");
@@ -228,7 +235,8 @@ void MessageTransportImpl::sendSetupResponse(
     }
     root["iceServers"].push_back(is);
   }
-  sendMessage(root);
+  auto signedMessage = signer_->signMessage(root);
+  channel_->sendMessage(signedMessage);
 }
 
 void MessageTransportImpl::handleError(
