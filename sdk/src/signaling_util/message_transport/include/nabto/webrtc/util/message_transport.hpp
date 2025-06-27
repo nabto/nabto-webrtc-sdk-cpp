@@ -203,16 +203,16 @@ class WebrtcSignalingMessage {
   bool isCandidate() const;
 
   /**
-   * Get the SignalingDescription contained in this message if isDescription()
-   * returns true.
+   * Get the SignalingDescription contained in this message if `isDescription()`
+   * returns true. This must never be called if `isDescription()` returns false.
    *
    * @return The contained SignalingDescription object.
    */
   SignalingDescription getDescription() const;
 
   /**
-   * Get the SignalingCandidate contained in this message if isCandidate()
-   * returns true.
+   * Get the SignalingCandidate contained in this message if `isCandidate()`
+   * returns true. This must never be called if `isCandidate()` returns false.
    *
    * @return The contained SignalingCandidate object.
    */
