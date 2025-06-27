@@ -43,7 +43,7 @@ class MessageTransportImpl
    * @param handler the handler to set
    */
   TransportMessageListenerId addMessageListener(
-      nabto::webrtc::SignalingMessageHandler handler) override;
+      MessageTransportMessageHandler handler) override;
 
   void removeMessageListener(TransportMessageListenerId id) override {
     const std::lock_guard<std::mutex> lock(handlerLock_);
@@ -62,14 +62,14 @@ class MessageTransportImpl
     errHandlers_.erase(id);
   }
 
-  void sendMessage(const nlohmann::json& message) override;
+  void sendMessage(const WebrtcSignalingMessage& message) override;
 
  private:
   nabto::webrtc::SignalingDevicePtr device_;
   nabto::webrtc::SignalingChannelPtr channel_;
   MessageSignerPtr signer_;
 
-  std::map<TransportMessageListenerId, nabto::webrtc::SignalingMessageHandler>
+  std::map<TransportMessageListenerId, MessageTransportMessageHandler>
       msgHandlers_;
   std::map<TransportErrorListenerId, nabto::webrtc::SignalingErrorHandler>
       errHandlers_;

@@ -43,17 +43,13 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
 
   std::vector<nlohmann::json> messageQueue_;
 
-  void handleMessage(const nlohmann::json& msg);
+  void handleMessage(nabto::webrtc::util::WebrtcSignalingMessage& msg);
   void parseIceServers(
       const std::vector<struct nabto::webrtc::IceServer>& servers);
   void handleTransportError(const nabto::webrtc::SignalingError& error);
   void handleChannelStateChange(
       const nabto::webrtc::SignalingChannelState& state);
   void handleChannelError(const nabto::webrtc::SignalingError& error);
-
-  void init();
-  void deinit();
-  void createPeerConnection();
   void handleStateChange(const rtc::PeerConnection::State& state);
   void handleSignalingStateChange(rtc::PeerConnection::SignalingState state);
   void handleLocalCandidate(rtc::Candidate cand);
@@ -61,12 +57,17 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   void handleDatachannelEvent(std::shared_ptr<rtc::DataChannel> channel);
   void handleGatherinsStateChange(rtc::PeerConnection::GatheringState state);
 
+  void init();
+  void deinit();
+  void createPeerConnection();
+
   void sendDescription(rtc::optional<rtc::Description> description);
   void sendCreateResponse(
       const std::vector<struct nabto::webrtc::IceServer>& iceServers);
   void requestIceServers();
 
-  void sendSignalingMessage(const nlohmann::json& message);
+  void sendSignalingMessage(
+      const nabto::webrtc::util::WebrtcSignalingMessage& message);
 
   void addTrack();
 

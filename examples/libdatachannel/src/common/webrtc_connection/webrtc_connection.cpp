@@ -33,7 +33,9 @@ void WebrtcConnection::init() {
   auto self = shared_from_this();
 
   messageTransport_->addMessageListener(
-      [self](const nlohmann::json& msg) { self->handleMessage(msg); });
+      [self](nabto::webrtc::util::WebrtcSignalingMessage& msg) {
+        self->handleMessage(msg);
+      });
 
   messageTransport_->addSetupDoneListener(
       [self](const std::vector<nabto::webrtc::IceServer>& iceServers) {
@@ -60,16 +62,15 @@ void WebrtcConnection::init() {
       });
 }
 
-void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
+void WebrtcConnection::handleMessage(
+    nabto::webrtc::util::WebrtcSignalingMessage& msg) {
   mutex_.lock();
   try {
-    NPLOGI << "Webrtc got signaling message: " << msg.dump();
-    auto type = msg.at("type").get<std::string>();
+    NPLOGI << "Webrtc got signaling message";
 
-    if (type == "DESCRIPTION") {
-      rtc::Description remDesc(
-          msg.at("description").at("sdp").get<std::string>(),
-          msg.at("description").at("type").get<std::string>());
+    if (msg.isDescription()) {
+      auto desc = msg.getDescription();
+      rtc::Description remDesc(desc.sdp, desc.type);
 
       bool offerCollision =
           remDesc.type() == rtc::Description::Type::Offer &&
@@ -93,13 +94,12 @@ void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
       }
       return;
     }
-    if (type == "CANDIDATE") {
+    if (msg.isCandidate()) {
       std::shared_ptr<rtc::PeerConnection> pc = pc_;
       mutex_.unlock();
       try {
-        rtc::Candidate cand(
-            msg.at("candidate").at("candidate").get<std::string>(),
-            msg.at("candidate").at("sdpMid").get<std::string>());
+        auto sigCand = msg.getCandidate();
+        rtc::Candidate cand(sigCand.candidate, sigCand.sdpMid);
         pc->addRemoteCandidate(cand);
       } catch (nlohmann::json::exception& ex) {
         NPLOGE << "handleIce json exception: " << ex.what();
@@ -114,10 +114,9 @@ void WebrtcConnection::handleMessage(const nlohmann::json& msg) {
       return;
     }
 
-    NPLOGE << "Got unknown message type: " << type;
+    NPLOGE << "Got unknown message type";
   } catch (std::exception& ex) {
-    NPLOGE << "Failed to handle message: " << msg.dump()
-           << " with: " << ex.what();
+    NPLOGE << "Failed to handle message with: " << ex.what();
   }
   mutex_.unlock();
 }
@@ -231,15 +230,11 @@ void WebrtcConnection::handleSignalingStateChange(
 void WebrtcConnection::handleLocalCandidate(rtc::Candidate cand) {
   const std::lock_guard<std::mutex> lock(mutex_);
   if (canTrickle_) {
-    nlohmann::json candidate = {{"sdpMid", cand.mid()},
-                                {"candidate", cand.candidate()}};
+    nabto::webrtc::util::SignalingCandidate candidate(cand.candidate());
+    candidate.setSdpMid(cand.mid());
 
-    nlohmann::json msg = {
-        {"type", "CANDIDATE"},
-        {"candidate", candidate},
-    };
-
-    sendSignalingMessage(msg);
+    sendSignalingMessage(
+        nabto::webrtc::util::WebrtcSignalingMessage(candidate));
   }
 }
 
@@ -305,15 +300,9 @@ void WebrtcConnection::sendDescription(
   NPLOGD << "SendDescription with: "
          << (description.has_value() ? "true" : "false");
   if (description) {
-    nlohmann::json message = {{"type", description->typeString()},
-                              {"sdp", std::string(description.value())}};
-
-    nlohmann::json msg = {
-        {"type", "DESCRIPTION"},
-        {"description", message},
-    };
-
-    sendSignalingMessage(msg);
+    nabto::webrtc::util::SignalingDescription desc(
+        description->typeString(), std::string(description.value()));
+    sendSignalingMessage(nabto::webrtc::util::WebrtcSignalingMessage(desc));
 
     if (description->type() == rtc::Description::Type::Answer) {
       if (pc_->negotiationNeeded()) {
@@ -325,12 +314,12 @@ void WebrtcConnection::sendDescription(
   }
 }
 
-void WebrtcConnection::sendSignalingMessage(const nlohmann::json& message) {
+void WebrtcConnection::sendSignalingMessage(
+    const nabto::webrtc::util::WebrtcSignalingMessage& message) {
   try {
     messageTransport_->sendMessage(message);
   } catch (std::exception& e) {
-    NPLOGE << "Failed to sign the message: " << message.dump()
-           << ", error: " << e.what();
+    NPLOGE << "Failed to sign the message with error: " << e.what();
   }
 }
 

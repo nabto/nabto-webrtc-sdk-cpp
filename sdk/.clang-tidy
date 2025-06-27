@@ -25,3 +25,4 @@ HeaderFilterRegex: '.*'
 
 CheckOptions:
   readability-function-cognitive-complexity.IgnoreMacros: true
+  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
