@@ -3,6 +3,12 @@
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/message_transport.hpp>
 
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace nabto {
@@ -25,11 +31,10 @@ MessageTransportPtr MessageTransportFactory::createNoneTransport(
 }
 
 // SIGNALING DESCRIPTION START
-SignalingDescription::SignalingDescription(const std::string& descType,
-                                           const std::string& descSdp) {
-  type = descType;
-  sdp = descSdp;
-}
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+SignalingDescription::SignalingDescription(std::string descType,
+                                           std::string descSdp)
+    : type(std::move(descType)), sdp(std::move(descSdp)) {}
 
 nlohmann::json SignalingDescription::toJson() {
   nlohmann::json desc = {{"type", type}, {"sdp", sdp}};
@@ -42,9 +47,8 @@ nlohmann::json SignalingDescription::toJson() {
 }
 
 // SIGNALING CANDIDATE START
-SignalingCandidate::SignalingCandidate(const std::string& cand) {
-  candidate = cand;
-}
+SignalingCandidate::SignalingCandidate(std::string cand)
+    : candidate(std::move(cand)) {}
 
 void SignalingCandidate::setSdpMid(const std::string& mid) { sdpMid = mid; }
 void SignalingCandidate::setSdpMLineIndex(int index) { sdpMLineIndex = index; }
@@ -74,10 +78,11 @@ nlohmann::json SignalingCandidate::toJson() {
 
 // SIGNALING MESSAGE START
 
-WebrtcSignalingMessage::WebrtcSignalingMessage(SignalingDescription desc) {
+WebrtcSignalingMessage::WebrtcSignalingMessage(
+    const SignalingDescription& desc) {
   description_ = std::make_unique<SignalingDescription>(desc);
 }
-WebrtcSignalingMessage::WebrtcSignalingMessage(SignalingCandidate cand) {
+WebrtcSignalingMessage::WebrtcSignalingMessage(const SignalingCandidate& cand) {
   candidate_ = std::make_unique<SignalingCandidate>(cand);
 }
 
@@ -90,10 +95,10 @@ bool WebrtcSignalingMessage::isCandidate() const {
 }
 
 SignalingDescription WebrtcSignalingMessage::getDescription() const {
-  return *(description_.get());
+  return *description_;
 }
 SignalingCandidate WebrtcSignalingMessage::getCandidate() const {
-  return *(candidate_.get());
+  return *candidate_;
 }
 
 WebrtcSignalingMessage WebrtcSignalingMessage::fromJson(
@@ -102,7 +107,7 @@ WebrtcSignalingMessage WebrtcSignalingMessage::fromJson(
   if (type == "DESCRIPTION") {
     auto descType = jsonMessage.at("description").at("type").get<std::string>();
     auto sdp = jsonMessage.at("description").at("sdp").get<std::string>();
-    SignalingDescription desc(descType, sdp);
+    const SignalingDescription desc(descType, sdp);
     return WebrtcSignalingMessage(desc);
   }
   if (type == "CANDIDATE") {

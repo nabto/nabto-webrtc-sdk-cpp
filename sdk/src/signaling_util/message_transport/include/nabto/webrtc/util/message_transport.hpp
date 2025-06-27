@@ -70,7 +70,7 @@ class SignalingDescription {
    * @param descType type of the description, typically "offer" or "answer"
    * @param descSdp SDP representation of the description.
    */
-  SignalingDescription(const std::string& descType, const std::string& descSdp);
+  SignalingDescription(std::string descType, std::string descSdp);
 
   /**
    * Convert the description to JSON format following the network protocol.
@@ -101,7 +101,7 @@ class SignalingCandidate {
    *
    * @param cand The string representation of the candidate.
    */
-  SignalingCandidate(const std::string& cand);
+  explicit SignalingCandidate(std::string cand);
 
   /**
    * Set the optional SDP MID value of a candidate.
@@ -146,7 +146,7 @@ class SignalingCandidate {
    * Optional SDP M Line Index of the candidate. If this is `<0` it means the
    * value does not exist.
    */
-  int sdpMLineIndex;
+  int sdpMLineIndex{-1};
 
   /**
    * Optional Username Fragment of the candidate. If this is empty, it means the
@@ -179,14 +179,14 @@ class WebrtcSignalingMessage {
    *
    * @param description The description to construct with.
    */
-  WebrtcSignalingMessage(SignalingDescription description);
+  explicit WebrtcSignalingMessage(const SignalingDescription& description);
 
   /**
    * Construct a WebRTC Signaling message from a SignalingCandidate.
    *
    * @param candidate The candidate to construct with.
    */
-  WebrtcSignalingMessage(SignalingCandidate candidate);
+  explicit WebrtcSignalingMessage(const SignalingCandidate& candidate);
 
   /**
    * Check if the message is a SignalingDescription.
