@@ -70,7 +70,7 @@ void WebrtcConnection::handleMessage(
 
     if (msg.isDescription()) {
       auto desc = msg.getDescription();
-      rtc::Description remDesc(desc.sdp, desc.sdpType);
+      rtc::Description remDesc(desc.sdp, desc.type);
 
       bool offerCollision =
           remDesc.type() == rtc::Description::Type::Offer &&
