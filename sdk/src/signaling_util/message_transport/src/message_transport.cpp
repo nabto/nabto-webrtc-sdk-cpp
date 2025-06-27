@@ -27,12 +27,12 @@ MessageTransportPtr MessageTransportFactory::createNoneTransport(
 // SIGNALING DESCRIPTION START
 SignalingDescription::SignalingDescription(const std::string& descType,
                                            const std::string& descSdp) {
-  sdpType = descType;
+  type = descType;
   sdp = descSdp;
 }
 
 nlohmann::json SignalingDescription::toJson() {
-  nlohmann::json desc = {{"type", sdpType}, {"sdp", sdp}};
+  nlohmann::json desc = {{"type", type}, {"sdp", sdp}};
 
   nlohmann::json msg = {
       {"type", "DESCRIPTION"},

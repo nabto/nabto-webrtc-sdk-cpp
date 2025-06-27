@@ -58,46 +58,164 @@ class MessageTransportFactory {
       nabto::webrtc::SignalingChannelPtr channel);
 };
 
-enum class SignalingMessageType { SIGNALING_DESCRIPTION, SIGNALING_CANDIDATE };
-
+/**
+ * Class representing a WebRTC Description received or to be sent on the
+ * MessageTransport.
+ */
 class SignalingDescription {
  public:
+  /**
+   * Construct a SignalingDescription object to send
+   *
+   * @param descType type of the description, typically "offer" or "answer"
+   * @param descSdp SDP representation of the description.
+   */
   SignalingDescription(const std::string& descType, const std::string& descSdp);
-  const enum SignalingMessageType type =
-      SignalingMessageType::SIGNALING_DESCRIPTION;
+
+  /**
+   * Convert the description to JSON format following the network protocol.
+   *
+   * @return The JSON document
+   */
   nlohmann::json toJson();
 
-  std::string sdpType;
+  /**
+   * The description type (typically "offer" or "answer")
+   */
+  std::string type;
+
+  /**
+   * SDP of the description.
+   */
   std::string sdp;
 };
 
+/**
+ * Class representing a WebRTC ICE Candidate received or to be sent on the
+ * MessageTransport.
+ */
 class SignalingCandidate {
  public:
+  /**
+   * Construct a Candidate to be sent by the MessageTransport.
+   *
+   * @param cand The string representation of the candidate.
+   */
   SignalingCandidate(const std::string& cand);
-  enum SignalingMessageType type = SignalingMessageType::SIGNALING_CANDIDATE;
 
+  /**
+   * Set the optional SDP MID value of a candidate.
+   *
+   * @param mid The MID to set.
+   */
   void setSdpMid(const std::string& mid);
+
+  /**
+   * Set the optional SDP M Line Index of the candidate
+   *
+   * @param index The index to set.
+   */
   void setSdpMLineIndex(int index);
+
+  /**
+   * Set the optional username fragment of the candidate
+   *
+   * @param ufrag The username fragment to set.
+   */
   void setUsernameFragment(const std::string& ufrag);
 
+  /**
+   * Convert the description to JSON format following the network protocol.
+   *
+   * @return The JSON document
+   */
   nlohmann::json toJson();
 
+  /**
+   * The string representation of the candidate
+   */
   std::string candidate;
+
+  /**
+   * Optional SDP MID of the candidate. If this is empty, it means the value
+   * does not exist.
+   */
   std::string sdpMid;
+
+  /**
+   * Optional SDP M Line Index of the candidate. If this is `<0` it means the
+   * value does not exist.
+   */
   int sdpMLineIndex;
+
+  /**
+   * Optional Username Fragment of the candidate. If this is empty, it means the
+   * value does not exist.
+   */
   std::string usernameFragment;
 };
 
+/**
+ * Generalized WebRTC Signaling message to be sent/received by the
+ * MessageTransport. This message can contain either a SignalingDescription or a
+ * SignalingCandidate.
+ */
 class WebrtcSignalingMessage {
  public:
+  /**
+   * Construct a WebRTC Signaling message from the JSON format defined by the
+   * protocol.
+   *
+   * If the JSON is invalid or not following the protocol, this will throw an
+   * exception.
+   *
+   * @param jsonMessage The message to decode.
+   * @return The created signaling message.
+   */
   static WebrtcSignalingMessage fromJson(nlohmann::json& jsonMessage);
+
+  /**
+   * Construct a WebRTC Signaling message from a SignalingDescription.
+   *
+   * @param description The description to construct with.
+   */
   WebrtcSignalingMessage(SignalingDescription description);
+
+  /**
+   * Construct a WebRTC Signaling message from a SignalingCandidate.
+   *
+   * @param candidate The candidate to construct with.
+   */
   WebrtcSignalingMessage(SignalingCandidate candidate);
 
+  /**
+   * Check if the message is a SignalingDescription.
+   *
+   * @return True iff the message contains a description.
+   */
   bool isDescription() const;
+
+  /**
+   * Check if the message is a SignalingCandidate.
+   *
+   * @return True iff the message contains a candidate.
+   */
   bool isCandidate() const;
 
+  /**
+   * Get the SignalingDescription contained in this message if isDescription()
+   * returns true.
+   *
+   * @return The contained SignalingDescription object.
+   */
   SignalingDescription getDescription() const;
+
+  /**
+   * Get the SignalingCandidate contained in this message if isCandidate()
+   * returns true.
+   *
+   * @return The contained SignalingCandidate object.
+   */
   SignalingCandidate getCandidate() const;
 
  private:
@@ -115,6 +233,11 @@ class WebrtcSignalingMessage {
 using SetupDoneHandler = std::function<void(
     const std::vector<nabto::webrtc::IceServer>& iceServers)>;
 
+/**
+ * Handler invoked when a new message is available from the MessageTransport.
+ *
+ * @param message The new message.
+ */
 using MessageTransportMessageHandler =
     std::function<void(WebrtcSignalingMessage& message)>;
 
