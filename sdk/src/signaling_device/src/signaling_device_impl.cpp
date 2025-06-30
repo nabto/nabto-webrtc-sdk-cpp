@@ -167,15 +167,17 @@ void SignalingDeviceImpl::close() {
     channel.second->wsClosed();
     channelClosed(channel.first);
   }
+  nabto::webrtc::WebsocketConnectionPtr ws;
   {
     const std::lock_guard<std::mutex> lock(mutex_);
     channels_.clear();
 
-    if (ws_) {
-      ws_->close();
-    }
+    ws = ws_;
   }
-  if (!ws_) {
+  if (ws) {
+    ws->close();
+  }
+  if (!ws) {
     deinit();
   }
 }
