@@ -4,6 +4,8 @@ project(NabtoWebrtcSignaling
     LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD 17)
+
 add_subdirectory(src/signaling_device)
 add_subdirectory(src/signaling_util/logging)
 add_subdirectory(src/signaling_util/curl_http_client)
