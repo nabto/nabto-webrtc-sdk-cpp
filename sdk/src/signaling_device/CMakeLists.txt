@@ -1,4 +1,12 @@
 
+
+add_custom_target(GENERATE_VERSION ALL
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/src/version.cpp
+  COMMAND ${CMAKE_COMMAND} -DNABTO_WEBRTC_VERSION=${NABTO_WEBRTC_VERSION} -P
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake_scripts/version.cmake
+  )
+
 set(src
     src/signaling_device_impl.cpp
     src/signaling_channel_impl.cpp
@@ -6,6 +14,7 @@ set(src
     src/websocket_connection.cpp
     src/signaling_error.cpp
     src/signaling.cpp
+    src/version.cpp
 )
 
 add_library(nabto_webrtc_signaling_device ${src})
