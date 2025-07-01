@@ -116,9 +116,12 @@ if (NABTO_SIGNALING_BUILD_TESTS)
         nabto_integration_test
         NabtoWebrtcSignaling::util_curl_client
         NabtoWebrtcSignaling::util_std_timer
+        NabtoWebrtcSignaling::util_logging
         LibDataChannel::LibDataChannel
         CppRestOpenAPIClient
         nabto_webrtc_signaling_device
+        plog::plog
+        OpenSSL::Crypto
         GTest::gtest_main
     )
 
