@@ -18,8 +18,9 @@ endif()
 if (version_out)
   set(VERSION "#include <nabto/webrtc/device.hpp>\n
 #include <string>\n
-static const std::string version_str = \"${version_out}\"\n;
-const std::string nabto::webrtc::SignalingDevice::version() { return version_str; }\n")
+#include <array>\n
+constexpr std::array<char, 100> version_str {\"${version_out}\"};
+std::string nabto::webrtc::SignalingDevice::version() { return {std::begin(version_str),std::end(version_str)}; }\n")
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/version.cpp)
     file(READ ${CMAKE_CURRENT_SOURCE_DIR}/src/version.cpp VERSION_)

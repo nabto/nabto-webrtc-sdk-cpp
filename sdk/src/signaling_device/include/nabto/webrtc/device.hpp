@@ -623,7 +623,7 @@ class SignalingDevice {
    *
    * @returns String representation of the library version
    */
-  static const std::string version();
+  static std::string version();
 };
 
 /**
