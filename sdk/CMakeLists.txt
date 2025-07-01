@@ -79,6 +79,7 @@ install(
 option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
 
 if (NABTO_SIGNALING_BUILD_TESTS)
+    set(CMAKE_CXX_STANDARD 20)
     find_package(GTest CONFIG REQUIRED)
     find_package(OpenSSL REQUIRED)
     find_package(LibDataChannel REQUIRED)
