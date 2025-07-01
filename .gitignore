@@ -1,2 +1,3 @@
 /build
 /sdk/build
+/sdk/src/signaling_device/src/version.cpp

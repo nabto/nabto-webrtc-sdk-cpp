@@ -63,6 +63,7 @@ SignalingDeviceImpl::SignalingDeviceImpl(const SignalingDeviceConfig& conf)
 
 void SignalingDeviceImpl::start() {
   mutex_.lock();
+  NABTO_SIGNALING_LOGI << "Signaling Device started in version: " << version();
   if (state_ == SignalingDeviceState::NEW) {
     mutex_.unlock();
     doConnect();

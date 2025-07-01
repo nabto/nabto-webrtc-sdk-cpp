@@ -617,6 +617,13 @@ class SignalingDevice {
    * @param id The ID returned when adding the listener.
    */
   virtual void removeReconnectListener(ReconnectListenerId id) = 0;
+
+  /**
+   * Get a string representation of the Nabto WebRTC Device version.
+   *
+   * @returns String representation of the library version
+   */
+  static std::string version();
 };
 
 /**
