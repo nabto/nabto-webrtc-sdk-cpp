@@ -4,6 +4,8 @@ project(NabtoWebrtcSignaling
     LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD 17)
+
 add_subdirectory(src/signaling_device)
 add_subdirectory(src/signaling_util/logging)
 add_subdirectory(src/signaling_util/curl_http_client)
@@ -77,6 +79,7 @@ install(
 option(NABTO_SIGNALING_BUILD_TESTS "Build tests" OFF)
 
 if (NABTO_SIGNALING_BUILD_TESTS)
+    set(CMAKE_CXX_STANDARD 20)
     find_package(GTest CONFIG REQUIRED)
     find_package(OpenSSL REQUIRED)
     find_package(LibDataChannel REQUIRED)
@@ -113,9 +116,12 @@ if (NABTO_SIGNALING_BUILD_TESTS)
         nabto_integration_test
         NabtoWebrtcSignaling::util_curl_client
         NabtoWebrtcSignaling::util_std_timer
+        NabtoWebrtcSignaling::util_logging
         LibDataChannel::LibDataChannel
         CppRestOpenAPIClient
         nabto_webrtc_signaling_device
+        plog::plog
+        OpenSSL::Crypto
         GTest::gtest_main
     )
 

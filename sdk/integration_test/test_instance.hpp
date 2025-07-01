@@ -1,10 +1,11 @@
 #pragma once
 
 // Required. See: https://github.com/microsoft/cpprestsdk/issues/230
-#define _TURN_OFF_PLATFORM_STRING
+// #define _TURN_OFF_PLATFORM_STRING
 
 #include "util/libdatachannel_websocket/rtc_websocket_wrapper.hpp"
 #include <CppRestOpenAPIClient/api/DefaultApi.h>
+#include <cpprest/json.h>
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Init.h>
@@ -170,7 +171,13 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
   }
 
   bool clientSendMessage(std::string& cliId, std::string message) {
-    std::vector<std::string> msgs = {message};
+    std::vector<std::shared_ptr<org::openapitools::client::model::AnyType> >
+        msgs;
+    auto msg = std::make_shared<org::openapitools::client::model::AnyType>();
+
+    msg->fromJson(web::json::value::string(message));
+    msgs.push_back(msg);
+
     auto req = std::make_shared<
         model::PostTestClientByTestIdSend_device_messages_request>();
     req->setMessages(msgs);
@@ -217,16 +224,29 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
 
   std::vector<std::string> clientWaitForMessagesIsReceived(
       std::string cliId, std::vector<std::string>& msgs) {
+    std::vector<std::shared_ptr<org::openapitools::client::model::AnyType> >
+        msgsLoc;
+    for (auto& m : msgs) {
+      auto msg = std::make_shared<org::openapitools::client::model::AnyType>();
+
+      msg->fromJson(web::json::value::string(m));
+      msgsLoc.push_back(msg);
+    }
+
     auto req = std::make_shared<
         model::PostTestClientByTestIdWait_for_device_messages_request>();
     req->setTimeout(200);
-    req->setMessages(msgs);
+    req->setMessages(msgsLoc);
 
     try {
       auto resp = api_->postTestDeviceByTestIdClientsByClientIdWaitForMessages(
                           testId_, cliId, req)
                       .get();
-      return resp->getMessages();
+      std::vector<std::string> respMsgs;
+      for (auto& m : resp->getMessages()) {
+        respMsgs.push_back(m->toJson().as_string());
+      }
+      return respMsgs;
     } catch (api::ApiException& ex) {
       std::cout << "Failed to wait for messages: " << ex.what() << std::endl;
       throw std::runtime_error("HTTP Failed");
