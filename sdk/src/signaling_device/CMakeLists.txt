@@ -28,3 +28,11 @@ find_package(nlohmann_json REQUIRED)
 find_package(plog REQUIRED)
 
 target_link_libraries(nabto_webrtc_signaling_device nlohmann_json::nlohmann_json plog::plog)
+
+target_sources(nabto_webrtc_signaling_device PUBLIC
+    FILE_SET public_headers
+    TYPE HEADERS
+    BASE_DIRS ./include
+    FILES
+        include/nabto/webrtc/device.hpp
+)
