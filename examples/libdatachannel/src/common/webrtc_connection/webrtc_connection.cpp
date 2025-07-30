@@ -220,8 +220,9 @@ void WebrtcConnection::handleSignalingStateChange(
     return;
   }
   const std::lock_guard<std::mutex> lock(mutex_);
-  if (canTrickle_ ||
-      pc_->gatheringState() == rtc::PeerConnection::GatheringState::Complete) {
+  if (pc_ &&
+      (canTrickle_ || pc_->gatheringState() ==
+                          rtc::PeerConnection::GatheringState::Complete)) {
     auto description = pc_->localDescription();
     sendDescription(description);
   }
@@ -268,6 +269,7 @@ void WebrtcConnection::handleDatachannelEvent(
 }
 
 void WebrtcConnection::addTrack() {
+  const std::lock_guard<std::mutex> lock(mutex_);
   if (videoTrack_ && pc_) {
     trackRef_ = videoTrack_->addTrack(pc_);
     pc_->setLocalDescription();
@@ -316,6 +318,9 @@ void WebrtcConnection::sendDescription(
 
 void WebrtcConnection::sendSignalingMessage(
     const nabto::webrtc::util::WebrtcSignalingMessage& message) {
+  if (!messageTransport_) {
+    return;
+  }
   try {
     messageTransport_->sendMessage(message);
   } catch (std::exception& e) {
