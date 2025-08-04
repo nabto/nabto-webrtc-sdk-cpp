@@ -124,7 +124,7 @@ void SignalingChannelImpl::peerConnected() {
       signaler_->websocketSendMessage(channelId_, message);
     }
   }
-  changeState(SignalingChannelState::ONLINE);
+  changeState(SignalingChannelState::CONNECTED);
 }
 
 void SignalingChannelImpl::peerOffline() {
@@ -133,7 +133,7 @@ void SignalingChannelImpl::peerOffline() {
 
     NABTO_SIGNALING_LOGI << "Peer: " << channelId_ << " went offline";
   }
-  changeState(SignalingChannelState::OFFLINE);
+  changeState(SignalingChannelState::DISCONNECTED);
 }
 
 void SignalingChannelImpl::handleError(const SignalingError& error) {

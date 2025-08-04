@@ -423,8 +423,8 @@ void WebrtcConnection::handleChannelStateChange(
   std::shared_ptr<rtc::PeerConnection> pc = nullptr;
 
   switch (state) {
-    case nabto::webrtc::SignalingChannelState::OFFLINE:
-      NPLOGD << "Got channel state: OFFLINE";
+    case nabto::webrtc::SignalingChannelState::DISCONNECTED:
+      NPLOGD << "Got channel state: DISCONNECTED";
       // This means we tried to send a signaling message but the client is
       // not connected to the backend. If we expect the client to connect
       // momentarily, we will then get a CLIENT_CONNECTED event and the
@@ -443,8 +443,8 @@ void WebrtcConnection::handleChannelStateChange(
         deinit();
       }
       break;
-    case nabto::webrtc::SignalingChannelState::ONLINE:
-      NPLOGD << "Got channel state ONLINE";
+    case nabto::webrtc::SignalingChannelState::CONNECTED:
+      NPLOGD << "Got channel state CONNECTED";
       // This means client reconnected, the client should do ICE restart
       // if needed so we can just ignore.
       break;
