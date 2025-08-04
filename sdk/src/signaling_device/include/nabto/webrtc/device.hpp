@@ -362,16 +362,16 @@ std::string signalingDeviceStateToString(SignalingDeviceState state);
  * Events a Signaling Channel can emit.
  *
  *  - NEW: The channel was just created.
- *  - ONLINE: The SDK received an indication that the client is online.
- *  - OFFLINE: The SDK tried to send a message to the client but the client was
+ *  - CONNECTED: The SDK received an indication that the client is online.
+ *  - DISCONNECTED: The SDK tried to send a message to the client but the client was
  * offline.
  *  - FAILED: The channel received a error, which is fatal in the protocol.
  *  - CLOSED: The channel was closed by the application.
  */
 enum class SignalingChannelState : std::uint8_t {
   NEW,
-  ONLINE,
-  OFFLINE,
+  CONNECTED,
+  DISCONNECTED,
   FAILED,
   CLOSED
 };

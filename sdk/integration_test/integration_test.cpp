@@ -315,7 +315,7 @@ TEST(connect, client_disconnect_after_connect) {
   ASSERT_TRUE(cliConn != nullptr);
   cliConn->addStateChangeListener(
       [&connEventProm](nabto::webrtc::SignalingChannelState event) {
-        if (event == nabto::webrtc::SignalingChannelState::OFFLINE) {
+        if (event == nabto::webrtc::SignalingChannelState::DISCONNECTED) {
           connEventProm.set_value();
         }
       });

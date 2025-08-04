@@ -28,10 +28,10 @@ std::string signalingChannelStateToString(SignalingChannelState state) {
   switch (state) {
     case SignalingChannelState::NEW:
       return "NEW";
-    case SignalingChannelState::ONLINE:
-      return "ONLINE";
-    case SignalingChannelState::OFFLINE:
-      return "OFFLINE";
+    case SignalingChannelState::CONNECTED:
+      return "CONNECTED";
+    case SignalingChannelState::DISCONNECTED:
+      return "DISCONNECTED";
     case SignalingChannelState::FAILED:
       return "FAILED";
     case SignalingChannelState::CLOSED:
