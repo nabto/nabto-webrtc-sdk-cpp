@@ -196,7 +196,7 @@ bool parse_options(int argc, char** argv, struct options& opts) {
         opts.caBundle = std::string(curlCaBundle);
       }
     }
-    if (!opts.caBundle.has_value()) {
+    if (opts.caBundle.has_value()) {
       std::ifstream f(opts.caBundle.value());
       if (!f.good()) {
         std::cout << "CA certificate bundle file does not exist: "
