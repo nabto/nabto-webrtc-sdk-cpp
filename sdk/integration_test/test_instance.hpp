@@ -100,7 +100,7 @@ class TestInstance : public std::enable_shared_from_this<TestInstance> {
   }
 
   nabto::webrtc::SignalingDevicePtr createDevice() {
-    http_ = nabto::webrtc::util::CurlHttpClient::create();
+    http_ = nabto::webrtc::util::CurlHttpClient::create(std::nullopt);
     ws_ = nabto::example::RtcWebsocketWrapper::create();
     tf_ = nabto::webrtc::util::StdTimerFactory::create();
     tokGen_ = TestTokenGen::create(accessToken_);
