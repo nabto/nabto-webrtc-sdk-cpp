@@ -31,9 +31,9 @@ class CurlHttpClient : public nabto::webrtc::SignalingHttpClient,
    * @return Smart pointer to the created SignalingHttpClient.
    */
   static nabto::webrtc::SignalingHttpClientPtr create(
-      std::optional<std::string> caBundle = std::nullopt);
+      std::optional<std::string> caBundle);
 
-  CurlHttpClient(std::optional<std::string>& caBundle);
+  explicit CurlHttpClient(std::optional<std::string>& caBundle);
   ~CurlHttpClient() override;
   CurlHttpClient(const CurlHttpClient&) = delete;
   CurlHttpClient& operator=(const CurlHttpClient&) = delete;
