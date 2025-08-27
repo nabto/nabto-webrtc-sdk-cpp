@@ -16,7 +16,12 @@ namespace util {
 class StdTimer : public nabto::webrtc::SignalingTimer,
                  public std::enable_shared_from_this<StdTimer> {
  public:
-  ~StdTimer() {}
+  ~StdTimer() {
+    if (timer_.joinable()) {
+      timer_.join();
+      timer_ = std::thread();
+    }
+  }
 
   void setTimeout(uint32_t timeoutMs, std::function<void()> cb) override {
     auto self = shared_from_this();
