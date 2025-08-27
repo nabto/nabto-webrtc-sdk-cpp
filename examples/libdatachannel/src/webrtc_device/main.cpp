@@ -11,6 +11,7 @@
 #include <nabto/webrtc/util/message_transport.hpp>
 #include <nabto/webrtc/util/std_timer.hpp>
 #include <nabto/webrtc/util/token_generator.hpp>
+#include <optional>
 #include <webrtc_connection/webrtc_connection.hpp>
 
 #include "h264_handler.hpp"
@@ -24,6 +25,7 @@ struct options {
   std::string sharedSecret;
   std::string sharedSecretId;
   bool centralAuthorization;
+  std::optional<std::string> caBundle;
 };
 
 bool parse_options(int argc, char** argv, struct options& opts);
@@ -50,8 +52,8 @@ int main(int argc, char** argv) {
       nabto::webrtc::util::NabtoTokenGenerator::create(
           opts.productId, opts.deviceId, opts.privateKey);
 
-  auto http = nabto::webrtc::util::CurlHttpClient::create();
-  auto ws = nabto::example::RtcWebsocketWrapper::create();
+  auto http = nabto::webrtc::util::CurlHttpClient::create(opts.caBundle);
+  auto ws = nabto::example::RtcWebsocketWrapper::create(opts.caBundle);
   auto tf = nabto::webrtc::util::StdTimerFactory::create();
   auto trackHandler = nabto::example::H264TrackHandler::create(nullptr);
 
@@ -122,11 +124,21 @@ bool parse_options(int argc, char** argv, struct options& opts) {
         "Optional. Shared secret used to sign and validate signaling messages",
         cxxopts::value<std::string>())("central-authorization",
                                        "Require central authorization")(
-        "h,help", "Shows this help text");
+        "ca-bundle",
+        "Optional. Path to a CA certificate file; overrides CURL_CA_BUNDLE "
+        "env var if set.",
+        cxxopts::value<std::string>())("h,help", "Shows this help text")(
+        "v,version", "Shows the Nabto WebRTC SDK version");
     auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
       std::cout << options.help({"", "Group"}) << std::endl;
+      return false;
+    }
+
+    if (result.count("version")) {
+      std::cout << "Nabto WebRTC SDK C++: "
+                << nabto::webrtc::SignalingDevice::version() << std::endl;
       return false;
     }
 
@@ -174,6 +186,23 @@ bool parse_options(int argc, char** argv, struct options& opts) {
                    "--central-authorization needs to be enabled"
                 << std::endl;
       return false;
+    }
+
+    if (result.count("ca-bundle")) {
+      opts.caBundle = result["ca-bundle"].as<std::string>();
+    } else {
+      const char* curlCaBundle = std::getenv("CURL_CA_BUNDLE");
+      if (curlCaBundle != nullptr) {
+        opts.caBundle = std::string(curlCaBundle);
+      }
+    }
+    if (!opts.caBundle.has_value()) {
+      std::ifstream f(opts.caBundle.value());
+      if (!f.good()) {
+        std::cout << "CA certificate bundle file does not exist: "
+                  << opts.caBundle.value() << std::endl;
+        return false;
+      }
     }
 
   } catch (const cxxopts::exceptions::exception& e) {

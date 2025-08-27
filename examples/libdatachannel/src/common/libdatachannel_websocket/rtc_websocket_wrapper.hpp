@@ -2,6 +2,7 @@
 
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
+#include <optional>
 #include <rtc/rtc.hpp>
 #include <variant>
 
@@ -12,21 +13,30 @@ class RtcWebsocketWrapper
     : public nabto::webrtc::SignalingWebsocket,
       public std::enable_shared_from_this<RtcWebsocketWrapper> {
  public:
-  static nabto::webrtc::SignalingWebsocketPtr create() {
-    return std::make_shared<RtcWebsocketWrapper>();
+  static nabto::webrtc::SignalingWebsocketPtr create(
+      std::optional<std::string> caBundle) {
+    return std::make_shared<RtcWebsocketWrapper>(caBundle);
   }
 
-  RtcWebsocketWrapper() {}
+  RtcWebsocketWrapper(std::optional<std::string>& caBundle) {
+    if (caBundle.has_value()) {
+      rtc::WebSocketConfiguration conf;
+      conf.caCertificatePemFile = caBundle;
+      ws_ = std::make_shared<rtc::WebSocket>(conf);
+    } else {
+      ws_ = std::make_shared<rtc::WebSocket>();
+    }
+  }
 
-  bool send(const std::string& data) { return ws_.send(data); }
+  bool send(const std::string& data) { return ws_->send(data); }
 
-  void close() { return ws_.close(); }
+  void close() { return ws_->close(); }
 
-  void onOpen(std::function<void()> callback) { ws_.onOpen(callback); }
+  void onOpen(std::function<void()> callback) { ws_->onOpen(callback); }
 
   void onMessage(std::function<void(const std::string& message)> callback) {
     auto self = shared_from_this();
-    ws_.onMessage(
+    ws_->onMessage(
         [self, callback](std::variant<rtc::binary, rtc::string> message) {
           std::string msg;
           if (std::holds_alternative<rtc::string>(message)) {
@@ -42,16 +52,16 @@ class RtcWebsocketWrapper
         });
   }
 
-  void onClosed(std::function<void()> callback) { ws_.onClosed(callback); }
+  void onClosed(std::function<void()> callback) { ws_->onClosed(callback); }
 
-  void open(const std::string& url) { ws_.open(url); }
+  void open(const std::string& url) { ws_->open(url); }
 
   void onError(std::function<void(const std::string& error)> callback) {
-    ws_.onError(callback);
+    ws_->onError(callback);
   }
 
  private:
-  rtc::WebSocket ws_;
+  std::shared_ptr<rtc::WebSocket> ws_;
 };
 
 }  // namespace example

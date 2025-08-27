@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <thread>
 
 namespace nabto {
@@ -24,13 +25,15 @@ class CurlHttpClient : public nabto::webrtc::SignalingHttpClient,
                        public std::enable_shared_from_this<CurlHttpClient> {
  public:
   /**
-   * Create an instance of the SignalingHttpClient.
+   * Create an instance of the SignalingHttpClient with a custom CA bundle.
    *
+   * @param caBundle path to the CA bundle to use
    * @return Smart pointer to the created SignalingHttpClient.
    */
-  static nabto::webrtc::SignalingHttpClientPtr create();
+  static nabto::webrtc::SignalingHttpClientPtr create(
+      std::optional<std::string> caBundle = std::nullopt);
 
-  CurlHttpClient();
+  CurlHttpClient(std::optional<std::string>& caBundle);
   ~CurlHttpClient() override;
   CurlHttpClient(const CurlHttpClient&) = delete;
   CurlHttpClient& operator=(const CurlHttpClient&) = delete;
@@ -46,6 +49,7 @@ class CurlHttpClient : public nabto::webrtc::SignalingHttpClient,
   std::string writeBuffer_;
   std::string authHeader_;
   std::string ctHeader_;
+  std::optional<std::string> caBundle_;
 
   struct curl_slist* curlReqHeaders_ = nullptr;
 

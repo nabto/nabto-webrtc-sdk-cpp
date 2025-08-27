@@ -18,11 +18,13 @@ namespace nabto {
 namespace webrtc {
 namespace util {
 
-nabto::webrtc::SignalingHttpClientPtr CurlHttpClient::create() {
-  return std::make_shared<CurlHttpClient>();
+nabto::webrtc::SignalingHttpClientPtr CurlHttpClient::create(
+    std::optional<std::string> caBundle) {
+  return std::make_shared<CurlHttpClient>(caBundle);
 }
 
-CurlHttpClient::CurlHttpClient() : curl_(CurlAsync::create()) {}
+CurlHttpClient::CurlHttpClient(std::optional<std::string>& caBundle)
+    : curl_(CurlAsync::create()), caBundle_(caBundle) {}
 
 CurlHttpClient::~CurlHttpClient() {
   if (curlReqHeaders_ != nullptr) {
@@ -61,6 +63,14 @@ bool CurlHttpClient::sendRequest(
     NPLOGE << "Failed to initialize Curl request with CURLE: "
            << curl_easy_strerror(res);
     return false;
+  }
+
+  if (caBundle_.has_value()) {
+    res = curl_easy_setopt(curl, CURLOPT_CAINFO, caBundle_.value().c_str());
+    if (res != CURLE_OK) {
+      NPLOGE << "Failed to set CA bundle with: " << curl_easy_strerror(res);
+      return false;
+    }
   }
 
   res = curl_easy_setopt(curl, CURLOPT_READFUNCTION, readFunc);
