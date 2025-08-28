@@ -140,9 +140,9 @@ size_t TcpRtpClient::rtp_write(void* ptr, size_t size, size_t nmemb,
     std::lock_guard<std::mutex> lock(self->mutex_);
     if (self->videoTrack_ != nullptr && self->videoTrack_->isOpen()) {
       uint8_t* buf = ((uint8_t*)ptr) + 4;
-      auto packets = self->videoRepacketizer_->handlePacket(
-          std::vector<uint8_t>(buf, buf + dataLen));
       try {
+        auto packets = self->videoRepacketizer_->handlePacket(
+            std::vector<uint8_t>(buf, buf + dataLen));
         for (auto p : packets) {
           self->videoTrack_->send((rtc::byte*)p.data(), p.size());
         }
@@ -152,6 +152,10 @@ size_t TcpRtpClient::rtp_write(void* ptr, size_t size, size_t nmemb,
         // condition. Both us and libdatachannel have mutex protection, so this
         // will not be a memory issue. However, libdatachannel can still change
         // the Open state between the check above and this.
+
+        // We have also observed a runtime error from the repacketizer due to
+        // mistakenly sending H265 data instead of H264. Since the uncaught
+        // exception will crash the device, we need to catch it as well.
         NPLOGE << "Caught send runtime error: " << err.what();
       }
     }
