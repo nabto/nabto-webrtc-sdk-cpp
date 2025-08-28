@@ -50,12 +50,12 @@ SignalingDeviceImplPtr SignalingDeviceImpl::create(
 SignalingDeviceImpl::SignalingDeviceImpl(const SignalingDeviceConfig& conf)
     : wsImpl_(conf.wsImpl),
       httpCli_(conf.httpCli),
-      ws_(WebsocketConnection::create(wsImpl_, conf.timerFactory)),
-      timerFactory_(conf.timerFactory),
       deviceId_(conf.deviceId),
       productId_(conf.productId),
       tokenProvider_(conf.tokenProvider),
-      httpHost_(conf.signalingUrl) {
+      httpHost_(conf.signalingUrl),
+      ws_(WebsocketConnection::create(wsImpl_, conf.timerFactory)),
+      timerFactory_(conf.timerFactory) {
   if (httpHost_.empty()) {
     httpHost_ = "https://" + productId_ + DEFAULT_SIGNALING_DOMAIN;
   }

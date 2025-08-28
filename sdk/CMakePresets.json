@@ -56,6 +56,14 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "NABTO_SIGNALING_BUILD_TESTS": "ON"
             }
+        },
+        {
+            "name": "werror",
+            "inherits": ["debug"],
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Werror",
+                "CMAKE_C_FLAGS": "-Wall -Wextra -Werror"
+            }
         }
     ],
     "buildPresets": [
@@ -83,6 +91,11 @@
         {
             "name": "clang_tidy",
             "configurePreset": "clang_tidy",
+            "targets": ["install"]
+        },
+        {
+            "name": "werror",
+            "configurePreset": "werror",
             "targets": ["install"]
         }
     ],
@@ -146,6 +159,19 @@
                 {
                     "type": "build",
                     "name": "clang_tidy"
+                }
+            ]
+        },
+        {
+            "name": "werror",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "werror"
+                },
+                {
+                    "type": "build",
+                    "name": "werror"
                 }
             ]
         }
