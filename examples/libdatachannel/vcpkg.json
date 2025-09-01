@@ -13,6 +13,10 @@
         "name": "jwt-cpp",
         "features": ["picojson"]
       },
+      {
+        "name": "libsrtp",
+        "features": ["openssl"]
+      },
       "nlohmann-json",
       "usrsctp",
       "gtest",
