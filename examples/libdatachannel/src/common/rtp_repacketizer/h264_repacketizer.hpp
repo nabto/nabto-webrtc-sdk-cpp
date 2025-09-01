@@ -19,39 +19,42 @@ class H264Repacketizer : public RtpRepacketizer {
   H264Repacketizer(std::shared_ptr<rtc::RtpPacketizationConfig> rtpConf)
       : RtpRepacketizer(rtpConf->ssrc, rtpConf->payloadType),
         rtpConf_(rtpConf) {
-    // TODO: remove this workaround for
-    // https://github.com/paullouisageneau/libdatachannel/issues/1216
-    rtpConf_->playoutDelayId = 0;
     packet_ = std::make_shared<rtc::H264RtpPacketizer>(
         rtc::NalUnit::Separator::LongStartSequence, rtpConf_);
   }
 
   std::vector<std::vector<uint8_t>> handlePacket(std::vector<uint8_t> data) {
+    // TODO fix the packetizer in 0.23.1
     std::vector<std::vector<uint8_t>> ret;
-    if (data.size() < 2 || data.at(1) == 200) {
-      // ignore RTCP packets for now
-      return ret;
-    }
-
-    auto src = reinterpret_cast<const std::byte*>(data.data());
-    rtc::message_ptr msg =
-        std::make_shared<rtc::Message>(src, src + data.size());
-
-    rtc::message_vector vec;
-    vec.push_back(msg);
-
-    depacket_.incoming(vec, nullptr);
-
-    if (vec.size() > 0) {
-      rtpConf_->timestamp = vec[0]->frameInfo->timestamp;
-      packet_->outgoing(vec, nullptr);
-
-      for (auto m : vec) {
-        uint8_t* src = (uint8_t*)m->data();
-        ret.push_back(std::vector<uint8_t>(src, src + m->size()));
-      }
-    }
+    ret.push_back(data);
     return ret;
+    // std::vector<std::vector<uint8_t>> ret;
+    // if (data.size() < 2 || data.at(1) == 200) {
+    //   // ignore RTCP packets for now
+    //   return ret;
+    // }
+
+    // auto src = reinterpret_cast<const std::byte*>(data.data());
+    // rtc::message_ptr msg =
+    //     std::make_shared<rtc::Message>(src, src + data.size());
+
+    // rtc::message_vector vec;
+    // vec.push_back(msg);
+
+    // depacket_.reassemble(vec);
+    // depacket_.incoming(vec, [](rtc::message_ptr message) {});
+    // depacket_.incoming(vec, nullptr);
+
+    // if (vec.size() > 0) {
+    //   rtpConf_->timestamp = vec[0]->frameInfo->timestamp;
+    //   packet_->outgoing(vec, nullptr);
+
+    //   for (auto m : vec) {
+    //     uint8_t* src = (uint8_t*)m->data();
+    //     ret.push_back(std::vector<uint8_t>(src, src + m->size()));
+    //   }
+    // }
+    // return ret;
   }
 
  private:

@@ -9,7 +9,10 @@
         "name": "libdatachannel",
         "features": ["srtp", "ws"]
       },
-      "jwt-cpp",
+      {
+        "name": "jwt-cpp",
+        "features": ["picojson"]
+      },
       "nlohmann-json",
       "usrsctp",
       "gtest",
