@@ -127,12 +127,14 @@ class H265TrackHandler : public WebrtcTrackHandler,
     // type exists, so we might as well reuse the same value for the RTP
     // session in WebRTC as the one we use in the RTP source (eg. Gstreamer)
     media.addH265Codec(payloadType_);
-    auto r = media.rtpMap(96);
+    // auto r = media.rtpMap(96);
     // r->fmtps.push_back(
     //     "sprop-vps=QAEMAf//"
-    //     "BAgAAAMAmAgAAAMAAFqSgJA=;sprop-sps="
-    //     "QgEBBAgAAAMAmAgAAAMAAFqQAKBAPCKUslSSZX/"
-    //     "4AAgAC1BgYGBAAAADAEAAAAeC;sprop-pps=RAHBcoYMRiQ=");
+    //     "AWAAAAMAkAAAAwAAAwB4koCQ;sprop-sps="
+    //     "QgEBAWAAAAMAkAAAAwAAAwB4oAPAgBDllkqSTK//"
+    //     "AAEAAWoCAgIIAAADAAgAAAMA8EA=;sprop-pps=RAHBcrRiQA==");
+
+    media.addSSRC(ssrc_, mid, mid);
 
     return media;
   }
