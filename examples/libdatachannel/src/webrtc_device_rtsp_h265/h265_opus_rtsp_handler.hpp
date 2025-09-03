@@ -134,7 +134,7 @@ class H265TrackHandler : public WebrtcTrackHandler,
     //     "QgEBAWAAAAMAkAAAAwAAAwB4oAPAgBDllkqSTK//"
     //     "AAEAAWoCAgIIAAADAAgAAAMA8EA=;sprop-pps=RAHBcrRiQA==");
 
-    media.addSSRC(ssrc_, mid, mid);
+    // media.addSSRC(ssrc_, mid, mid);
 
     return media;
   }
