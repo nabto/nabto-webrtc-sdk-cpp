@@ -19,11 +19,12 @@ class H264Repacketizer : public RtpRepacketizer {
   H264Repacketizer(std::shared_ptr<rtc::RtpPacketizationConfig> rtpConf)
       : RtpRepacketizer(rtpConf->ssrc, rtpConf->payloadType),
         rtpConf_(rtpConf) {
-    // TODO: remove this workaround for
-    // https://github.com/paullouisageneau/libdatachannel/issues/1216
-    rtpConf_->playoutDelayId = 0;
-    packet_ = std::make_shared<rtc::H264RtpPacketizer>(
-        rtc::NalUnit::Separator::LongStartSequence, rtpConf_);
+    depacketizerMediaHandler_ = std::make_shared<rtc::MediaHandler>();
+    depacketizerMediaHandler_->addToChain(std::make_shared<rtc::H264RtpDepacketizer>(rtc::H264RtpDepacketizer()));
+
+    repacketizerMediaHandler_ = std::make_shared<rtc::MediaHandler>();
+
+    repacketizerMediaHandler_->addToChain(std::make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer(rtc::NalUnit::Separator::LongStartSequence, rtpConf)));
   }
 
   std::vector<std::vector<uint8_t>> handlePacket(std::vector<uint8_t> data) {
@@ -40,23 +41,21 @@ class H264Repacketizer : public RtpRepacketizer {
     rtc::message_vector vec;
     vec.push_back(msg);
 
-    depacket_.incoming(vec, nullptr);
+    depacketizerMediaHandler_->incomingChain(vec, nullptr);
 
-    if (vec.size() > 0) {
-      rtpConf_->timestamp = vec[0]->frameInfo->timestamp;
-      packet_->outgoing(vec, nullptr);
-
-      for (auto m : vec) {
-        uint8_t* src = (uint8_t*)m->data();
-        ret.push_back(std::vector<uint8_t>(src, src + m->size()));
-      }
+    repacketizerMediaHandler_->outgoingChain(vec, nullptr);
+    for (auto m : vec) {
+      uint8_t* src = (uint8_t*)m->data();
+      ret.push_back(std::vector<uint8_t>(src, src + m->size()));
     }
     return ret;
   }
 
  private:
-  rtc::H264RtpDepacketizer depacket_;
-  std::shared_ptr<rtc::H264RtpPacketizer> packet_ = nullptr;
+  std::shared_ptr<rtc::MediaHandler> depacketizerMediaHandler_;
+  std::shared_ptr<rtc::MediaHandler> repacketizerMediaHandler_;
+  // rtc::H264RtpDepacketizer depacket_;
+  // std::shared_ptr<rtc::H264RtpPacketizer> packet_ = nullptr;
   std::shared_ptr<rtc::RtpPacketizationConfig> rtpConf_ = nullptr;
 };
 

@@ -15,7 +15,10 @@
       ]
     },
     "boost-uuid",
-    "jwt-cpp",
+    {
+      "name": "jwt-cpp",
+      "features": ["picojson"]
+    },
     "openssl"
   ]
 }
