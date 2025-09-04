@@ -13,6 +13,10 @@
 #include <nabto/webrtc/util/token_generator.hpp>
 #include <optional>
 #include <webrtc_connection/webrtc_connection.hpp>
+#include <csignal>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
 
 #include "h264_opus_rtsp_handler.hpp"
 
@@ -33,11 +37,27 @@ bool parse_options(int argc, char** argv, struct options& opts);
 struct options defaultOptions();
 std::string readKeyFile(std::string path);
 
+// Signal handling
+static std::atomic<bool> shutdownRequested(false);
+static std::mutex shutdownMutex;
+static std::condition_variable shutdownCv;
+
+void signalHandler(int signal) {
+  if (signal == SIGINT) {
+    NPLOGI << "Received SIGINT, shutting down...";
+    shutdownRequested = true;
+    shutdownCv.notify_all();
+  }
+}
+
 int main(int argc, char** argv) {
   auto opts = defaultOptions();
   if (!parse_options(argc, argv, opts)) {
     return 0;
   }
+
+  // Register signal handler for Ctrl-C
+  std::signal(SIGINT, signalHandler);
 
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
   nabto::webrtc::util::initLogger(opts.logLevel, &consoleAppender);
@@ -47,6 +67,7 @@ int main(int argc, char** argv) {
                                                           &consoleAppender);
 
   NPLOGI << "Connecting to device: " << opts.deviceId;
+  NPLOGI << "Press Ctrl-C to shutdown gracefully";
 
   nabto::webrtc::SignalingTokenGeneratorPtr jwtPtr =
       nabto::webrtc::util::NabtoTokenGenerator::create(
@@ -108,8 +129,17 @@ int main(int argc, char** argv) {
   });
   device->start();
 
-  int n;
-  std::cin >> n;
+  // Wait for shutdown signal
+  {
+    std::unique_lock<std::mutex> lock(shutdownMutex);
+    shutdownCv.wait(lock, []{ return shutdownRequested.load(); });
+  }
+
+  NPLOGI << "Shutting down device...";
+  device->close();
+  NPLOGI << "Device stopped, exiting";
+
+  return 0;
 }
 
 bool parse_options(int argc, char** argv, struct options& opts) {
