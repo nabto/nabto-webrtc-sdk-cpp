@@ -19,47 +19,43 @@ class H264Repacketizer : public RtpRepacketizer {
   H264Repacketizer(std::shared_ptr<rtc::RtpPacketizationConfig> rtpConf)
       : RtpRepacketizer(rtpConf->ssrc, rtpConf->payloadType),
         rtpConf_(rtpConf) {
-    packet_ = std::make_shared<rtc::H264RtpPacketizer>(
-        rtc::NalUnit::Separator::LongStartSequence, rtpConf_);
+    depacketizerMediaHandler_ = std::make_shared<rtc::MediaHandler>();
+    depacketizerMediaHandler_->addToChain(std::make_shared<rtc::H264RtpDepacketizer>(rtc::H264RtpDepacketizer()));
+
+    repacketizerMediaHandler_ = std::make_shared<rtc::MediaHandler>();
+
+    repacketizerMediaHandler_->addToChain(std::make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer(rtc::NalUnit::Separator::LongStartSequence, rtpConf)));
   }
 
   std::vector<std::vector<uint8_t>> handlePacket(std::vector<uint8_t> data) {
-    // TODO fix the packetizer in 0.23.1
     std::vector<std::vector<uint8_t>> ret;
-    ret.push_back(data);
+    if (data.size() < 2 || data.at(1) == 200) {
+      // ignore RTCP packets for now
+      return ret;
+    }
+
+    auto src = reinterpret_cast<const std::byte*>(data.data());
+    rtc::message_ptr msg =
+        std::make_shared<rtc::Message>(src, src + data.size());
+
+    rtc::message_vector vec;
+    vec.push_back(msg);
+
+    depacketizerMediaHandler_->incomingChain(vec, nullptr);
+
+    repacketizerMediaHandler_->outgoingChain(vec, nullptr);
+    for (auto m : vec) {
+      uint8_t* src = (uint8_t*)m->data();
+      ret.push_back(std::vector<uint8_t>(src, src + m->size()));
+    }
     return ret;
-    // std::vector<std::vector<uint8_t>> ret;
-    // if (data.size() < 2 || data.at(1) == 200) {
-    //   // ignore RTCP packets for now
-    //   return ret;
-    // }
-
-    // auto src = reinterpret_cast<const std::byte*>(data.data());
-    // rtc::message_ptr msg =
-    //     std::make_shared<rtc::Message>(src, src + data.size());
-
-    // rtc::message_vector vec;
-    // vec.push_back(msg);
-
-    // depacket_.reassemble(vec);
-    // depacket_.incoming(vec, [](rtc::message_ptr message) {});
-    // depacket_.incoming(vec, nullptr);
-
-    // if (vec.size() > 0) {
-    //   rtpConf_->timestamp = vec[0]->frameInfo->timestamp;
-    //   packet_->outgoing(vec, nullptr);
-
-    //   for (auto m : vec) {
-    //     uint8_t* src = (uint8_t*)m->data();
-    //     ret.push_back(std::vector<uint8_t>(src, src + m->size()));
-    //   }
-    // }
-    // return ret;
   }
 
  private:
-  rtc::H264RtpDepacketizer depacket_;
-  std::shared_ptr<rtc::H264RtpPacketizer> packet_ = nullptr;
+  std::shared_ptr<rtc::MediaHandler> depacketizerMediaHandler_;
+  std::shared_ptr<rtc::MediaHandler> repacketizerMediaHandler_;
+  // rtc::H264RtpDepacketizer depacket_;
+  // std::shared_ptr<rtc::H264RtpPacketizer> packet_ = nullptr;
   std::shared_ptr<rtc::RtpPacketizationConfig> rtpConf_ = nullptr;
 };
 
