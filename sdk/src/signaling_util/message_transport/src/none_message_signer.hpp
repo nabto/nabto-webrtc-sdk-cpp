@@ -1,7 +1,6 @@
 #pragma once
 
 #include "message_signer.hpp"
-#include <jwt-cpp/jwt.h>
 
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
