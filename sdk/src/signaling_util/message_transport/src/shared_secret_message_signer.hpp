@@ -1,7 +1,7 @@
 #pragma once
 
 #include "message_signer.hpp"
-#include <jwt-cpp/traits/nlohmann-json/traits.h>
+#include <jwt-cpp/traits/nlohmann-json/defaults.h>
 
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
