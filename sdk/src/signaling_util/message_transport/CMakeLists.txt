@@ -1,6 +1,7 @@
 set(curl_src
     src/message_transport.cpp
     src/message_transport_impl.cpp
+    src/shared_secret_message_signer_impl.cpp
 )
 
 add_library( nabto_webrtc_message_transport "${curl_src}")
@@ -24,4 +25,3 @@ target_sources(nabto_webrtc_message_transport PUBLIC
     FILES
         include/nabto/webrtc/util/message_transport.hpp
 )
-
