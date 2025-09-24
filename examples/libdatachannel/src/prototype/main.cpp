@@ -13,13 +13,17 @@
 #include <nabto/webrtc/util/message_transport.hpp>
 #include <nabto/webrtc/util/std_timer.hpp>
 #include <nabto/webrtc/util/token_generator.hpp>
+#include <webrtc_connection/webrtc_connection.hpp>
 
-#include "connection.hpp"
-#include "h264_handler.hpp"
+#include "codecs.hpp"
+#include "rtp_handler.hpp"
 
 using namespace std::literals;
 using std::string_view;
 using std::string;
+using nabto::example::VideoCodec;
+using nabto::example::AudioCodec;
+using nabto::example::Protocol;
 
 struct DeviceSettings {
     string_view product_id;
@@ -32,21 +36,10 @@ struct AuthSettings {
     string_view shared_secret;
 };
 
-enum class VideoCodec
-{
-    H264,
-    H265,
-    VP8
-};
-
-enum class AudioCodec
-{
-    OPUS
-};
-
 struct StreamSettings {
     VideoCodec video_codec;
     AudioCodec audio_codec;
+    Protocol protocol;
 };
 
 struct Settings {
@@ -78,6 +71,30 @@ static bool load_options(toml::v3::ex::parse_result& config, Settings& settings)
     settings.auth.shared_secret = config["auth"]["shared_secret"].value_or(""sv);
     settings.auth.central_auth = config["auth"]["central_auth"].value_or(false);
 
+    auto videoCodec = std::string(config["stream"]["video_codec"].value_or("none"sv));
+    auto audioCodec = std::string(config["stream"]["audio_codec"].value_or("none"sv));
+
+    std::transform(videoCodec.begin(), videoCodec.end(), videoCodec.begin(), [](auto c) { return std::tolower(c); });
+    std::transform(audioCodec.begin(), audioCodec.end(), audioCodec.begin(), [](auto c) { return std::tolower(c); });
+
+    if (videoCodec == "h264") {
+        settings.stream.video_codec = VideoCodec::H264;
+    } else if (videoCodec == "H265" || videoCodec == "HEVC") {
+        settings.stream.video_codec =  VideoCodec::H265;
+    } else if (videoCodec == "VP8") {
+        settings.stream.video_codec = VideoCodec::VP8;
+    } else {
+        settings.stream.video_codec = VideoCodec::NONE;
+    }
+
+    if (audioCodec == "OPUS") {
+        settings.stream.audio_codec = AudioCodec::OPUS;
+    } else if (audioCodec == "PCMU") {
+        settings.stream.audio_codec = AudioCodec::PCMU;
+    } else {
+        settings.stream.audio_codec =  AudioCodec::NONE;
+    }
+
     return valid;
 }
 
@@ -85,7 +102,7 @@ static void handle_new_channel(
     nabto::webrtc::SignalingDevicePtr device,
     Settings& settings, 
     nabto::webrtc::SignalingChannelPtr channel,
-    nabto::example::H264TrackHandlerPtr trackHandler,
+    nabto::example::RtpTrackHandlerPtr trackHandler,
     bool authorized) {
 
     if (settings.auth.central_auth) {
@@ -145,6 +162,12 @@ int main() {
     Settings settings = {};
     load_options(config, settings);
 
+    std::cout << 
+        "Starting device with following stream settings\n"
+        "  Protocol: " << nabto::example::protocolToString(settings.stream.protocol) << "\n"
+        "  Video codec: " << nabto::example::videoCodecToString(settings.stream.video_codec) << "\n"
+        "  Audio codec: " << nabto::example::audioCodecToString(settings.stream.audio_codec) << "\n";
+
     string product_id{settings.device.product_id};
     string device_id{settings.device.device_id};
     string private_key{settings.device.private_key};
@@ -159,7 +182,7 @@ int main() {
     auto http = nabto::webrtc::util::CurlHttpClient::create(std::nullopt);
     auto ws = nabto::example::RtcWebsocketWrapper::create(std::nullopt);
     auto tf = nabto::webrtc::util::StdTimerFactory::create();
-    auto trackHandler = nabto::example::H264TrackHandler::create(nullptr);
+    auto trackHandler = nabto::example::RtpTrackHandler::create(settings.stream.video_codec, settings.stream.audio_codec);
 
     nabto::webrtc::SignalingDeviceConfig signalingConfig = {
         device_id,

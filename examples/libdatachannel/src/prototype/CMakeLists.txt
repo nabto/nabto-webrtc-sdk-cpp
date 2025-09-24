@@ -1,6 +1,5 @@
 set(src
     main.cpp
-    connection.cpp
 )
 
 add_executable(prototype "${src}")
