@@ -40,6 +40,7 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   std::vector<rtc::IceServer> iceServers_;
   size_t trackRef_ = 0;
   std::mutex mutex_;
+  std::shared_ptr<rtc::DataChannel> dc_ = nullptr;
 
   std::vector<nlohmann::json> messageQueue_;
 
@@ -69,6 +70,7 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   void sendSignalingMessage(
       const nabto::webrtc::util::WebrtcSignalingMessage& message);
 
+  void addDataChannel();
   void addTrack();
 
   size_t datachannelSendSeq_ = 0;

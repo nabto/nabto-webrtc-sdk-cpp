@@ -39,6 +39,22 @@ gst-launch-1.0 videotestsrc ! clockoverlay ! video/x-raw,width=1920,height=1200 
     udpsink host=127.0.0.1 port=6000
 ```
 
+The following command can send a feed with test audio as well.
+```
+gst-launch-1.0 videotestsrc ! videoconvert ! x264enc tune=zerolatency bitrate=2000 speed-preset=ultrafast ! \
+    rtph264pay pt=96 ! udpsink host=127.0.0.1 port=6000 \
+    audiotestsrc ! audioconvert ! audioresample ! opusenc ! \
+    rtpopuspay pt=111 ! udpsink host=127.0.0.1 port=6002
+```
+
+To receive audio/video in a two-way audio video scenario you can use the following gstreamer command to consume an incoming stream
+```
+gst-launch-1.0 udpsrc port=6001 caps=application/x-rtp,encoding-name=H264,payload=96 ! rtph264depay ! 
+    avdec_h264 ! videoconvert ! autovideosink \
+    udpsrc port=6003 caps=application/x-rtp,encoding-name=OPUS,payload=111 ! rtpopusdepay ! \
+    opusdec !   audioconvert !   autoaudiosink
+```
+
 For testing RTSP, Nabto provides a test RTSP server also based on Gstreamer
 [here](https://github.com/nabto/edge-device-webrtc/tree/main/test-apps/rtsp-server).
 

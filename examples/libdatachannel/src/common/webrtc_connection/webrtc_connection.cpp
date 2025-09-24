@@ -246,12 +246,8 @@ void WebrtcConnection::handleDatachannelEvent(
   auto self = shared_from_this();
   channel->onMessage(
       [self](rtc::binary data) { NPLOGE << "Got BINARY datachannel message "; },
-      [self](std::string data) {
+      [self, channel](std::string data) {
         NPLOGE << "Got datachannel message: " << data;
-        // if (data == "Datachannel msg: 1") {
-        //     self->trackRef_ = self->videoTrack_->addTrack(self->pc_);
-        //     self->pc_->setLocalDescription();
-        // }
       });
 
   channel->onOpen([self, channel]() {
@@ -266,6 +262,19 @@ void WebrtcConnection::handleDatachannelEvent(
         rtc::make_message(vec.begin(), vec.end(), rtc::Message::String);
     channel->send(rtc::to_variant(*message));
   });
+}
+
+void WebrtcConnection::addDataChannel() {
+  const std::lock_guard<std::mutex> lock(mutex_);
+  if (pc_) {
+    dc_ = pc_->createDataChannel("default");
+    auto self = shared_from_this();
+    dc_->onMessage([self](rtc::binary data) { NPLOGE << "Got BINARY datachannel message "; },
+                   [self](std::string data) {
+        NPLOGE << "Echoing datachannel message: " << data;
+        self->dc_->send(data);
+    });
+  }
 }
 
 void WebrtcConnection::addTrack() {
@@ -374,6 +383,7 @@ void WebrtcConnection::parseIceServers(
     }
   }
   createPeerConnection();
+  addDataChannel();
   addTrack();
 }
 
