@@ -1,0 +1,33 @@
+{
+    "name": "nabto-webrtc-device",
+    "version-string": "0.0.1",
+    "dependencies": [
+        "libwebsockets",
+        "curl",
+        "plog",
+        "cxxopts",
+        {
+            "name": "libdatachannel",
+            "features": [
+                "srtp",
+                "ws"
+            ]
+        },
+        {
+            "name": "jwt-cpp",
+            "features": [
+                "picojson"
+            ]
+        },
+        {
+            "name": "libsrtp",
+            "features": [
+                "openssl"
+            ]
+        },
+        "nlohmann-json",
+        "usrsctp",
+        "gtest",
+        "openssl"
+    ]
+}

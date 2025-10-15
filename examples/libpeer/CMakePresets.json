@@ -1,0 +1,54 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "base",
+            "binaryDir": "build/${presetName}",
+            "installDir": "build/${presetName}/install"
+        },
+        {
+            "name": "unix_base",
+            "generator": "Ninja"
+        },
+        {
+            "name": "vcpkg_base",
+            "toolchainFile": "../../3rdparty/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        },
+        {
+            "name": "debug",
+            "inherits": [
+                "base",
+                "unix_base",
+                "vcpkg_base"
+            ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_SHARED_LIBS": "OFF"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "targets": [
+                "install"
+            ]
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "debug"
+                },
+                {
+                    "type": "build",
+                    "name": "debug"
+                }
+            ]
+        }
+    ]
+}

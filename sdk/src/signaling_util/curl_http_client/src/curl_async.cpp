@@ -47,6 +47,7 @@ bool CurlHttpClient::sendRequest(
   NPLOGD << "Sending HTTP request";
 
   res = curl_easy_setopt(curl, CURLOPT_URL, request.url.c_str());
+  NPLOGD << request.url;
   if (res != CURLE_OK) {
     NPLOGE << "Failed to initialize Curl request with CURLE: "
            << curl_easy_strerror(res);
