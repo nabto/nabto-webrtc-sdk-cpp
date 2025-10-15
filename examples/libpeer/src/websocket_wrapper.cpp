@@ -1,15 +1,17 @@
+#include <nabto/webrtc/util/logging.hpp>
 #include "websocket_wrapper.hpp"
 
 namespace nabto::example {
 
-LibwebsocketsSignalingWebsocket::LibwebsocketsSignalingWebsocket() = default;
-
-LibwebsocketsSignalingWebsocket::~LibwebsocketsSignalingWebsocket() {
+LwsWebsocket::~LwsWebsocket() {
   cleanup();
 }
 
-void LibwebsocketsSignalingWebsocket::open(const std::string& url) {
-  if (running_) {
+void LwsWebsocket::open(const std::string& url) {
+  if (!contextManager_ || !contextManager_->getContext()) {
+    if (onError_) {
+      onError_("Failed to get LWS context");
+    }
     return;
   }
 
@@ -49,204 +51,162 @@ void LibwebsocketsSignalingWebsocket::open(const std::string& url) {
     port = (port == 443) ? 80 : port;
   }
 
-  // Create context
-  struct lws_context_creation_info info;
-  memset(&info, 0, sizeof(info));
-  info.port = CONTEXT_PORT_NO_LISTEN;
-  info.protocols = nullptr;  // Using default protocols
-  info.gid = -1;
-  info.uid = -1;
-  info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-  info.user = this;
-
-  context_ = lws_create_context(&info);
-  if (!context_) {
-    if (on_error_) {
-      on_error_("Failed to create libwebsockets context");
-    }
-    return;
-  }
-
-  // Setup client connection info
-  struct lws_client_connect_info ccinfo;
-  memset(&ccinfo, 0, sizeof(ccinfo));
-  ccinfo.context = context_;
+  // setup connection info
+  struct lws_client_connect_info ccinfo = {};
+  ccinfo.context = contextManager_->getContext();
   ccinfo.address = host.c_str();
   ccinfo.port = port;
   ccinfo.path = path.c_str();
   ccinfo.host = host.c_str();
   ccinfo.origin = host.c_str();
-  ccinfo.protocol = nullptr;
-  ccinfo.ssl_connection = use_ssl ? LCCSCF_USE_SSL : 0;
+  ccinfo.protocol = "lws-websocket-protocol";
+  ccinfo.ssl_connection = LCCSCF_USE_SSL;
   ccinfo.userdata = this;
 
   wsi_ = lws_client_connect_via_info(&ccinfo);
   if (!wsi_) {
-    if (on_error_) {
-      on_error_("Failed to connect to websocket");
+    if (onError_) {
+      onError_("Failed to connect to websocket");
     }
-    cleanup();
     return;
   }
 
-  // Start service thread
-  running_ = true;
-  service_thread_ = std::thread(&LibwebsocketsSignalingWebsocket::serviceLoop, this);
+  NPLOGI << "Websocket connected succesfully";
+  contextManager_->registerWebsocket(wsi_);
 }
 
-void LibwebsocketsSignalingWebsocket::serviceLoop() {
-  while (running_) {
-    if (context_) {
-      lws_service(context_, 50);
-    }
-    
-    // Process send queue
-    std::lock_guard<std::mutex> lock(queue_mutex_);
-    if (!send_queue_.empty() && connected_ && wsi_) {
-      lws_callback_on_writable(wsi_);
-    }
-  }
-}
-
-bool LibwebsocketsSignalingWebsocket::send(const std::string& data) {
+bool LwsWebsocket::send(const std::string& data) {
+  NPLOGI << data;
   if (!connected_ || !wsi_) {
     return false;
   }
 
-  std::lock_guard<std::mutex> lock(queue_mutex_);
-  send_queue_.push(data);
-  
-  if (context_) {
+  std::lock_guard<std::mutex> lock(queueMutex_);
+  sendQueue_.push(data);
+
+  if (contextManager_ && contextManager_->getContext()) {
     lws_callback_on_writable(wsi_);
   }
-  
+
   return true;
 }
 
-void LibwebsocketsSignalingWebsocket::close() {
-  running_ = false;
-  
+void LwsWebsocket::close() {
   if (wsi_) {
     lws_callback_on_writable(wsi_);
   }
-  
+
   cleanup();
 }
 
-void LibwebsocketsSignalingWebsocket::cleanup() {
-  running_ = false;
-  
-  if (service_thread_.joinable()) {
-    service_thread_.join();
+void LwsWebsocket::cleanup() {
+  if (wsi_ && contextManager_) {
+    contextManager_->unregisterWebsocket(wsi_);
+    wsi_ = nullptr;
   }
   
-  if (context_) {
-    lws_context_destroy(context_);
-    context_ = nullptr;
-  }
-  
-  wsi_ = nullptr;
   connected_ = false;
 }
 
-void LibwebsocketsSignalingWebsocket::onOpen(std::function<void()> callback) {
-  std::lock_guard<std::mutex> lock(callback_mutex_);
-  on_open_ = callback;
+void LwsWebsocket::onMessage(std::function<void(const std::string& message)> callback) {
+  std::lock_guard<std::mutex> lock(callbackMutex_);
+  onMessage_ = callback;
 }
 
-void LibwebsocketsSignalingWebsocket::onMessage(
-    std::function<void(const std::string& message)> callback) {
-  std::lock_guard<std::mutex> lock(callback_mutex_);
-  on_message_ = callback;
+void LwsWebsocket::onClosed(std::function<void()> callback) {
+  std::lock_guard<std::mutex> lock(callbackMutex_);
+  onClosed_ = callback;
 }
 
-void LibwebsocketsSignalingWebsocket::onClosed(std::function<void()> callback) {
-  std::lock_guard<std::mutex> lock(callback_mutex_);
-  on_closed_ = callback;
+void LwsWebsocket::onOpen(std::function<void()> callback) {
+  std::lock_guard<std::mutex> lock(callbackMutex_);
+  onOpen_ = callback;
 }
 
-void LibwebsocketsSignalingWebsocket::onError(
-    std::function<void(const std::string& error)> callback) {
-  std::lock_guard<std::mutex> lock(callback_mutex_);
-  on_error_ = callback;
+void LwsWebsocket::onError(std::function<void(const std::string& error)> callback) {
+  std::lock_guard<std::mutex> lock(callbackMutex_);
+  onError_ = callback;
 }
 
-int LibwebsocketsSignalingWebsocket::websocketCallback(
-    struct lws* wsi, enum lws_callback_reasons reason,
-    void* user, void* in, size_t len) {
-  
-  auto* ws = static_cast<LibwebsocketsSignalingWebsocket*>(
-      lws_context_user(lws_get_context(wsi)));
-  
+int LwsWebsocket::websocketCallback(
+  struct lws* wsi,
+  enum lws_callback_reasons reason,
+  void* userdata,
+  void* in,
+  size_t len
+) {
+
+  auto* ws = static_cast<LwsWebsocket*>(userdata);
   if (!ws) {
     return 0;
   }
 
   switch (reason) {
-    case LWS_CALLBACK_CLIENT_ESTABLISHED:
+    case LWS_CALLBACK_CLIENT_ESTABLISHED: {
       ws->connected_ = true;
       {
-        std::lock_guard<std::mutex> lock(ws->callback_mutex_);
-        if (ws->on_open_) {
-          ws->on_open_();
+        std::lock_guard<std::mutex> lock(ws->callbackMutex_);
+        if (ws->onOpen_) {
+          ws->onOpen_();
         }
       }
       break;
+    }
 
-    case LWS_CALLBACK_CLIENT_RECEIVE:
-      {
-        std::string message(static_cast<const char*>(in), len);
-        std::lock_guard<std::mutex> lock(ws->callback_mutex_);
-        if (ws->on_message_) {
-          ws->on_message_(message);
+    case LWS_CALLBACK_CLIENT_RECEIVE: {
+      std::string message(static_cast<const char*>(in), len);
+      NPLOGI << message;
+      std::lock_guard<std::mutex> lock(ws->callbackMutex_);
+      if (ws->onMessage_) {
+        ws->onMessage_(message);
+      }
+      break;
+    }
+
+    case LWS_CALLBACK_CLIENT_WRITEABLE: {
+      std::lock_guard<std::mutex> lock(ws->queueMutex_);
+      if (!ws->sendQueue_.empty()) {
+        std::string& msg = ws->sendQueue_.front();
+        size_t writeSize = msg.size();
+
+        if (ws->writeBuffer_.size() < (LWS_PRE + writeSize)) {
+          ws->writeBuffer_.resize(LWS_PRE + writeSize);
+        }
+
+        memcpy(&ws->writeBuffer_[LWS_PRE], msg.c_str(), writeSize);
+
+        lws_write(wsi, &ws->writeBuffer_[LWS_PRE], writeSize, LWS_WRITE_TEXT);
+        ws->sendQueue_.pop();
+
+        if (!ws->sendQueue_.empty()) {
+          lws_callback_on_writable(wsi);
         }
       }
       break;
+    }
 
-    case LWS_CALLBACK_CLIENT_WRITEABLE:
-      {
-        std::lock_guard<std::mutex> lock(ws->queue_mutex_);
-        if (!ws->send_queue_.empty()) {
-          std::string& msg = ws->send_queue_.front();
-          size_t write_size = msg.size();
-          
-          unsigned char buf[LWS_PRE + write_size];
-          memcpy(&buf[LWS_PRE], msg.c_str(), write_size);
-          
-          lws_write(wsi, &buf[LWS_PRE], write_size, LWS_WRITE_TEXT);
-          ws->send_queue_.pop();
-          
-          if (!ws->send_queue_.empty()) {
-            lws_callback_on_writable(wsi);
-          }
-        }
-      }
-      break;
-
-    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-      {
-        std::string error = in ? std::string(static_cast<const char*>(in), len) 
-                               : "Connection error";
-        std::lock_guard<std::mutex> lock(ws->callback_mutex_);
-        if (ws->on_error_) {
-          ws->on_error_(error);
-        }
+    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR: {
+      std::string error = in ? std::string(static_cast<const char*>(in), len) : "Connection error";
+      std::lock_guard<std::mutex> lock(ws->callbackMutex_);
+      if (ws->onError_) {
+        ws->onError_(error);
       }
       ws->connected_ = false;
       break;
+    }
 
-    case LWS_CALLBACK_CLOSED:
+    case LWS_CALLBACK_CLOSED: {
       ws->connected_ = false;
       {
-        std::lock_guard<std::mutex> lock(ws->callback_mutex_);
-        if (ws->on_closed_) {
-          ws->on_closed_();
+        std::lock_guard<std::mutex> lock(ws->callbackMutex_);
+        if (ws->onClosed_) {
+          ws->onClosed_();
         }
       }
       break;
+    }
 
-    default:
-      break;
+    default: break;
   }
 
   return 0;

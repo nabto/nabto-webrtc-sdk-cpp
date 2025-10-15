@@ -14,7 +14,6 @@
 
 #include "websocket_wrapper.hpp"
 #include "webrtc_connection.hpp"
-#include "http_client.hpp"
 
 #include "deviceconf.hpp"
 
@@ -33,7 +32,7 @@ int main() {
 
     //auto http = nabto::webrtc::LwsHttpClient::create();
     auto http = nabto::webrtc::util::CurlHttpClient::create(std::nullopt);
-    auto ws = nabto::example::LibwebsocketsSignalingWebsocket::create();
+    auto ws = nabto::example::LwsWebsocket::create();
     auto tf = nabto::webrtc::util::StdTimerFactory::create();
 
     nabto::webrtc::SignalingDeviceConfig conf = {
@@ -47,6 +46,11 @@ int main() {
     };
 
     auto device = nabto::webrtc::SignalingDeviceFactory::create(conf);
+
+    device->addNewChannelListener([device](nabto::webrtc::SignalingChannelPtr channel, bool authorized) {
+        NPLOGI << "New channel!";
+    });
+
     device->start();
 
     int n;

@@ -11,25 +11,21 @@
 
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
-
-namespace nabto {
-namespace webrtc {
-class LwsContextManager;
-}
-}
+#include "lws_context_manager.hpp"
 
 namespace nabto::example {
 
-class LibwebsocketsSignalingWebsocket : 
-  public nabto::webrtc::SignalingWebsocket,
-  public std::enable_shared_from_this<LibwebsocketsSignalingWebsocket> {
+class LwsWebsocket : 
+  public nabto::webrtc::SignalingWebsocket {
  public:
   static nabto::webrtc::SignalingWebsocketPtr create() {
-    return std::make_shared<LibwebsocketsSignalingWebsocket>();
+    return std::make_shared<LwsWebsocket>();
   }
 
-  LibwebsocketsSignalingWebsocket();
-  ~LibwebsocketsSignalingWebsocket() override;
+  static int websocketCallback(struct lws* wsi, enum lws_callback_reasons reason,
+                               void* user, void* in, size_t len);
+
+  ~LwsWebsocket() override;
 
   bool send(const std::string& data) override;
   void close() override;
@@ -40,28 +36,24 @@ class LibwebsocketsSignalingWebsocket :
   void open(const std::string& url) override;
 
  private:
-  static int websocketCallback(struct lws* wsi, enum lws_callback_reasons reason,
-                               void* user, void* in, size_t len);
   
-  void serviceLoop();
   void cleanup();
-
-  struct lws_context* context_ = nullptr;
+  
+  std::shared_ptr<LwsContextManager> contextManager_ = LwsContextManager::getInstance();
   struct lws* wsi_ = nullptr;
-  std::thread service_thread_;
-  std::atomic<bool> running_{false};
   std::atomic<bool> connected_{false};
 
   // Callbacks
-  std::function<void()> on_open_;
-  std::function<void(const std::string&)> on_message_;
-  std::function<void()> on_closed_;
-  std::function<void(const std::string&)> on_error_;
+  std::function<void()> onOpen_;
+  std::function<void(const std::string&)> onMessage_;
+  std::function<void()> onClosed_;
+  std::function<void(const std::string&)> onError_;
 
   // Send queue
-  std::queue<std::string> send_queue_;
-  std::mutex queue_mutex_;
-  std::mutex callback_mutex_;
+  std::queue<std::string> sendQueue_;
+  std::vector<unsigned char> writeBuffer_;
+  std::mutex queueMutex_;
+  std::mutex callbackMutex_;
 };
 
 } // nabto::example

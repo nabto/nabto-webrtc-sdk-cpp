@@ -25,7 +25,6 @@ set(src
     src/websocket_wrapper.cpp
     src/webrtc_connection.cpp
     src/lws_context_manager.cpp
-    src/http_client.cpp
 )
 
 add_executable(libpeer_device "${src}")
