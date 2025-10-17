@@ -13,7 +13,7 @@
 
 #include "lws_websocket.hpp"
 #include "lws_http_client.hpp"
-#include "webrtc_connection.hpp"
+#include "libpeer_connection.hpp"
 
 #include "deviceconf.hpp"
 
@@ -48,6 +48,15 @@ int main() {
 
     device->addNewChannelListener([device](nabto::webrtc::SignalingChannelPtr channel, bool authorized) {
         NPLOGI << "New channel!";
+        auto transport = nabto::webrtc::util::MessageTransportFactory::createSharedSecretTransport(
+            device,
+            channel,
+            [](const std::string keyId) -> std::string {
+                return sharedSecret;
+            }
+        );
+
+        auto conn = nabto::example::WebrtcConnection::create(device, channel, transport);
     });
 
     device->start();

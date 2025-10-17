@@ -22,10 +22,10 @@ find_package(peer REQUIRED)
 
 set(src
     src/main.cpp
-    src/webrtc_connection.cpp
     src/lws_http_client.cpp
     src/lws_websocket.cpp
     src/lws_context_manager.cpp
+    src/libpeer_connection.cpp
 )
 
 add_executable(libpeer_device "${src}")

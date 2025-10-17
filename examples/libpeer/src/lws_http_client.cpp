@@ -42,7 +42,11 @@ bool LwsHttpClient::sendRequest(const nabto::webrtc::SignalingHttpRequest& reque
 
   uint64_t handle = requestIndex_++;
   requests_[handle] = { this, cb, request, "", 0, 0 };
-  requests_[handle].req.headers.push_back({ "Content-Length", std::to_string(request.body.length()) });
+
+  if (request.method == "POST" && request.body.length() > 0)
+  {
+    requests_[handle].req.headers.push_back({ "Content-Length", std::to_string(request.body.length()) });
+  }
 
   ccinfo.protocol = "lws-http-protocol";
   ccinfo.userdata = reinterpret_cast<void*>(handle);
