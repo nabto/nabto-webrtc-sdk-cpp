@@ -1,7 +1,8 @@
 #pragma once
+#include <peer.h>
+
 #include <memory>
 #include <mutex>
-#include <peer.h>
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/message_transport.hpp>
 
@@ -18,13 +19,14 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
       nabto::webrtc::util::MessageTransportPtr transport);
 
   WebrtcConnection(nabto::webrtc::SignalingDevicePtr device,
-                 nabto::webrtc::SignalingChannelPtr channel,
-                 nabto::webrtc::util::MessageTransportPtr transport);
+                   nabto::webrtc::SignalingChannelPtr channel,
+                   nabto::webrtc::util::MessageTransportPtr transport);
 
  private:
   static std::atomic<bool> isLibPeerInitialized_;
 
-  static void onIceConnectionStateChange(PeerConnectionState state, void* userdata);
+  static void onIceConnectionStateChange(PeerConnectionState state,
+                                         void* userdata);
   static void onIceCandidate(char* description, void* userdata);
   static void onMessage(char* msg, size_t len, void* userdata, uint16_t sid);
 
@@ -33,11 +35,13 @@ class WebrtcConnection : public std::enable_shared_from_this<WebrtcConnection> {
   void createPeerConnection();
 
   void sendDescription(const char* desc, SdpType type);
-  void sendSignalingMessage(const nabto::webrtc::util::WebrtcSignalingMessage& message);
+  void sendSignalingMessage(
+      const nabto::webrtc::util::WebrtcSignalingMessage& message);
 
   void handleMessage(nabto::webrtc::util::WebrtcSignalingMessage& msg);
   void handleTransportError(const nabto::webrtc::SignalingError& error);
-  void handleChannelStateChange(const nabto::webrtc::SignalingChannelState& state);
+  void handleChannelStateChange(
+      const nabto::webrtc::SignalingChannelState& state);
   void handleChannelError(const nabto::webrtc::SignalingError& error);
 
   nabto::webrtc::SignalingChannelPtr channel_;

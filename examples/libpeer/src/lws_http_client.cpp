@@ -1,24 +1,23 @@
+#include "lws_http_client.hpp"
+
 #include <iostream>
 #include <nabto/webrtc/util/logging.hpp>
-#include "lws_http_client.hpp"
+
 #include "util.hpp"
 
 namespace nabto::example {
 
 std::unordered_map<uint64_t, LwsHttpClient::Request> LwsHttpClient::requests_;
 
-LwsHttpClient::LwsHttpClient() {
-}
+LwsHttpClient::LwsHttpClient() {}
 
-LwsHttpClient::~LwsHttpClient() {
-  cleanup();
-}
+LwsHttpClient::~LwsHttpClient() { cleanup(); }
 
-void LwsHttpClient::cleanup() {
-}
+void LwsHttpClient::cleanup() {}
 
-bool LwsHttpClient::sendRequest(const nabto::webrtc::SignalingHttpRequest& request,
-                                nabto::webrtc::HttpResponseCallback cb) {
+bool LwsHttpClient::sendRequest(
+    const nabto::webrtc::SignalingHttpRequest& request,
+    nabto::webrtc::HttpResponseCallback cb) {
   std::lock_guard<std::mutex> lock(sendMutex_);
 
   auto parsed = parseUrl(request.url);
@@ -41,11 +40,11 @@ bool LwsHttpClient::sendRequest(const nabto::webrtc::SignalingHttpRequest& reque
   NPLOGI << request.method << "  " << request.body;
 
   uint64_t handle = requestIndex_++;
-  requests_[handle] = { this, cb, request, "", 0, 0 };
+  requests_[handle] = {this, cb, request, "", 0, 0};
 
-  if (request.method == "POST" && request.body.length() > 0)
-  {
-    requests_[handle].req.headers.push_back({ "Content-Length", std::to_string(request.body.length()) });
+  if (request.method == "POST" && request.body.length() > 0) {
+    requests_[handle].req.headers.push_back(
+        {"Content-Length", std::to_string(request.body.length())});
   }
 
   ccinfo.protocol = "lws-http-protocol";
@@ -61,14 +60,15 @@ bool LwsHttpClient::sendRequest(const nabto::webrtc::SignalingHttpRequest& reque
   return true;
 }
 
-int LwsHttpClient::lwsCallback(struct lws* wsi, enum lws_callback_reasons reason,
-                               void* user, void* in, size_t len) {
+int LwsHttpClient::lwsCallback(struct lws* wsi,
+                               enum lws_callback_reasons reason, void* user,
+                               void* in, size_t len) {
   uint64_t handle = (uint64_t)user;
   Request& r = requests_[handle];
 
   char buf[LWS_PRE + 1024];
   char* start = &buf[LWS_PRE];
-  char*  end = &buf[sizeof(buf) - 1];
+  char* end = &buf[sizeof(buf) - 1];
   char* p = start;
   int n;
 
@@ -84,7 +84,7 @@ int LwsHttpClient::lwsCallback(struct lws* wsi, enum lws_callback_reasons reason
       break;
     }
 
-    // Receiving callbacks
+      // Receiving callbacks
 
     case LWS_CALLBACK_ESTABLISHED_CLIENT_HTTP: {
       int status = lws_http_client_http_response(wsi);
@@ -109,7 +109,8 @@ int LwsHttpClient::lwsCallback(struct lws* wsi, enum lws_callback_reasons reason
     }
 
     case LWS_CALLBACK_COMPLETED_CLIENT_HTTP: {
-      NPLOGI << "COMPLETED_CLIENT_HTTP : status " << r.statusCode << " : " << r.body;
+      NPLOGI << "COMPLETED_CLIENT_HTTP : status " << r.statusCode << " : "
+             << r.body;
       auto response = std::make_unique<nabto::webrtc::SignalingHttpResponse>();
       response->statusCode = r.statusCode;
       response->body = r.body;
@@ -117,24 +118,20 @@ int LwsHttpClient::lwsCallback(struct lws* wsi, enum lws_callback_reasons reason
       break;
     }
 
-    // Callbacks for generating POST data
+      // Callbacks for generating POST data
 
     case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER: {
       if (!lws_http_is_redirected_to_get(wsi)) {
         NPLOGI << "APPEND_HANDSHAKE_HEADER : doing POST flow";
 
-        unsigned char **headerPtr = (unsigned char**)in;
-        unsigned char *headerEnd = (*headerPtr) + len;
+        unsigned char** headerPtr = (unsigned char**)in;
+        unsigned char* headerEnd = (*headerPtr) + len;
 
         for (auto& element : r.req.headers) {
           lws_add_http_header_by_name(
-            wsi,
-            (unsigned char*)element.first.c_str(),
-            (unsigned char*)element.second.c_str(),
-            element.second.length(),
-            headerPtr,
-            headerEnd
-          );
+              wsi, (unsigned char*)element.first.c_str(),
+              (unsigned char*)element.second.c_str(), element.second.length(),
+              headerPtr, headerEnd);
         }
 
         lws_client_http_body_pending(wsi, 1);
@@ -187,4 +184,4 @@ int LwsHttpClient::lwsCallback(struct lws* wsi, enum lws_callback_reasons reason
   return lws_callback_http_dummy(wsi, reason, user, in, len);
 }
 
-} // nabto::webrtc
+}  // namespace nabto::example

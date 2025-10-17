@@ -1,29 +1,19 @@
-#include <nabto/webrtc/util/logging.hpp>
 #include "lws_context_manager.hpp"
-#include "lws_websocket.hpp"
-#include "lws_http_client.hpp"
 
 #include <plog/Log.h>
 
 #include <cstring>
+#include <nabto/webrtc/util/logging.hpp>
+
+#include "lws_http_client.hpp"
+#include "lws_websocket.hpp"
 
 namespace nabto::example {
 
 struct lws_protocols lwsProtocols[] = {
-  {
-    "lws-websocket-protocol",
-    LwsWebsocket::lwsCallback,
-    0,
-    0
-  },
-  {
-    "lws-http-protocol",
-    LwsHttpClient::lwsCallback,
-    0,
-    0
-  },
-  { nullptr, nullptr, 0, 0 }
-};
+    {"lws-websocket-protocol", LwsWebsocket::lwsCallback, 0, 0},
+    {"lws-http-protocol", LwsHttpClient::lwsCallback, 0, 0},
+    {nullptr, nullptr, 0, 0}};
 
 std::weak_ptr<LwsContextManager> LwsContextManager::instance_;
 std::mutex LwsContextManager::instanceMutex_;
@@ -55,9 +45,7 @@ LwsContextManager::LwsContextManager() {
   }
 }
 
-LwsContextManager::~LwsContextManager() {
-  cleanup();
-}
+LwsContextManager::~LwsContextManager() { cleanup(); }
 
 void LwsContextManager::serviceLoop() {
   int n = 0;

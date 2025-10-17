@@ -1,9 +1,9 @@
 #pragma once
 
 #include <mutex>
+#include <nabto/webrtc/device.hpp>
 #include <unordered_map>
 
-#include <nabto/webrtc/device.hpp>
 #include "lws_context_manager.hpp"
 
 namespace nabto::example {
@@ -44,11 +44,11 @@ class LwsHttpClient : public nabto::webrtc::SignalingHttpClient {
 
   void cleanup();
 
-  std::shared_ptr<LwsContextManager> contextManager_ = LwsContextManager::getInstance();
+  std::shared_ptr<LwsContextManager> contextManager_ =
+      LwsContextManager::getInstance();
   std::atomic<bool> connected_{false};
-  
 
   std::mutex sendMutex_;
 };
 
-} // nabto::example
+}  // namespace nabto::example

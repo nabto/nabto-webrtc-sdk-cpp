@@ -1,12 +1,12 @@
-#include <nabto/webrtc/util/logging.hpp>
 #include "lws_websocket.hpp"
+
+#include <nabto/webrtc/util/logging.hpp>
+
 #include "util.hpp"
 
 namespace nabto::example {
 
-LwsWebsocket::~LwsWebsocket() {
-  cleanup();
-}
+LwsWebsocket::~LwsWebsocket() { cleanup(); }
 
 void LwsWebsocket::open(const std::string& url) {
   if (!contextManager_ || !contextManager_->getContext()) {
@@ -60,20 +60,20 @@ bool LwsWebsocket::send(const std::string& data) {
   return true;
 }
 
-void LwsWebsocket::close() {
-  cleanup();
-}
+void LwsWebsocket::close() { cleanup(); }
 
 void LwsWebsocket::cleanup() {
   if (wsi_) {
     lws_callback_on_writable(wsi_);
-    lws_set_timeout(wsi_, PENDING_TIMEOUT_AWAITING_PROXY_RESPONSE, LWS_TO_KILL_SYNC);
+    lws_set_timeout(wsi_, PENDING_TIMEOUT_AWAITING_PROXY_RESPONSE,
+                    LWS_TO_KILL_SYNC);
   }
-  wsi_ = nullptr;  
+  wsi_ = nullptr;
   connected_ = false;
 }
 
-void LwsWebsocket::onMessage(std::function<void(const std::string& message)> callback) {
+void LwsWebsocket::onMessage(
+    std::function<void(const std::string& message)> callback) {
   std::lock_guard<std::mutex> lock(callbackMutex_);
   onMessage_ = callback;
 }
@@ -88,19 +88,14 @@ void LwsWebsocket::onOpen(std::function<void()> callback) {
   onOpen_ = callback;
 }
 
-void LwsWebsocket::onError(std::function<void(const std::string& error)> callback) {
+void LwsWebsocket::onError(
+    std::function<void(const std::string& error)> callback) {
   std::lock_guard<std::mutex> lock(callbackMutex_);
   onError_ = callback;
 }
 
-int LwsWebsocket::lwsCallback(
-  struct lws* wsi,
-  enum lws_callback_reasons reason,
-  void* userdata,
-  void* in,
-  size_t len
-) {
-
+int LwsWebsocket::lwsCallback(struct lws* wsi, enum lws_callback_reasons reason,
+                              void* userdata, void* in, size_t len) {
   auto* ws = static_cast<LwsWebsocket*>(userdata);
   if (!ws) {
     return 0;
@@ -151,7 +146,8 @@ int LwsWebsocket::lwsCallback(
     }
 
     case LWS_CALLBACK_CLIENT_CONNECTION_ERROR: {
-      std::string error = in ? std::string(static_cast<const char*>(in), len) : "Connection error";
+      std::string error = in ? std::string(static_cast<const char*>(in), len)
+                             : "Connection error";
       std::lock_guard<std::mutex> lock(ws->callbackMutex_);
       if (ws->onError_) {
         ws->onError_(error);
@@ -171,10 +167,11 @@ int LwsWebsocket::lwsCallback(
       break;
     }
 
-    default: break;
+    default:
+      break;
   }
 
   return 0;
 }
 
-}
+}  // namespace nabto::example

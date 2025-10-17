@@ -1,21 +1,22 @@
 #pragma once
 
 #include <libwebsockets.h>
-#include <string>
-#include <functional>
-#include <queue>
-#include <mutex>
-#include <atomic>
-#include <memory>
-#include <thread>
 
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
+#include <queue>
+#include <string>
+#include <thread>
+
 #include "lws_context_manager.hpp"
 
 namespace nabto::example {
 
-class LwsWebsocket :  public nabto::webrtc::SignalingWebsocket {
+class LwsWebsocket : public nabto::webrtc::SignalingWebsocket {
  public:
   static nabto::webrtc::SignalingWebsocketPtr create() {
     return std::make_shared<LwsWebsocket>();
@@ -29,7 +30,8 @@ class LwsWebsocket :  public nabto::webrtc::SignalingWebsocket {
   bool send(const std::string& data) override;
   void close() override;
   void onOpen(std::function<void()> callback) override;
-  void onMessage(std::function<void(const std::string& message)> callback) override;
+  void onMessage(
+      std::function<void(const std::string& message)> callback) override;
   void onClosed(std::function<void()> callback) override;
   void onError(std::function<void(const std::string& error)> callback) override;
   void open(const std::string& url) override;
@@ -37,7 +39,8 @@ class LwsWebsocket :  public nabto::webrtc::SignalingWebsocket {
  private:
   void cleanup();
 
-  std::shared_ptr<LwsContextManager> contextManager_ = LwsContextManager::getInstance();
+  std::shared_ptr<LwsContextManager> contextManager_ =
+      LwsContextManager::getInstance();
   struct lws* wsi_ = nullptr;
   std::atomic<bool> connected_{false};
 
@@ -54,4 +57,4 @@ class LwsWebsocket :  public nabto::webrtc::SignalingWebsocket {
   std::mutex callbackMutex_;
 };
 
-} // nabto::example
+}  // namespace nabto::example

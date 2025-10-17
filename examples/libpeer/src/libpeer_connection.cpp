@@ -74,7 +74,8 @@ void WebrtcConnection::createPeerConnection() {
   pcConfig_.user_data = this;
 
   pc_ = peer_connection_create(&pcConfig_);
-  peer_connection_oniceconnectionstatechange(pc_, &WebrtcConnection::onIceConnectionStateChange);
+  peer_connection_oniceconnectionstatechange(
+      pc_, &WebrtcConnection::onIceConnectionStateChange);
   peer_connection_onicecandidate(pc_, &WebrtcConnection::onIceCandidate);
 
   const char* offer = peer_connection_create_offer(pc_);
@@ -83,7 +84,8 @@ void WebrtcConnection::createPeerConnection() {
 
   if (pc_) {
     running = true;
-    connectionTaskThread_ = std::thread(&WebrtcConnection::connectionLoop, this);
+    connectionTaskThread_ =
+        std::thread(&WebrtcConnection::connectionLoop, this);
   }
 }
 
@@ -102,7 +104,8 @@ void WebrtcConnection::sendDescription(const char* description, SdpType type) {
   }
 }
 
-void WebrtcConnection::sendSignalingMessage(const nrtc::util::WebrtcSignalingMessage& message) {
+void WebrtcConnection::sendSignalingMessage(
+    const nrtc::util::WebrtcSignalingMessage& message) {
   if (!transport_) {
     return;
   }
@@ -136,8 +139,6 @@ void WebrtcConnection::onIceConnectionStateChange(PeerConnectionState state,
   NPLOGI << "ICE Connection state changed to " << state;
 }
 
-void WebrtcConnection::onIceCandidate(char* description, void* userdata) {
-
-}
+void WebrtcConnection::onIceCandidate(char* description, void* userdata) {}
 
 }  // namespace nabto::example

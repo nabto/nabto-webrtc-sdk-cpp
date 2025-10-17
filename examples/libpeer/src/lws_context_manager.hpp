@@ -10,12 +10,13 @@
 namespace nabto::example {
 
 class LwsContextManager {
-public:
+ public:
   static std::shared_ptr<LwsContextManager> getInstance();
   ~LwsContextManager();
 
   struct lws_context* getContext() { return context_; }
-private:
+
+ private:
   LwsContextManager();
   void serviceLoop();
   void cleanup();
@@ -30,5 +31,4 @@ private:
   static std::mutex instanceMutex_;
 };
 
-} // nabto::example
-
+}  // namespace nabto::example
