@@ -1,5 +1,6 @@
 #include <nabto/webrtc/util/logging.hpp>
-#include "websocket_wrapper.hpp"
+#include "lws_websocket.hpp"
+#include "util.hpp"
 
 namespace nabto::example {
 
@@ -15,47 +16,16 @@ void LwsWebsocket::open(const std::string& url) {
     return;
   }
 
-  // Parse URL
-  std::string protocol, host, path;
-  int port = 443;
-  bool use_ssl = true;
-
-  size_t proto_end = url.find("://");
-  if (proto_end != std::string::npos) {
-    protocol = url.substr(0, proto_end);
-    use_ssl = (protocol == "wss");
-    
-    size_t host_start = proto_end + 3;
-    size_t path_start = url.find('/', host_start);
-    size_t port_start = url.find(':', host_start);
-    
-    if (port_start != std::string::npos && 
-        (path_start == std::string::npos || port_start < path_start)) {
-      host = url.substr(host_start, port_start - host_start);
-      size_t port_end = (path_start != std::string::npos) ? path_start : url.length();
-      port = std::stoi(url.substr(port_start + 1, port_end - port_start - 1));
-    } else if (path_start != std::string::npos) {
-      host = url.substr(host_start, path_start - host_start);
-    } else {
-      host = url.substr(host_start);
-    }
-    
-    if (path_start != std::string::npos) {
-      path = url.substr(path_start);
-    } else {
-      path = "/";
-    }
-  }
-
-  if (!use_ssl) {
-    port = (port == 443) ? 80 : port;
-  }
+  auto parsed = parseUrl(url);
+  auto protocol = std::get<0>(parsed);
+  auto host = std::get<1>(parsed);
+  auto path = std::get<2>(parsed);
 
   // setup connection info
   struct lws_client_connect_info ccinfo = {};
   ccinfo.context = contextManager_->getContext();
   ccinfo.address = host.c_str();
-  ccinfo.port = port;
+  ccinfo.port = 443;
   ccinfo.path = path.c_str();
   ccinfo.host = host.c_str();
   ccinfo.origin = host.c_str();
@@ -72,7 +42,6 @@ void LwsWebsocket::open(const std::string& url) {
   }
 
   NPLOGI << "Websocket connected succesfully";
-  contextManager_->registerWebsocket(wsi_);
 }
 
 bool LwsWebsocket::send(const std::string& data) {
@@ -92,19 +61,15 @@ bool LwsWebsocket::send(const std::string& data) {
 }
 
 void LwsWebsocket::close() {
-  if (wsi_) {
-    lws_callback_on_writable(wsi_);
-  }
-
   cleanup();
 }
 
 void LwsWebsocket::cleanup() {
-  if (wsi_ && contextManager_) {
-    contextManager_->unregisterWebsocket(wsi_);
-    wsi_ = nullptr;
+  if (wsi_) {
+    lws_callback_on_writable(wsi_);
+    lws_set_timeout(wsi_, PENDING_TIMEOUT_AWAITING_PROXY_RESPONSE, LWS_TO_KILL_SYNC);
   }
-  
+  wsi_ = nullptr;  
   connected_ = false;
 }
 
@@ -128,7 +93,7 @@ void LwsWebsocket::onError(std::function<void(const std::string& error)> callbac
   onError_ = callback;
 }
 
-int LwsWebsocket::websocketCallback(
+int LwsWebsocket::lwsCallback(
   struct lws* wsi,
   enum lws_callback_reasons reason,
   void* userdata,

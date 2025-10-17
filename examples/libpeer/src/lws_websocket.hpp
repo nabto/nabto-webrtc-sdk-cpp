@@ -15,15 +15,14 @@
 
 namespace nabto::example {
 
-class LwsWebsocket : 
-  public nabto::webrtc::SignalingWebsocket {
+class LwsWebsocket :  public nabto::webrtc::SignalingWebsocket {
  public:
   static nabto::webrtc::SignalingWebsocketPtr create() {
     return std::make_shared<LwsWebsocket>();
   }
 
-  static int websocketCallback(struct lws* wsi, enum lws_callback_reasons reason,
-                               void* user, void* in, size_t len);
+  static int lwsCallback(struct lws* wsi, enum lws_callback_reasons reason,
+                         void* user, void* in, size_t len);
 
   ~LwsWebsocket() override;
 
@@ -36,9 +35,8 @@ class LwsWebsocket :
   void open(const std::string& url) override;
 
  private:
-  
   void cleanup();
-  
+
   std::shared_ptr<LwsContextManager> contextManager_ = LwsContextManager::getInstance();
   struct lws* wsi_ = nullptr;
   std::atomic<bool> connected_{false};

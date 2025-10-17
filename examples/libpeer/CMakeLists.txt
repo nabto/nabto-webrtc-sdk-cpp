@@ -22,8 +22,9 @@ find_package(peer REQUIRED)
 
 set(src
     src/main.cpp
-    src/websocket_wrapper.cpp
     src/webrtc_connection.cpp
+    src/lws_http_client.cpp
+    src/lws_websocket.cpp
     src/lws_context_manager.cpp
 )
 
@@ -36,9 +37,6 @@ target_link_libraries(libpeer_device
     NabtoWebrtcSignaling::util_uuid
     NabtoWebrtcSignaling::util_message_transport
     NabtoWebrtcSignaling::util_token_generator
-
-    NabtoWebrtcSignaling::util_curl_client
-    
     websockets
     peer
 )

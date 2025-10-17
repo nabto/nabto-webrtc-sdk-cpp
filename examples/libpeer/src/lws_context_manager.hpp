@@ -15,9 +15,6 @@ public:
   ~LwsContextManager();
 
   struct lws_context* getContext() { return context_; }
-
-  void registerWebsocket(struct lws* wsi);
-  void unregisterWebsocket(struct lws* wsi);
 private:
   LwsContextManager();
   void serviceLoop();

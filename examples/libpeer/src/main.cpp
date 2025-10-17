@@ -8,11 +8,11 @@
 
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/logging.hpp>
-#include <nabto/webrtc/util/curl_async.hpp>
 #include <nabto/webrtc/util/token_generator.hpp>
 #include <nabto/webrtc/util/std_timer.hpp>
 
-#include "websocket_wrapper.hpp"
+#include "lws_websocket.hpp"
+#include "lws_http_client.hpp"
 #include "webrtc_connection.hpp"
 
 #include "deviceconf.hpp"
@@ -30,8 +30,7 @@ int main() {
       nabto::webrtc::util::NabtoTokenGenerator::create(
           productId, deviceId, privateKey);
 
-    //auto http = nabto::webrtc::LwsHttpClient::create();
-    auto http = nabto::webrtc::util::CurlHttpClient::create(std::nullopt);
+    auto http = nabto::example::LwsHttpClient::create();
     auto ws = nabto::example::LwsWebsocket::create();
     auto tf = nabto::webrtc::util::StdTimerFactory::create();
 

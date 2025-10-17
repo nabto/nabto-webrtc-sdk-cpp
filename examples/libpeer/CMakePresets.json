@@ -25,9 +25,27 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "BUILD_SHARED_LIBS": "OFF"
             }
+        },
+        {
+            "name": "release",
+            "inherits": [
+                "base",
+                "unix_base",
+                "vcpkg_base"
+            ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "targets": [
+                "install"
+            ]
+        },
         {
             "name": "debug",
             "configurePreset": "debug",
@@ -37,6 +55,19 @@
         }
     ],
     "workflowPresets": [
+        {
+            "name": "release",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "release"
+                },
+                {
+                    "type": "build",
+                    "name": "release"
+                }
+            ]
+        },
         {
             "name": "debug",
             "steps": [
