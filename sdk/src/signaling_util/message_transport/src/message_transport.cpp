@@ -1,15 +1,14 @@
 #include "message_transport_impl.hpp"
 
-#include <nabto/webrtc/device.hpp>
-#include <nabto/webrtc/util/message_transport.hpp>
-
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
-
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
+
+#include "nabto/webrtc/device.hpp"
+#include "nabto/webrtc/util/message_transport.hpp"
+#include "nlohmann/json.hpp"
+#include "nlohmann/json_fwd.hpp"
 
 namespace nabto {
 namespace webrtc {

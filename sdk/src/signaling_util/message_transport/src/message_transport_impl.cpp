@@ -1,15 +1,5 @@
 #include "message_transport_impl.hpp"
 
-#include "message_signer.hpp"
-#include "none_message_signer.hpp"
-#include "shared_secret_message_signer.hpp"
-
-#include <nabto/webrtc/device.hpp>
-#include <nabto/webrtc/util/logging.hpp>
-#include <nabto/webrtc/util/message_transport.hpp>
-
-#include <nlohmann/json.hpp>
-
 #include <exception>
 #include <functional>
 #include <map>
@@ -18,6 +8,14 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "message_signer.hpp"
+#include "nabto/webrtc/device.hpp"
+#include "nabto/webrtc/util/logging.hpp"
+#include "nabto/webrtc/util/message_transport.hpp"
+#include "nlohmann/json.hpp"
+#include "none_message_signer.hpp"
+#include "shared_secret_message_signer.hpp"
 
 namespace nabto {
 namespace webrtc {
