@@ -327,6 +327,8 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
         for (const auto& [id, handler] : chanHandlers) {
           handler(chan, authorized);
         }
+        chan->handleMessage(msg);
+        return;
       }
       mutex_.unlock();
       chan->handleMessage(msg);
