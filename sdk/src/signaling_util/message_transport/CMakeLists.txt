@@ -4,13 +4,18 @@ set(curl_src
     src/shared_secret_message_signer_impl.cpp
 )
 
+find_package(jwt-cpp CONFIG REQUIRED)
+
 add_library( nabto_webrtc_message_transport "${curl_src}")
 
 target_link_libraries(nabto_webrtc_message_transport
     NabtoWebrtcSignaling::util_uuid
     NabtoWebrtcSignaling::util_logging
     NabtoWebrtcSignaling::device
+    jwt-cpp::jwt-cpp
 )
+
+target_compile_definitions(nabto_webrtc_message_transport PRIVATE -DJWT_DISABLE_PICOJSON)
 
 target_include_directories(nabto_webrtc_message_transport
   PUBLIC

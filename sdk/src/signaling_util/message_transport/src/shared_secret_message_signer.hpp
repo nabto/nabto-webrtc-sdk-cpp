@@ -1,5 +1,6 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include "message_signer.hpp"
 
 namespace nabto {
