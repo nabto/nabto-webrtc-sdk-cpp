@@ -42,6 +42,7 @@ class LwsWebsocket : public nabto::webrtc::SignalingWebsocket {
   std::shared_ptr<LwsContextManager> contextManager_ =
       LwsContextManager::getInstance();
   struct lws* wsi_ = nullptr;
+  std::string receiveBuffer_;
   std::atomic<bool> connected_{false};
 
   // Callbacks

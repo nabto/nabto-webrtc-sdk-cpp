@@ -114,11 +114,14 @@ int LwsWebsocket::lwsCallback(struct lws* wsi, enum lws_callback_reasons reason,
     }
 
     case LWS_CALLBACK_CLIENT_RECEIVE: {
-      std::string message(static_cast<const char*>(in), len);
-      NPLOGI << message;
       std::lock_guard<std::mutex> lock(ws->callbackMutex_);
-      if (ws->onMessage_) {
-        ws->onMessage_(message);
+      ws->receiveBuffer_.append(static_cast<const char*>(in), len);
+
+      if (lws_is_final_fragment(wsi)) {
+        if (ws->onMessage_) {
+          ws->onMessage_(ws->receiveBuffer_);
+        }
+        ws->receiveBuffer_.clear();
       }
       break;
     }

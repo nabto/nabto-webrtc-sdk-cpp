@@ -119,9 +119,16 @@ void WebrtcConnection::sendSignalingMessage(
 
 void WebrtcConnection::handleMessage(nrtc::util::WebrtcSignalingMessage& msg) {
   std::lock_guard<std::mutex> lock(mutex_);
+
   if (msg.isDescription()) {
     auto desc = msg.getDescription();
-    NPLOGI << "Description received: " << desc.sdp;
+    auto type = desc.type == "offer" ? SDP_TYPE_OFFER : SDP_TYPE_ANSWER;
+    peer_connection_set_remote_description(pc_, desc.sdp.c_str(), type);
+  }
+
+  if (msg.isCandidate()) {
+    std::string cand = msg.getCandidate().candidate;
+    peer_connection_add_ice_candidate(pc_, cand.data());
   }
 }
 
@@ -139,6 +146,16 @@ void WebrtcConnection::onIceConnectionStateChange(PeerConnectionState state,
   NPLOGI << "ICE Connection state changed to " << state;
 }
 
-void WebrtcConnection::onIceCandidate(char* description, void* userdata) {}
+void WebrtcConnection::onIceCandidate(char* description, void* userdata) {
+  WebrtcConnection* conn = reinterpret_cast<WebrtcConnection*>(userdata);
+  std::string cand = std::string(description);
+  nrtc::util::SignalingCandidate signalingCandidate(cand);
+
+  // @TODO: Probably not correct to just set "0" here.
+  signalingCandidate.setSdpMid("0");
+
+  conn->sendSignalingMessage(
+      nrtc::util::WebrtcSignalingMessage(signalingCandidate));
+}
 
 }  // namespace nabto::example
