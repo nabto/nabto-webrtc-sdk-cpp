@@ -18,7 +18,7 @@ PeerConnectionPtr WebrtcConnection::create(
 
   auto conn = std::make_shared<WebrtcConnection>(device, channel, transport);
   conn->init();
-  conn->pcConfig_ = {};
+  memset(&conn->pcConfig_, 0, sizeof(conn->pcConfig_));
   return conn;
 }
 
@@ -123,12 +123,12 @@ void WebrtcConnection::handleMessage(nrtc::util::WebrtcSignalingMessage& msg) {
   if (msg.isDescription()) {
     auto desc = msg.getDescription();
     auto type = desc.type == "offer" ? SDP_TYPE_OFFER : SDP_TYPE_ANSWER;
+    NPLOGI << desc.sdp;
     peer_connection_set_remote_description(pc_, desc.sdp.c_str(), type);
   }
 
   if (msg.isCandidate()) {
-    std::string cand = msg.getCandidate().candidate;
-    peer_connection_add_ice_candidate(pc_, cand.data());
+   NPLOGE << "Received candidate message even though that shouldnt be possible: " << msg.getCandidate().candidate;
   }
 }
 
@@ -152,7 +152,7 @@ void WebrtcConnection::onIceCandidate(char* description, void* userdata) {
   nrtc::util::SignalingCandidate signalingCandidate(cand);
 
   // @TODO: Probably not correct to just set "0" here.
-  signalingCandidate.setSdpMid("0");
+  signalingCandidate.setSdpMid("video");
 
   conn->sendSignalingMessage(
       nrtc::util::WebrtcSignalingMessage(signalingCandidate));

@@ -17,6 +17,8 @@
 
 using std::string;
 
+nabto::example::PeerConnectionPtr conn = nullptr;
+
 int main() {
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
   nabto::webrtc::util::initLogger(plog::Severity::debug, &consoleAppender);
@@ -47,8 +49,7 @@ int main() {
                   return sharedSecret;
                 });
 
-        auto conn = nabto::example::WebrtcConnection::create(device, channel,
-                                                             transport);
+        conn = nabto::example::WebrtcConnection::create(device, channel, transport);
       });
 
   device->start();
