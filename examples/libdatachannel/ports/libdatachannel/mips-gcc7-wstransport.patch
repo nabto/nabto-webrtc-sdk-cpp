@@ -1,13 +1,12 @@
 diff --git a/src/impl/tlstransport.hpp b/src/impl/tlstransport.hpp
-index 37793e6..754d152 100644
+index f56c36c..5a42724 100644
 --- a/src/impl/tlstransport.hpp
 +++ b/src/impl/tlstransport.hpp
-@@ -1,5 +1,8 @@
+@@ -39,6 +39,7 @@ public:
  	bool send(message_ptr message) override;
  
  	bool isClient() const { return mIsClient; }
-+	// GCC 7.x sometimes instantiates the generic std::visit lambda first,
-+	// which expects isActive() to exist on all alternatives.
 +	bool isActive() const { return mIsClient; }
  
  protected:
+ 	virtual void incoming(message_ptr message) override;
