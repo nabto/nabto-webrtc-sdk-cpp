@@ -1,8 +1,8 @@
 diff --git a/src/impl/tlstransport.hpp b/src/impl/tlstransport.hpp
-index 2322b86..b1b0b7e 100644
+index 37793e6..754d152 100644
 --- a/src/impl/tlstransport.hpp
 +++ b/src/impl/tlstransport.hpp
-@@ -35,6 +35,10 @@ public:
+@@ -1,5 +1,8 @@
  	bool send(message_ptr message) override;
  
  	bool isClient() const { return mIsClient; }
