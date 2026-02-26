@@ -130,7 +130,6 @@ class SignalingChannelImpl
   ChannelStateListenerId currStateListId_ = 0;
   ChannelErrorListenerId currErrListId_ = 0;
 
-  uint32_t recvSeq_ = 0;
   uint32_t sendSeq_ = 0;
   std::vector<nlohmann::json> unackedMessages_;
   std::mutex mutex_;
