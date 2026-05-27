@@ -3,14 +3,15 @@ name: Check Library code
 on: push
 
 permissions:
+  id-token: write
   actions: write
   checks: write
   contents: read
 
 env:
+  AWS_DEV_REGION: us-east-1
+  AWS_DEV_ROLE_ARN: arn:aws:iam::297820887526:role/nabto-webrtc-sdk-cpp-github-actions-access
   VCPKG_BINARY_SOURCES: "clear;x-aws,s3://vcpkg-build-cache-us-east-1,readwrite"
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 
 jobs:
@@ -23,6 +24,11 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_DEV_ROLE_ARN }}
+          aws-region: ${{ env.AWS_DEV_REGION }}
+          role-duration-seconds: 7200
       - name: Run clang tidy
         run: cmake --workflow --preset clang_tidy
         working-directory: sdk
@@ -36,6 +42,11 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_DEV_ROLE_ARN }}
+          aws-region: ${{ env.AWS_DEV_REGION }}
+          role-duration-seconds: 7200
       - name: Run werror build
         run: cmake --workflow --preset werror
         working-directory: sdk
