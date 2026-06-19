@@ -1,15 +1,14 @@
 #pragma once
 
 #include "message_signer.hpp"
-#include <jwt-cpp/traits/nlohmann-json/traits.h>
-
-#include <nabto/webrtc/device.hpp>
-#include <nabto/webrtc/util/logging.hpp>
-#include <nabto/webrtc/util/uuid.hpp>
-
-#include <nlohmann/json.hpp>
 
 #include <memory>
+
+#include "jwt-cpp/traits/nlohmann-json/traits.h"
+#include "nabto/webrtc/device.hpp"
+#include "nabto/webrtc/util/logging.hpp"
+#include "nabto/webrtc/util/uuid.hpp"
+#include "nlohmann/json.hpp"
 
 namespace nabto {
 namespace webrtc {

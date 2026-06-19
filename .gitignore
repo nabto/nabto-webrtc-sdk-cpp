@@ -3,3 +3,4 @@
 /sdk/src/signaling_device/src/version.cpp
 scratch.md
 perf.data*
+sdk/CMakeUserPresets.json
