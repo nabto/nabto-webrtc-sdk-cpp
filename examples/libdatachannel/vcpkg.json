@@ -10,8 +10,7 @@
         "features": ["srtp", "ws"]
       },
       {
-        "name": "jwt-cpp",
-        "features": ["picojson"]
+        "name": "jwt-cpp"
       },
       {
         "name": "libsrtp",

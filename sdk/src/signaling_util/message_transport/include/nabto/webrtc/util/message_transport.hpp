@@ -1,7 +1,5 @@
 #pragma once
 
-#include <rtc/rtc.hpp>
-
 #include <nabto/webrtc/device.hpp>
 
 #include <nlohmann/json.hpp>
