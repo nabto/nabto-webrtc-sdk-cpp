@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../../../src/openssl_key_id.hpp"
-#include <jwt-cpp/jwt.h>
+#include <jwt-cpp/traits/nlohmann-json/defaults.h>
 
 #include <nabto/webrtc/device.hpp>
 #include <nabto/webrtc/util/uuid.hpp>
