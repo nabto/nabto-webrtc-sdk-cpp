@@ -9,11 +9,28 @@
 
 #include <cstdint>
 #include <exception>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <string>
 #include <utility>
+
+namespace {
+
+// get<uint32_t>() converts any JSON number, so 4294967297 and 1.5 would both
+// become 1. Only accept what is a 32 bit unsigned integer on the wire.
+uint32_t parseSeq(const nlohmann::json& msg) {
+  const auto& seq = msg.at("seq");
+  if (!seq.is_number_unsigned() ||
+      seq.get<uint64_t>() > std::numeric_limits<uint32_t>::max()) {
+    throw std::invalid_argument("seq is not a 32 bit unsigned integer");
+  }
+  return seq.get<uint32_t>();
+}
+
+}  // namespace
 
 namespace nabto {
 namespace webrtc {
@@ -32,22 +49,21 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
     auto type = msg.at("type").get<std::string>();
     if (type == "DATA") {
       NABTO_SIGNALING_LOGD << "Handling DATA";
-      const auto seq = msg.at("seq").get<uint32_t>();
-      bool expected = false;
-      {
-        const std::lock_guard<std::mutex> lock(mutex_);
-        if (seq > recvSeq_) {
-          // Not acked, so the peer retransmits it in order.
-          NABTO_SIGNALING_LOGD << "Ignoring DATA with seq " << seq
-                               << " ahead of the expected seq " << recvSeq_;
-          return;
-        }
-        expected = (seq == recvSeq_);
-        if (expected) {
-          recvSeq_++;
-        }
+      const uint32_t seq = parseSeq(msg);
+      // Held until the listeners have run, so messages are handed over one at
+      // a time and in order.
+      const std::lock_guard<std::recursive_mutex> receiveLock(receiveMutex_);
+      if (seq > recvSeq_) {
+        // Not acked, so the peer retransmits it in order.
+        NABTO_SIGNALING_LOGD << "Ignoring DATA with seq " << seq
+                             << " ahead of the expected seq " << recvSeq_;
+        return;
       }
-      sendAck(msg);
+      const bool expected = (seq == recvSeq_);
+      if (expected) {
+        recvSeq_++;
+      }
+      sendAck(seq);
       if (!expected) {
         // The peer resends unacked messages when it sees us or itself
         // (re)connect, so a duplicate is normal: Ack it again and drop it.
@@ -108,9 +124,8 @@ void SignalingChannelImpl::sendError(const SignalingError& error) {
   changeState(SignalingChannelState::FAILED);
 }
 
-void SignalingChannelImpl::sendAck(const nlohmann::json& msg) {
-  const nlohmann::json ack = {{"type", "ACK"},
-                              {"seq", msg.at("seq").get<uint32_t>()}};
+void SignalingChannelImpl::sendAck(uint32_t seq) {
+  const nlohmann::json ack = {{"type", "ACK"}, {"seq", seq}};
   const std::lock_guard<std::mutex> lock(mutex_);
   signaler_->websocketSendMessage(channelId_, ack);
 }

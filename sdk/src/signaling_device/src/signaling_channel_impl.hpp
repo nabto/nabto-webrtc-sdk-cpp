@@ -111,6 +111,14 @@ class SignalingChannelImpl
 
   // #### INTERNAL FUNCTIONS ####
   void handleMessage(const nlohmann::json& msg);
+
+  /**
+   * Hold back the handling of incoming DATA messages on other threads while
+   * the returned lock is held. The holder can still call handleMessage.
+   */
+  std::unique_lock<std::recursive_mutex> lockReceive() {
+    return std::unique_lock<std::recursive_mutex>(receiveMutex_);
+  }
   void peerConnected();
   void peerOffline();
   void handleError(const SignalingError& error);
@@ -131,13 +139,18 @@ class SignalingChannelImpl
   ChannelErrorListenerId currErrListId_ = 0;
 
   uint32_t sendSeq_ = 0;
-  // The next sequence number expected from the peer.
+  // Serializes the handling of incoming DATA messages. Never taken while
+  // holding mutex_. Recursive so the device can hold it across the new
+  // channel listeners and the initial message.
+  std::recursive_mutex receiveMutex_;
+  // The next sequence number expected from the peer. Guarded by
+  // receiveMutex_.
   uint32_t recvSeq_ = 0;
   std::vector<nlohmann::json> unackedMessages_;
   std::mutex mutex_;
   SignalingChannelState state_ = SignalingChannelState::NEW;
 
-  void sendAck(const nlohmann::json& msg);
+  void sendAck(uint32_t seq);
   void handleAck(const nlohmann::json& msg);
   void changeState(SignalingChannelState state);
 

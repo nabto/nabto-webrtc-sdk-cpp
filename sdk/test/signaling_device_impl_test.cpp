@@ -6,9 +6,12 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <functional>
+#include <future>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -88,6 +91,9 @@ class ConnectedDevice {
     device_->addNewChannelListener(
         [this](const nabto::webrtc::SignalingChannelPtr& channel,
                bool /*authorized*/) {
+          if (beforeMessageListener) {
+            beforeMessageListener();
+          }
           channel->addMessageListener([this](const nlohmann::json& msg) {
             delivered.push_back(msg);
           });
@@ -112,6 +118,12 @@ class ConnectedDevice {
 
   // Receive a DATA message from the client as the backend forwards it.
   void receiveData(uint32_t seq, const nlohmann::json& data) {
+    receiveDataWithSeq(seq, data);
+  }
+
+  // As receiveData, but with any JSON value as the sequence number.
+  void receiveDataWithSeq(const nlohmann::json& seq,
+                          const nlohmann::json& data) {
     const nlohmann::json frame = {
         {"type", "MESSAGE"},
         {"channelId", "chan"},
@@ -133,6 +145,9 @@ class ConnectedDevice {
   }
 
   std::vector<nlohmann::json> delivered;
+
+  // Runs in the new channel listener before it adds its message listener.
+  std::function<void()> beforeMessageListener;
 
  private:
   std::shared_ptr<FakeWebsocket> ws_ = std::make_shared<FakeWebsocket>();
@@ -243,4 +258,53 @@ TEST(signaling_device_impl, parseIceServersExtraData) {
   ASSERT_EQ(s2.urls.size(), 0);
   ASSERT_TRUE(s2.username.empty());
   ASSERT_TRUE(s2.credential.empty());
+}
+
+// The channel is reachable for other threads before the new channel listeners
+// have added their message listeners. A duplicate of the initial message
+// handled in that window must not use up the sequence number: The original
+// would then be dropped as a retransmission and no listener would see it.
+TEST(signaling_device_impl, concurrentDuplicateWaitsForChannelListeners) {
+  ConnectedDevice device;
+  const nlohmann::json setupRequest = {{"type", "SETUP_REQUEST"}};
+  std::thread duplicate;
+  device.beforeMessageListener = [&device, &setupRequest, &duplicate]() {
+    std::promise<void> handled;
+    auto wasHandled = handled.get_future();
+    duplicate = std::thread(
+        [&device, &setupRequest, handled = std::move(handled)]() mutable {
+          device.receiveData(0, setupRequest);
+          handled.set_value();
+        });
+    // An uncoordinated duplicate is handled at once. A coordinated one waits
+    // for this listener to return, so the wait times out.
+    const auto window = std::chrono::milliseconds(200);
+    wasHandled.wait_for(window);
+  };
+
+  device.receiveData(0, setupRequest);
+  duplicate.join();
+
+  ASSERT_EQ(device.delivered.size(), 1);
+  ASSERT_EQ(device.delivered[0], setupRequest);
+  const std::vector<uint32_t> expectedAcks = {0, 0};
+  ASSERT_EQ(device.ackedSeqs(), expectedAcks);
+}
+
+// A sequence number that is not a 32 bit unsigned integer must not be
+// converted to one: 4294967297 and 1.5 would both be taken for 1.
+TEST(signaling_device_impl, malformedSeqIsIgnored) {
+  ConnectedDevice device;
+
+  device.receiveData(0, "first");
+  device.receiveDataWithSeq(4294967297U, "too large");
+  device.receiveDataWithSeq(1.5, "fraction");
+  device.receiveDataWithSeq(-1, "negative");
+  device.receiveDataWithSeq("1", "string");
+  device.receiveData(1, "second");
+
+  const std::vector<nlohmann::json> expected = {"first", "second"};
+  ASSERT_EQ(device.delivered, expected);
+  const std::vector<uint32_t> expectedAcks = {0, 1};
+  ASSERT_EQ(device.ackedSeqs(), expectedAcks);
 }

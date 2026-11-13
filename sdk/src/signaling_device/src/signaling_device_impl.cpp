@@ -322,6 +322,11 @@ void SignalingDeviceImpl::handleWsMessage(SignalingMessageType type,
           return;
         }
         auto chanHandlers = chanHandlers_;
+        // Taken while other threads still need mutex_ to find the channel, so
+        // it is never contended here. A retransmission of the initial message
+        // on another thread then waits until the listeners below have added
+        // their message listeners and the initial message has been handled.
+        const auto receiveLock = chan->lockReceive();
         mutex_.unlock();
 
         for (const auto& [id, handler] : chanHandlers) {
