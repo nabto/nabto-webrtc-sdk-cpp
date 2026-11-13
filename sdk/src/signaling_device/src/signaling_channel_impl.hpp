@@ -131,6 +131,8 @@ class SignalingChannelImpl
   ChannelErrorListenerId currErrListId_ = 0;
 
   uint32_t sendSeq_ = 0;
+  // The next sequence number expected from the peer.
+  uint32_t recvSeq_ = 0;
   std::vector<nlohmann::json> unackedMessages_;
   std::mutex mutex_;
   SignalingChannelState state_ = SignalingChannelState::NEW;

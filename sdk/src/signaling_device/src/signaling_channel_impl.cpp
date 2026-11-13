@@ -32,7 +32,28 @@ void SignalingChannelImpl::handleMessage(const nlohmann::json& msg) {
     auto type = msg.at("type").get<std::string>();
     if (type == "DATA") {
       NABTO_SIGNALING_LOGD << "Handling DATA";
+      const auto seq = msg.at("seq").get<uint32_t>();
+      bool expected = false;
+      {
+        const std::lock_guard<std::mutex> lock(mutex_);
+        if (seq > recvSeq_) {
+          // Not acked, so the peer retransmits it in order.
+          NABTO_SIGNALING_LOGD << "Ignoring DATA with seq " << seq
+                               << " ahead of the expected seq " << recvSeq_;
+          return;
+        }
+        expected = (seq == recvSeq_);
+        if (expected) {
+          recvSeq_++;
+        }
+      }
       sendAck(msg);
+      if (!expected) {
+        // The peer resends unacked messages when it sees us or itself
+        // (re)connect, so a duplicate is normal: Ack it again and drop it.
+        NABTO_SIGNALING_LOGD << "Dropping retransmitted DATA with seq " << seq;
+        return;
+      }
       const auto& str = msg.at("data");
       std::map<MessageListenerId, SignalingMessageHandler> messageHandlers;
       {
